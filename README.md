@@ -1,2 +1,3 @@
-# tokenroi
-How many tokens you burned are useful?
+# tokmon
+
+Monitor your AI coding agent token usage and costs.
