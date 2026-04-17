@@ -16,7 +16,7 @@ interface RunCliOptions {
 
 const program = new Command();
 
-program.name("tokmon").description("Token usage monitor for AI coding agents").version("0.1.3");
+program.name("tokmon").description("Token usage monitor for AI coding agents").version("0.1.4");
 
 program
   .option("--port <port>", "Dashboard port", Number, 3000)

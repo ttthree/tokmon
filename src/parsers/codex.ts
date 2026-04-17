@@ -67,14 +67,26 @@ export const codexParser: Parser = {
 
       const db = new Database(dbPath, { readonly: true, fileMustExist: true });
       try {
-        const rows = db.prepare(
-          `
-            SELECT id, cwd, model, model_provider, created_at, updated_at, tokens_used, title, archived
-            FROM threads
-            WHERE updated_at > ? AND archived = 0
-            ORDER BY updated_at ASC
-          `,
-        ).all(lastUpdatedAt) as CodexThreadRow[];
+        const columns = new Set(
+          (db.prepare(`PRAGMA table_info(threads)`).all() as Array<{ name: string }>).map((c) => c.name),
+        );
+        if (columns.size === 0) {
+          // `threads` table doesn't exist in this database; skip.
+          continue;
+        }
+
+        const wanted = ["id", "cwd", "model", "model_provider", "created_at", "updated_at", "tokens_used", "title", "archived"];
+        const selectExprs = wanted.map((col) => (columns.has(col) ? col : `NULL AS ${col}`)).join(", ");
+        const hasUpdatedAt = columns.has("updated_at");
+        const hasArchived = columns.has("archived");
+        const orderBy = hasUpdatedAt ? "ORDER BY updated_at ASC" : "";
+        const whereClauses: string[] = [];
+        if (hasUpdatedAt) whereClauses.push("updated_at > ?");
+        if (hasArchived) whereClauses.push("archived = 0");
+        const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+        const params = hasUpdatedAt ? [lastUpdatedAt] : [];
+
+        const rows = db.prepare(`SELECT ${selectExprs} FROM threads ${whereSql} ${orderBy}`).all(...params) as CodexThreadRow[];
 
         const statsMap = await buildRolloutStatsMap(codexDir, rows.map((r) => r.id));
         for (const row of rows) {
@@ -89,7 +101,9 @@ export const codexParser: Parser = {
             sessionsByKey.set(key, session);
           }
         }
-        const maxUpdated = db.prepare(`SELECT MAX(updated_at) AS maxUpdatedAt FROM threads`).get() as { maxUpdatedAt: number | null } | undefined;
+        const maxUpdated = hasUpdatedAt
+          ? (db.prepare(`SELECT MAX(updated_at) AS maxUpdatedAt FROM threads`).get() as { maxUpdatedAt: number | null } | undefined)
+          : undefined;
         cursorUpdates[dbPath] = {
           path: dbPath,
           inode: Number(stat.ino),
@@ -101,7 +115,7 @@ export const codexParser: Parser = {
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        if (!message.includes("no such table")) {
+        if (!message.includes("no such table") && !message.includes("no such column")) {
           throw error;
         }
       } finally {
