@@ -1,6 +1,6 @@
 {
   "name": "@ttthree/tokmon",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Token usage monitor for AI coding agents — track costs, review sessions, optimize workflows",
   "type": "module",
   "license": "MIT",
@@ -31,7 +31,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && vite build",
+    "build": "tsc -p tsconfig.build.json && vite build && chmod +x dist/cli/index.js",
     "build:web": "vite build",
     "dev": "tsx src/cli/index.ts",
     "test": "npm run test:unit",
