@@ -19,7 +19,7 @@ describe("run", () => {
     collectCommand.mockResolvedValue({ sessionCount: 3, durationMs: 2100 });
     loadConfig.mockResolvedValue({ github: { repo: "owner/repo", branch: "main" } });
     isSyncConfigured.mockReturnValue(true);
-    serve.mockResolvedValue(undefined);
+    serve.mockResolvedValue(3000);
     sync.mockResolvedValue({ pulled: 2, pushed: true });
     exec.mockImplementation((_command: string, callback?: () => void) => {
       callback?.();
@@ -47,6 +47,7 @@ describe("run", () => {
     });
     serve.mockImplementation(async () => {
       order.push("serve");
+      return 3000;
     });
 
     const { run } = await import("../../src/cli/commands/run.js");
@@ -70,7 +71,7 @@ describe("run", () => {
     await run({ port: 3000, open: false, reset: false });
 
     expect(sync).not.toHaveBeenCalled();
-    expect(serve).toHaveBeenCalledWith(3000);
+    expect(serve).toHaveBeenCalledWith(3000, { autoFallback: true });
   });
 
   it("treats sync failures as non-fatal", async () => {
@@ -79,7 +80,7 @@ describe("run", () => {
     const { run } = await import("../../src/cli/commands/run.js");
     await expect(run({ port: 3000, open: false, reset: false })).resolves.toBeUndefined();
 
-    expect(serve).toHaveBeenCalledWith(3000);
+    expect(serve).toHaveBeenCalledWith(3000, { autoFallback: true });
     expect(console.log).toHaveBeenCalledWith("⚠ GitHub sync failed: bad credentials");
   });
 

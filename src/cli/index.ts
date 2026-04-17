@@ -16,14 +16,15 @@ interface RunCliOptions {
 
 const program = new Command();
 
-program.name("tokmon").description("Token usage monitor for AI coding agents").version("0.1.0");
+program.name("tokmon").description("Token usage monitor for AI coding agents").version("0.1.3");
 
 program
   .option("--port <port>", "Dashboard port", Number, 3000)
   .option("--no-open", "Don't auto-open browser")
   .option("--reset", "Reprocess all sessions from scratch")
   .action(async (options: RunCliOptions) => {
-    await run(options);
+    const explicitPort = process.argv.includes("--port");
+    await run({ ...options, explicitPort });
   });
 
 program

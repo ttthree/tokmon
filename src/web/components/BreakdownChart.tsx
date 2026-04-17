@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Bar, BarChart, Cell, Customized, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { useTheme } from "../theme/ThemeProvider.js";
@@ -18,7 +19,7 @@ interface BreakdownChartProps {
   onSelect?: (name: string | null) => void;
 }
 
-function makeRightAlignedLabels(insideColor: string, outsideColor: string) {
+function makeRightAlignedLabels(insideColor: string, outsideColor: string, idPrefix: string) {
   return function RightAlignedLabels(props: any) {
     const { xAxisMap, formattedGraphicalItems } = props;
     if (!xAxisMap || !formattedGraphicalItems?.length) return null;
@@ -28,25 +29,43 @@ function makeRightAlignedLabels(insideColor: string, outsideColor: string) {
     const points: any[] = formattedGraphicalItems[0]?.props?.data ?? [];
     return (
       <g pointerEvents="none">
+        <defs>
+          {points.map((p: any, i: number) => {
+            const barLeft = p.x ?? 0;
+            const barRight = barLeft + (p.width ?? 0);
+            return (
+              <g key={i}>
+                <clipPath id={`${idPrefix}-inside-${i}`}>
+                  <rect x={barLeft} y={p.y} width={Math.max(0, barRight - barLeft)} height={p.height ?? 0} />
+                </clipPath>
+                <clipPath id={`${idPrefix}-outside-${i}`}>
+                  <rect x={barRight} y={p.y} width={Math.max(0, rightEdge - barRight)} height={p.height ?? 0} />
+                </clipPath>
+              </g>
+            );
+          })}
+        </defs>
         {points.map((p: any, i: number) => {
-          const barRight = p.x + (p.width ?? 0);
-          const insideBar = barRight >= rightEdge - padding;
           const labelX = rightEdge - padding;
           const labelY = p.y + (p.height ?? 0) / 2;
           const name = p.payload?.name ?? "";
+          const baseProps = {
+            x: labelX,
+            y: labelY,
+            textAnchor: "end" as const,
+            dominantBaseline: "central" as const,
+            fontSize: 12,
+            fontWeight: 500,
+          };
           return (
-            <text
-              key={i}
-              x={labelX}
-              y={labelY}
-              textAnchor="end"
-              dominantBaseline="central"
-              fill={insideBar ? insideColor : outsideColor}
-              fontSize={12}
-              fontWeight={500}
-            >
-              {name}
-            </text>
+            <g key={i}>
+              <text {...baseProps} fill={outsideColor} clipPath={`url(#${idPrefix}-outside-${i})`}>
+                {name}
+              </text>
+              <text {...baseProps} fill={insideColor} clipPath={`url(#${idPrefix}-inside-${i})`}>
+                {name}
+              </text>
+            </g>
           );
         })}
       </g>
@@ -77,7 +96,9 @@ export function BreakdownChart({
 
   const insideLabelColor = theme.cssVars["--accent-fg"] ?? "#ffffff";
   const outsideLabelColor = theme.cssVars["--text-secondary"] ?? "#334155";
-  const LabelLayer = makeRightAlignedLabels(insideLabelColor, outsideLabelColor);
+  const rawId = useId();
+  const idPrefix = `bar-label-${rawId.replace(/:/g, "")}`;
+  const LabelLayer = makeRightAlignedLabels(insideLabelColor, outsideLabelColor, idPrefix);
 
   return (
     <div

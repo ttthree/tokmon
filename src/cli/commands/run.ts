@@ -10,6 +10,7 @@ export interface RunOptions {
   port: number;
   open: boolean;
   reset: boolean;
+  explicitPort?: boolean;
 }
 
 let refreshRunning = false;
@@ -30,11 +31,12 @@ export async function run(options: RunOptions): Promise<void> {
     }
   }
 
-  await serve(options.port);
-  console.log(`● Dashboard → http://localhost:${options.port}`);
+  const actualPort = await serve(options.port, { autoFallback: !options.explicitPort });
+  const url = `http://localhost:${actualPort}`;
+  console.log(`● Dashboard → ${url}`);
 
   if (options.open) {
-    openBrowser(`http://localhost:${options.port}`);
+    openBrowser(url);
   }
 
   startBackgroundRefresh(config);

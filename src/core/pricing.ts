@@ -136,7 +136,8 @@ export async function refreshPricingSnapshots(): Promise<PricingSnapshot> {
 
   await fs.writeFile(latestPath, body, "utf8");
   if (changed || !latestExisting) {
-    await fs.writeFile(path.join(getPricingDirectory(), `${snapshot.fetchedAt}.json`), body, "utf8");
+    const safeName = snapshot.fetchedAt.replace(/:/g, "-");
+    await fs.writeFile(path.join(getPricingDirectory(), `${safeName}.json`), body, "utf8");
   }
 
   return snapshot;
@@ -163,7 +164,11 @@ export async function loadPricingForDate(sessionDate: Date): Promise<PricingSnap
 export function selectPricingSnapshot(sessionDate: Date, snapshots: string[]): string {
   const sorted = [...snapshots].sort().reverse();
   for (const snapshot of sorted) {
-    const snapshotDate = new Date(snapshot.replace(/\.json$/, ""));
+    const stem = snapshot.replace(/\.json$/, "");
+    // Filenames on Windows use hyphens instead of colons in the time part.
+    // Convert back to ISO (e.g. "2026-04-17T07-29-45.640Z" -> "2026-04-17T07:29:45.640Z").
+    const isoish = stem.replace(/T(\d{2})-(\d{2})-(\d{2})/, "T$1:$2:$3");
+    const snapshotDate = new Date(isoish);
     if (snapshotDate <= sessionDate) {
       return snapshot;
     }

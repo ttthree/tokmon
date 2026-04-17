@@ -26,24 +26,56 @@ import { collectCommand, type CollectProgressEvent } from "../cli/commands/colle
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HOST = "127.0.0.1";
 
-export async function serve(port = 3000): Promise<void> {
-  await ensurePortAvailable(port);
+export interface ServeOptions {
+  autoFallback?: boolean;
+  maxAttempts?: number;
+}
 
-  const app = createApp();
+export async function serve(port = 3000, options: ServeOptions = {}): Promise<number> {
+  const { autoFallback = false, maxAttempts = 10 } = options;
+  const attempts = autoFallback ? maxAttempts : 1;
 
-  await new Promise<void>((resolve, reject) => {
-    const server = app.listen(port, HOST, () => {
-      console.log(`listening on http://localhost:${port}`);
-      resolve();
-    });
-    server.on("error", (error: NodeJS.ErrnoException) => {
-      if (error.code === "EADDRINUSE") {
-        reject(new Error(`Port ${port} is already in use. Use --port to pick another.`));
-        return;
+  let lastError: Error | null = null;
+  for (let i = 0; i < attempts; i++) {
+    const candidate = port + i;
+    try {
+      await ensurePortAvailable(candidate);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (autoFallback && i < attempts - 1) {
+        console.log(`Port ${candidate} is in use; trying ${candidate + 1}...`);
+        continue;
       }
-      reject(error);
-    });
-  });
+      break;
+    }
+
+    const app = createApp();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const server = app.listen(candidate, HOST, () => {
+          console.log(`listening on http://localhost:${candidate}`);
+          resolve();
+        });
+        server.on("error", (error: NodeJS.ErrnoException) => {
+          if (error.code === "EADDRINUSE") {
+            reject(new Error(`Port ${candidate} is already in use. Use --port to pick another.`));
+            return;
+          }
+          reject(error);
+        });
+      });
+      return candidate;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (autoFallback && i < attempts - 1) {
+        console.log(`Port ${candidate} is in use; trying ${candidate + 1}...`);
+        continue;
+      }
+      break;
+    }
+  }
+
+  throw lastError ?? new Error(`Port ${port} is already in use. Use --port to pick another.`);
 }
 
 export function createApp(): express.Express {
