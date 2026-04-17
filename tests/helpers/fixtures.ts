@@ -93,11 +93,12 @@ export async function createCopilotFixture(testHome: string, fileName = "process
   await fs.writeFile(
     path.join(logDir, fileName),
     [
-      '2026-03-28T08:23:41.401Z [DEBUG] Sending telemetry event: copilot-cli/cli.telemetry (kind: assistant_usage)',
+      '2026-03-28T08:23:41.401Z [INFO] [Telemetry] cli.telemetry:',
       JSON.stringify({
         kind: "assistant_usage",
         properties: {
           event_id: "event-1",
+          api_call_id: "api-1",
           model: "claude-opus-4.6",
           interaction_id: "interaction-1",
           copilot_pid: "pid-1",
@@ -112,7 +113,7 @@ export async function createCopilotFixture(testHome: string, fileName = "process
       }),
       '2026-03-28T08:23:42.401Z [INFO] [Telemetry] cli.model_call:',
       JSON.stringify({
-        api_id: "event-2",
+        api_id: "api-2",
         model: "claude-opus-4.6",
         interaction_id: "interaction-1",
         prompt_tokens_count: 75,

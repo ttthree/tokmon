@@ -695,7 +695,26 @@ function SourceFilter({
   value: AgentFilter;
   onChange: (v: AgentFilter) => void;
 }) {
-  if (sources.length <= 1) return null;
+  if (sources.length === 0) return null;
+  // When only a single agent source is detected, render a read-only chip so users
+  // know which agent the data came from (instead of hiding the filter entirely).
+  if (sources.length === 1) {
+    const only = sources[0];
+    return (
+      <div
+        className="inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-medium"
+        style={{
+          background: "var(--bg-panel)",
+          borderColor: "var(--border)",
+          boxShadow: "var(--shadow-card)",
+          color: "var(--text-secondary)",
+        }}
+        title="Only one agent detected"
+      >
+        {only !== "all" ? AGENT_FILTER_LABELS[only] ?? only : only}
+      </div>
+    );
+  }
   const options: AgentFilter[] = ["all", ...sources];
   return (
     <div

@@ -4,44 +4,83 @@ Token usage monitor for AI coding agents — track costs, review sessions, optim
 
 Supports **Claude Code**, **Codex**, **Copilot CLI**, **Eureka**, and **Mars** orchestrator sessions. Aggregates across machines, breaks down by project / model / agent / machine, and exposes it all in a clean web dashboard.
 
+---
+
 ## Quick start
+
+Run without installing:
 
 ```bash
 npx @ttthree/tokmon
 ```
 
-This collects local sessions from your agent tool directories (`~/.claude`, `~/.codex`, etc.), stores them in a local SQLite DB under `~/.tokmon/`, and opens the dashboard in your browser.
-
-## Install globally
+Or install globally:
 
 ```bash
 npm install -g @ttthree/tokmon
 tokmon
 ```
 
-## Requirements
+That's it — tokmon scans your local agent directories (`~/.claude`, `~/.codex`, `~/.craft-agent`, …), writes its own data under `~/.tokmon/`, and opens the dashboard at `http://localhost:3000`.
 
-- **Node.js >= 20**
-- A C/C++ toolchain for `sqlite3` native bindings (see note below)
+**Requirements:** Node.js >= 20.
 
-## Note on `sqlite3`
+---
 
-tokmon uses the [`sqlite3`](https://www.npmjs.com/package/sqlite3) native module for local storage. On first install, npm downloads a prebuilt binary if one is available for your platform/Node version. If no prebuilt matches, it falls back to compiling from source, which requires:
+## Detailed usage
 
-- **macOS**: Xcode Command Line Tools (`xcode-select --install`)
-- **Linux**: `build-essential` + `python3`
-- **Windows**: Windows Build Tools — run `npm install --global --production windows-build-tools` once, or install Visual Studio with the "Desktop development with C++" workload
-
-If `npx @ttthree/tokmon` seems stuck on install, it's most likely compiling sqlite3. Give it a minute; subsequent runs are cached.
-
-## Commands
+### Commands
 
 ```bash
 tokmon              # collect + start dashboard (default)
-tokmon collect      # collect sessions only
-tokmon serve        # start dashboard without re-collecting
+tokmon config       # show current configuration
+tokmon config set <key> <value>
+tokmon config add-project <name> <folder>
+tokmon config exclude-folder <pattern>
 tokmon --help       # full CLI reference
 ```
+
+`collect`, `serve`, and `sync` are also available as hidden subcommands for advanced workflows.
+
+### Options
+
+| Option | Description |
+| --- | --- |
+| `--port <port>` | Dashboard port (default `3000`). If omitted and the port is busy, tokmon auto-falls-back to the next free port (up to 10 tries). Pass `--port` explicitly to disable fallback. |
+| `--no-open` | Don't auto-open the browser. |
+| `--reset` | Reprocess all sessions from scratch (drops the cursor and re-parses everything). |
+| `-V`, `--version` | Print the version. |
+| `-h`, `--help` | Show help. |
+
+### Data locations
+
+- Config + machine data: `~/.tokmon/`
+- Pricing snapshots: `~/.tokmon/pricing/` (auto-refreshed from LiteLLM)
+- Scanned sources (read-only): `~/.claude`, `~/.codex`, `~/.craft-agent`, `~/.copilot` (where present)
+
+### Multi-machine sync (optional)
+
+tokmon can sync per-machine data through a private GitHub repo so one dashboard aggregates all your devices:
+
+```bash
+tokmon config set github.repo <owner>/<repo>    # private repo
+tokmon sync --init                              # bootstrap
+tokmon sync                                     # incremental
+```
+
+Requires the `gh` CLI authenticated and `git` installed.
+
+### Native module note
+
+tokmon depends on [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3). npm downloads a prebuilt binary for most platform/Node combos. If no prebuilt matches, it compiles from source — you'll need:
+
+- **macOS**: Xcode Command Line Tools (`xcode-select --install`)
+- **Linux**: `build-essential` + `python3`
+- **Windows**: Visual Studio with the "Desktop development with C++" workload
+
+If `npx @ttthree/tokmon` seems stuck on first run, it's most likely compiling native bindings — subsequent runs use the cached binary.
+
+---
 
 ## License
 

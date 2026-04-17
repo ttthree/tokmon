@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import Database from "better-sqlite3";
+
 import { getCopilotDirectory } from "../core/config.js";
 import { normalizeProjectPath } from "../core/project.js";
 import { marsRegistry } from "./mars.js";
@@ -14,6 +16,7 @@ export interface CopilotModelCall {
   session_id?: string;
   copilot_pid?: string;
   input_tokens?: number;
+  input_tokens_uncached?: number;
   output_tokens?: number;
   prompt_tokens_count?: number;
   completion_tokens_count?: number;
@@ -54,6 +57,7 @@ export const copilotCliParser: Parser = {
       ...marsRegistry.copilotRoots.map((dir) => ({ dir, isMars: true })),
     ];
     const logFiles: Array<{ path: string; isMars: boolean }> = [];
+    const cwdByFileRoot = new Map<string, Map<string, string>>();
     for (const root of roots) {
       const logsDir = path.join(root.dir, "logs");
       const files = await fs.readdir(logsDir, { withFileTypes: true }).catch(() => []);
@@ -61,6 +65,10 @@ export const copilotCliParser: Parser = {
         if (!entry.isFile() || !/^process-.*\.log$/.test(entry.name)) continue;
         logFiles.push({ path: path.join(logsDir, entry.name), isMars: root.isMars });
       }
+      // Copilot CLI stores per-session cwd in `session-store.db` next to the
+      // `logs/` directory. The raw telemetry events don't carry a reliable
+      // projectPath, so prefer this lookup over inferring from JSON.
+      cwdByFileRoot.set(root.dir, loadSessionCwdMap(path.join(root.dir, "session-store.db")));
     }
     logFiles.sort((a, b) => a.path.localeCompare(b.path));
 
@@ -93,6 +101,27 @@ export const copilotCliParser: Parser = {
         byteOffset: stat.size,
         processedAt: new Date().toISOString(),
       };
+    }
+
+    // Enrich sessions with the recorded cwd from session-store.db. We do this
+    // as a post-pass because `session-store.db` keys by session_id, which is
+    // only guaranteed after aggregation.
+    const mergedCwd = new Map<string, string>();
+    for (const map of cwdByFileRoot.values()) {
+      for (const [sid, cwd] of map) mergedCwd.set(sid, cwd);
+    }
+    if (mergedCwd.size > 0) {
+      for (const [key, session] of sessionsByKey) {
+        if (session.projectPath) continue;
+        const cwd = mergedCwd.get(session.id);
+        if (!cwd) continue;
+        const normalized = normalizeProjectPath(cwd);
+        sessionsByKey.set(key, {
+          ...session,
+          projectPath: cwd,
+          project: path.basename(normalized) || session.project,
+        });
+      }
     }
 
     return {
@@ -136,9 +165,46 @@ function mergeSessions(existing: Session, incoming: Session): Session {
   };
 }
 
+function loadSessionCwdMap(dbPath: string): Map<string, string> {
+  const map = new Map<string, string>();
+  let db: Database.Database;
+  try {
+    db = new Database(dbPath, { readonly: true, fileMustExist: true });
+  } catch {
+    return map;
+  }
+  try {
+    const rows = db
+      .prepare(`SELECT id, cwd FROM sessions WHERE cwd IS NOT NULL AND cwd != ''`)
+      .all() as Array<{ id: string; cwd: string }>;
+    for (const row of rows) {
+      if (row.id && row.cwd) map.set(row.id, row.cwd);
+    }
+  } catch {
+    // Schema mismatch or corrupt DB — best effort only.
+  } finally {
+    db.close();
+  }
+  return map;
+}
+
 export function normalizeTokens(call: CopilotModelCall): { input: number; output: number } {
+  // Anthropic semantics: `input` means tokens NOT served from cache read.
+  // Copilot CLI's `input_tokens` / `prompt_tokens_count` is a superset that
+  // already includes `cache_read_tokens`. (Note: cache_write_tokens are brand-new
+  // tokens being written into cache and are billed as input — do NOT subtract
+  // them.) Prefer the explicit `input_tokens_uncached` when available.
+  const uncached = numberOrUndefined(call.input_tokens_uncached);
+  let input: number;
+  if (uncached !== undefined) {
+    input = uncached;
+  } else {
+    const superset = numberOrZero(call.input_tokens ?? call.prompt_tokens_count);
+    const cacheRead = numberOrZero(call.cache_read_tokens);
+    input = Math.max(0, superset - cacheRead);
+  }
   return {
-    input: numberOrZero(call.input_tokens ?? call.prompt_tokens_count),
+    input,
     output: numberOrZero(call.output_tokens ?? call.completion_tokens_count),
   };
 }
@@ -159,7 +225,14 @@ function parseEvents(content: string, fallbackTimestamp: string): ParsedEvent[] 
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
-    if (!line.includes("assistant_usage") && !line.includes("cli.model_call:")) {
+    // Trigger on the log-prefix lines that precede a JSON block. The JSON's
+    // opening `{` sits on the next line, so we must start scanning from that
+    // header — NOT from a later line that happens to contain "assistant_usage"
+    // (which appears inside the JSON payload and would cause extractJsonBlock
+    // to latch onto a nested object such as `properties`).
+    const isTelemetryHeader = line.includes("cli.telemetry:");
+    const isModelCallHeader = line.includes("cli.model_call:");
+    if (!isTelemetryHeader && !isModelCallHeader) {
       continue;
     }
 
@@ -188,19 +261,33 @@ function parseEvents(content: string, fallbackTimestamp: string): ParsedEvent[] 
 function aggregateEvents(events: ParsedEvent[], machineId: string, isMarsRoot: boolean): Session[] {
   const grouped = new Map<string, SessionAccumulator>();
 
+  // Each API call can be logged twice (once as `assistant_usage`, once as
+  // `cli.model_call`) with the same api_id. Only the first sighting per api_id
+  // contributes tokens/duration. Metadata (timestamps, matchKeys, project path)
+  // still merges so that the session stays complete even if one variant arrives
+  // first and another fills in missing fields.
+  const seenApiIds = new Set<string>();
+
   for (const event of events) {
     const id = resolveSessionKey(event.call);
     const timestamp = Date.parse(event.timestamp);
-    const tokens = normalizeTokens(event.call);
+    const apiId = typeof event.call.api_id === "string" && event.call.api_id.length > 0 ? event.call.api_id : undefined;
+    const isDuplicate = apiId !== undefined && seenApiIds.has(apiId);
+    if (apiId !== undefined) seenApiIds.add(apiId);
+
     const existing = grouped.get(id);
     if (!existing) {
+      // If this is a duplicate api_id but we've never seen its session key,
+      // skip entirely — materializing a zero-token session would pollute output.
+      if (isDuplicate) continue;
+      const tokens = normalizeTokens(event.call);
       grouped.set(id, {
         id,
         projectPath: inferProjectPath(event.call) ?? "",
         model: event.call.model || "unknown",
         createdAt: Number.isNaN(timestamp) ? Date.now() : timestamp,
         modifiedAt: Number.isNaN(timestamp) ? Date.now() : timestamp,
-        apiIds: new Set([event.call.api_id]),
+        apiIds: apiId !== undefined ? new Set([apiId]) : new Set(),
         durationSeconds: numberOrZero(event.call.duration) / 1000,
         tokens: {
           input: tokens.input,
@@ -216,12 +303,17 @@ function aggregateEvents(events: ParsedEvent[], machineId: string, isMarsRoot: b
     existing.createdAt = Math.min(existing.createdAt, timestamp);
     existing.modifiedAt = Math.max(existing.modifiedAt, timestamp);
     existing.model = existing.model === "unknown" ? event.call.model : existing.model;
-    existing.apiIds.add(event.call.api_id);
-    existing.durationSeconds += numberOrZero(event.call.duration) / 1000;
-    existing.tokens.input += tokens.input;
-    existing.tokens.output += tokens.output;
-    existing.tokens.cacheCreation += numberOrZero(event.call.cache_write_tokens);
-    existing.tokens.cacheRead += numberOrZero(event.call.cache_read_tokens);
+    if (apiId !== undefined) existing.apiIds.add(apiId);
+    if (!isDuplicate) {
+      const tokens = normalizeTokens(event.call);
+      existing.durationSeconds += numberOrZero(event.call.duration) / 1000;
+      existing.tokens.input += tokens.input;
+      existing.tokens.output += tokens.output;
+      existing.tokens.cacheCreation += numberOrZero(event.call.cache_write_tokens);
+      existing.tokens.cacheRead += numberOrZero(event.call.cache_read_tokens);
+    }
+    // matchKeys may legitimately differ across the two log variants (different
+    // id fields present), so keep merging regardless of duplicate status.
     for (const key of getCopilotMatchKeys(event.call)) {
       existing.matchKeys.add(key);
     }
@@ -285,7 +377,11 @@ function parseStructuredRecord(raw: Record<string, unknown>, line: string): Copi
   }
   const properties = isRecord(raw.properties) ? raw.properties : {};
   const metrics = isRecord(raw.metrics) ? raw.metrics : {};
-  const apiId = stringOrUndefined(properties.event_id) ?? stringOrUndefined(raw.api_id) ?? stringOrUndefined(raw.event_id);
+  const apiId =
+    stringOrUndefined(properties.api_call_id) ??
+    stringOrUndefined(raw.api_id) ??
+    stringOrUndefined(properties.event_id) ??
+    stringOrUndefined(raw.event_id);
   const model = stringOrUndefined(properties.model) ?? stringOrUndefined(raw.model);
   if (!apiId || !model) {
     return null;
@@ -297,6 +393,7 @@ function parseStructuredRecord(raw: Record<string, unknown>, line: string): Copi
     session_id: stringOrUndefined(raw.session_id),
     copilot_pid: stringOrUndefined(properties.copilot_pid) ?? stringOrUndefined(raw.copilot_pid),
     input_tokens: numberOrUndefined(metrics.input_tokens),
+    input_tokens_uncached: numberOrUndefined(metrics.input_tokens_uncached),
     output_tokens: numberOrUndefined(metrics.output_tokens),
     cache_read_tokens: numberOrUndefined(metrics.cache_read_tokens),
     cache_write_tokens: numberOrUndefined(metrics.cache_write_tokens),
@@ -323,9 +420,12 @@ function parseInlineRecord(raw: Record<string, unknown>, line: string): CopilotM
     copilot_pid: stringOrUndefined(raw.copilot_pid),
     prompt_tokens_count: numberOrUndefined(raw.prompt_tokens_count),
     completion_tokens_count: numberOrUndefined(raw.completion_tokens_count),
-    cache_read_tokens: numberOrUndefined(raw.cache_read_tokens),
+    // Copilot CLI >= 1.0.13 emits `cached_tokens_count` / `duration_ms` at the
+    // top level of cli.model_call events; older versions used `cache_read_tokens`
+    // / `duration`. Accept either.
+    cache_read_tokens: numberOrUndefined(raw.cache_read_tokens ?? raw.cached_tokens_count),
     cache_write_tokens: numberOrUndefined(raw.cache_write_tokens),
-    duration: numberOrUndefined(raw.duration),
+    duration: numberOrUndefined(raw.duration ?? raw.duration_ms),
     timestamp: stringOrUndefined(raw.timestamp),
     projectPath: inferProjectPath(raw) ?? undefined,
   };

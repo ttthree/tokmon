@@ -54,7 +54,11 @@ describe("mars e2e", () => {
 
     const copilotLogDir = path.join(roots.copilot, "logs");
     await fs.mkdir(copilotLogDir, { recursive: true });
-    await fs.writeFile(path.join(copilotLogDir, "process-001.log"), JSON.stringify({ kind: "assistant_usage", session_id: "cp-1", properties: { event_id: "evt-1", model: "claude" }, metrics: { input_tokens: 6, output_tokens: 3 } }) + "\n", "utf8");
+    await fs.writeFile(path.join(copilotLogDir, "process-001.log"), [
+      '2026-03-28T08:23:41.401Z [INFO] [Telemetry] cli.telemetry:',
+      JSON.stringify({ kind: "assistant_usage", session_id: "cp-1", properties: { event_id: "evt-1", api_call_id: "api-evt-1", model: "claude" }, metrics: { input_tokens: 6, output_tokens: 3 } }),
+      "",
+    ].join("\n"), "utf8");
 
     await collectCommand({ reset: true, silent: true });
     await collectCommand({ silent: true });

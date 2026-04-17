@@ -53,6 +53,13 @@ export async function resolveProject(sessionPath: string, config: ProjectConfig)
   // Normalize worktree paths to their parent project first
   const normalized = normalizeProjectPath(sessionPath);
 
+  // Guard: empty/root/cwd-equivalent paths would cause `git -C ""` to inspect
+  // tokmon's own working directory and attribute every un-sourced session to
+  // whatever repo the user happens to have tokmon running in.
+  if (!normalized || normalized === "/" || normalized === ".") {
+    return "other";
+  }
+
   for (const [name, definition] of Object.entries(config.projects)) {
     for (const pattern of definition.folders) {
       if (matchesPattern(normalized, pattern)) {
