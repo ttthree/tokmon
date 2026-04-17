@@ -1,38 +1,63 @@
 {
-  "name": "tokmon",
+  "name": "@ttthree/tokmon",
   "version": "0.1.0",
   "description": "Token usage monitor for AI coding agents — track costs, review sessions, optimize workflows",
   "type": "module",
+  "license": "MIT",
+  "author": "ttthree",
+  "keywords": [
+    "claude-code",
+    "codex",
+    "copilot-cli",
+    "eureka",
+    "token",
+    "tokens",
+    "cost",
+    "usage",
+    "monitor",
+    "dashboard",
+    "ai",
+    "llm",
+    "anthropic",
+    "openai",
+    "cli"
+  ],
   "bin": {
-    "tokmon": "dist/src/cli/index.js"
+    "tokmon": "dist/cli/index.js"
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && vite build",
+    "build": "tsc -p tsconfig.build.json && vite build",
     "build:web": "vite build",
     "dev": "tsx src/cli/index.ts",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "engines": {
     "node": ">=20"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.9.0",
     "commander": "^13.1.0",
     "express": "^5.1.0",
     "minimatch": "^10.0.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
-    "recharts": "^2.15.3",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7"
+    "recharts": "^2.15.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.53.0",

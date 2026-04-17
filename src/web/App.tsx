@@ -1,13 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { CostBreakdown, DataResponse, ProjectSummary, Session, Source, TokenBreakdown } from "../core/types.js";
-import { fetchDashboardData } from "./api.js";
+import { fetchDashboardData, triggerCollect } from "./api.js";
+import { ActiveFiltersBar } from "./components/ActiveFiltersBar.js";
 import { BreakdownChart } from "./components/BreakdownChart.js";
+import { BurnClock } from "./components/BurnClock.js";
+import { ProjectActivityTable } from "./components/ProjectActivityTable.js";
 import { ProjectDetailCard } from "./components/ProjectDetailCard.js";
-import { ProjectLeaderboard } from "./components/ProjectLeaderboard.js";
 import { SessionDetailModal } from "./components/SessionDetailModal.js";
 import { SessionTable } from "./components/SessionTable.js";
+import { SettingsTab } from "./components/SettingsTab.js";
 import { StatCard } from "./components/StatCard.js";
+import { ThemePicker } from "./components/ThemePicker.js";
 import { TimeFilter } from "./components/TimeFilter.js";
 import { TokenChart } from "./components/TokenChart.js";
 import { formatCompact } from "./format.js";
@@ -20,34 +24,94 @@ const SOURCE_LABELS: Record<Source, string> = {
   codex: "Codex",
   "copilot-cli": "Copilot CLI",
   eureka: "Eureka",
+  mars: "Mars",
+};
+
+type AgentFilter = Source | "mars" | "all";
+type Tab = "overview" | "projects" | "sessions" | "settings";
+
+const AGENT_FILTER_LABELS: Record<Exclude<AgentFilter, "all">, string> = {
+  "claude-code": "Claude Code",
+  codex: "Codex",
+  "copilot-cli": "Copilot CLI",
+  eureka: "Eureka",
+  mars: "Mars",
 };
 
 export function App() {
   const [range, setRange] = useState<RangeFilter>("all");
-  const [sourceFilter, setSourceFilter] = useState<Source | "all">("all");
+  const [sourceFilter, setSourceFilter] = useState<AgentFilter>("all");
+  const [modelFilter, setModelFilter] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [projectSearch, setProjectSearch] = useState("");
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [data, setData] = useState<DataResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("overview");
+  // Bumped only when data arrives from a background poll (not from
+  // initial load or filter changes). Consumed by StatCard to decide
+  // whether to play the delta animation.
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const collectingRef = useRef(false);
   const selectedSessionTriggerRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
+  const buildParams = useCallback(() => {
     const params = new URLSearchParams();
     if (range === "7d") params.set("days", "7");
     if (range === "30d") params.set("days", "30");
     if (range === "12m") params.set("months", "12");
+    return params;
+  }, [range]);
 
+  // Shared refresh: run collect, reload data, bump token for animation.
+  // Serialized via collectingRef so rapid clicks / overlapping polls
+  // don't pile up.
+  const refreshNow = useCallback(async () => {
+    if (collectingRef.current) return;
+    collectingRef.current = true;
+    setIsRefreshing(true);
+    try {
+      await triggerCollect(false, () => {});
+      const response = await fetchDashboardData(buildParams());
+      setData(response);
+      setError(null);
+      setRefreshToken((token) => token + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      collectingRef.current = false;
+      setIsRefreshing(false);
+    }
+  }, [buildParams]);
+
+  useEffect(() => {
+    const params = buildParams();
+    let cancelled = false;
+
+    // Initial render: just read whatever's cached, no collect, no animation.
     fetchDashboardData(params)
       .then((response) => {
+        if (cancelled) return;
         setData(response);
         setError(null);
       })
       .catch((loadError: Error) => {
+        if (cancelled) return;
         setError(loadError.message);
       });
-  }, [range]);
+
+    const intervalId = window.setInterval(() => {
+      if (cancelled) return;
+      void refreshNow();
+    }, 30_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [buildParams, refreshNow]);
 
   useEffect(() => {
     if (!data || selectedProject === null) {
@@ -59,22 +123,37 @@ export function App() {
     }
   }, [data, selectedProject]);
 
-  // Clear selected project when source filter changes
+  // Clear selected project and model filter when source filter changes
   useEffect(() => {
     setSelectedProject(null);
+    setModelFilter(null);
   }, [sourceFilter]);
 
-  // Derive available sources from data for the filter pills
-  const availableSources = useMemo(() => {
+  // Clear model filter when selected project changes (charts repopulate)
+  useEffect(() => {
+    setModelFilter(null);
+  }, [selectedProject]);
+
+  // Derive available agent filters (sub-agent sources + Mars orchestrator if present)
+  const availableSources = useMemo((): AgentFilter[] => {
     if (!data) return [];
     const sources = new Set(data.sessions.map((s) => s.source));
-    return (["claude-code", "codex", "copilot-cli", "eureka"] as Source[]).filter((s) => sources.has(s));
+    const ordered: AgentFilter[] = (["claude-code", "codex", "copilot-cli", "eureka"] as Source[]).filter((s) =>
+      sources.has(s),
+    );
+    if (data.sessions.some((s) => s.orchestrator?.kind === "mars")) {
+      ordered.push("mars");
+    }
+    return ordered;
   }, [data]);
 
-  // Apply source filter to sessions before all other computations
+  // Apply agent filter (source or Mars orchestrator) before all other computations
   const sourceSessions = useMemo(() => {
     if (!data) return [];
     if (sourceFilter === "all") return data.sessions;
+    if (sourceFilter === "mars") {
+      return data.sessions.filter((s) => s.orchestrator?.kind === "mars");
+    }
     return data.sessions.filter((s) => s.source === sourceFilter);
   }, [data, sourceFilter]);
 
@@ -89,13 +168,20 @@ export function App() {
   const sourceProjects = useMemo(() => {
     if (!data) return [];
     if (sourceFilter === "all") return data.projects;
-    return buildFilteredProjects(sourceSessions);
+    const machineNames = new Map(data.machines.map((m) => [m.machineId, m.name]));
+    return buildFilteredProjects(sourceSessions, machineNames);
   }, [data, sourceFilter, sourceSessions]);
 
   const visibleSessions = useMemo(() => {
-    if (!selectedProject) return sourceSessions;
-    return sourceSessions.filter((session) => session.project === selectedProject);
-  }, [sourceSessions, selectedProject]);
+    let result = sourceSessions;
+    if (selectedProject) {
+      result = result.filter((session) => session.project === selectedProject);
+    }
+    if (modelFilter) {
+      result = result.filter((session) => sessionMatchesModel(session, modelFilter));
+    }
+    return result;
+  }, [sourceSessions, selectedProject, modelFilter]);
 
   const filteredSessions = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -109,6 +195,13 @@ export function App() {
   const visibleProjects = useMemo(() => getVisibleProjects(sourceProjects, projectSearch), [sourceProjects, projectSearch]);
 
   const chartData = useMemo(() => buildChartData(sourceSessions, range), [sourceSessions, range]);
+  const projectChartData = useMemo(() => {
+    if (!selectedProject) return [];
+    return buildChartData(
+      sourceSessions.filter((s) => s.project === selectedProject),
+      range,
+    );
+  }, [sourceSessions, selectedProject, range]);
   const projectData = useMemo(() => buildProjectData(sourceProjects), [sourceProjects]);
   const modelData = useMemo(() => buildModelData(sourceSessions), [sourceSessions]);
   const agentData = useMemo(() => buildAgentData(sourceSessions), [sourceSessions]);
@@ -120,6 +213,8 @@ export function App() {
   const selectedSourceData = useMemo(() => buildBreakdownChartData(selectedProjectSummary?.sourceBreakdown), [selectedProjectSummary]);
   const selectedModelData = useMemo(() => buildBreakdownChartData(selectedProjectSummary?.modelBreakdown), [selectedProjectSummary]);
   const selectedMachineData = useMemo(() => buildBreakdownChartData(selectedProjectSummary?.machineBreakdown), [selectedProjectSummary]);
+  const selectedProjectLabel = selectedProjectSummary?.projectLabel ?? null;
+  const agentSelectedLabel = sourceFilter === "all" ? null : AGENT_FILTER_LABELS[sourceFilter] ?? null;
 
   useEffect(() => {
     if (!selectedSession) {
@@ -134,113 +229,241 @@ export function App() {
   }, [filteredSessions, selectedSession]);
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#e0f2fe,_#f8fafc_50%,_#f1f5f9)] px-4 py-8 text-slate-900 sm:px-6 lg:px-10">
+    <main
+      className="min-h-screen px-4 pb-24 pt-8 sm:px-6 lg:px-10"
+      style={{ background: "var(--bg-app)", color: "var(--text-primary)", fontFamily: "var(--font-body)" }}
+    >
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+        <header
+          className="flex flex-col gap-3 rounded-3xl border px-6 py-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+          style={{ background: "var(--bg-panel)", borderColor: "var(--border)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}
+        >
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">TOKMON</div>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight">Token Monitor</h1>
+            <div
+              className="text-[10px] font-semibold uppercase tracking-[0.25em]"
+              style={{ color: "var(--header-eyebrow)" }}
+            >
+              TOKMON
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight leading-tight">Token Monitor</h1>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <SourceFilter sources={availableSources} value={sourceFilter} onChange={setSourceFilter} />
             <TimeFilter value={range} onChange={setRange} />
+            <ThemePicker />
           </div>
         </header>
 
         {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <StatCard testId="total-cost" label="Total Cost" value={formatCurrency(filteredTotals?.cost.total ?? 0)} />
-          <StatCard label="Sessions" value={String(filteredTotals?.sessions ?? 0)} />
-          <StatCard label="Turns" value={formatCompact(filteredTotals?.turns ?? 0)} />
-          <StatCard label="Avg Duration" value={formatDuration(filteredTotals ? (filteredTotals.durationSeconds / Math.max(filteredTotals.sessions, 1)) : 0)} />
-          <StatCard label="Cache Hit Rate" value={formatPercent(filteredTotals?.cacheHitRate ?? 0)} />
-        </section>
+        <div className="flex items-center justify-between gap-3">
+          <TabBar value={tab} onChange={setTab} />
+          <RefreshButton isRefreshing={isRefreshing} onClick={() => void refreshNow()} />
+        </div>
 
-        <section className="grid gap-4 xl:grid-cols-2">
-          <TokenChart data={chartData} />
-          <div className="grid gap-4 grid-cols-2">
-            {tokenBreakdown.map((item) => (
-              <StatCard key={item.name} label={item.name} value={formatCompact(item.value)} />
-            ))}
-          </div>
-        </section>
-
-        <section className="grid gap-4 xl:grid-cols-[1.15fr_1fr]">
-          <ProjectLeaderboard
-            projects={visibleProjects}
-            searchQuery={projectSearch}
-            selectedProject={selectedProject}
-            onSelect={setSelectedProject}
-            onSearchChange={setProjectSearch}
-            formatCurrency={formatCurrency}
-            formatPercent={formatPercent}
-          />
-          <ProjectDetailCard
-            project={selectedProjectSummary}
-            onClear={() => setSelectedProject(null)}
-            formatCurrency={formatCurrency}
-            formatPercent={formatPercent}
-          />
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {selectedProjectSummary ? (
-            <>
-              <BreakdownChart testId="source-breakdown" title="Cost by Source" data={selectedSourceData} formatValue={(v) => `$${v.toFixed(2)}`} />
-              <BreakdownChart testId="selected-model-breakdown" title="Cost by Model" data={selectedModelData} formatValue={(v) => `$${v.toFixed(2)}`} />
-              <BreakdownChart testId="machine-breakdown" title="Cost by Machine" data={selectedMachineData} formatValue={(v) => `$${v.toFixed(2)}`} />
-            </>
-          ) : (
-            <>
-              <BreakdownChart
-                testId="project-breakdown"
-                title="Cost by Project"
-                data={projectData}
-                formatValue={(v) => `$${v.toFixed(2)}`}
+        {tab === "overview" ? (
+          <>
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <StatCard
+                testId="total-cost"
+                label="Total Cost"
+                value={formatCurrency(filteredTotals?.cost.total ?? 0)}
+                numericValue={filteredTotals?.cost.total ?? 0}
+                formatDelta={formatCurrencyDelta}
+                deltaEpsilon={0.0005}
+                refreshToken={refreshToken}
               />
-              <BreakdownChart
-                testId="model-breakdown"
-                title="Cost by Model"
-                data={modelData}
-                formatValue={(v) => `$${v.toFixed(2)}`}
+              <StatCard
+                label="Sessions"
+                value={String(filteredTotals?.sessions ?? 0)}
+                numericValue={filteredTotals?.sessions ?? 0}
+                formatDelta={formatIntDelta}
+                refreshToken={refreshToken}
               />
-              <BreakdownChart
-                testId="agent-breakdown"
-                title="Cost by Agent"
-                data={agentData}
-                formatValue={(v) => `$${v.toFixed(2)}`}
+              <StatCard
+                label="Turns"
+                value={formatInteger(filteredTotals?.turns ?? 0)}
+                numericValue={filteredTotals?.turns ?? 0}
+                formatDelta={formatIntDelta}
+                refreshToken={refreshToken}
               />
-            </>
-          )}
-        </section>
+              <StatCard
+                label="Cache Hit Rate"
+                value={formatPercent(filteredTotals?.cacheHitRate ?? 0)}
+                numericValue={filteredTotals?.cacheHitRate ?? 0}
+                formatDelta={formatPercentDelta}
+                deltaEpsilon={0.0005}
+                refreshToken={refreshToken}
+              />
+            </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="text-sm font-semibold text-slate-700">Recent Sessions</div>
-              <div className="text-xs text-slate-500">
-                {selectedProjectSummary ? `Showing sessions for ${selectedProjectSummary.projectLabel}.` : "Showing sessions for all projects in range."}
+            <section>
+              <TokenChart data={chartData} />
+            </section>
+
+            <section className="grid gap-4 xl:grid-cols-[320px_1fr] items-stretch">
+              <div className="grid grid-cols-2 grid-rows-2 gap-4">
+                {tokenBreakdown.map((item) => (
+                  <StatCard key={item.name} label={item.name} value={formatCompact(item.value)} />
+                ))}
               </div>
+              <BurnClock sessions={visibleSessions} formatCurrency={formatCurrency} />
+            </section>
+          </>
+        ) : tab === "projects" ? (
+          <>
+            <section>
+              <ProjectActivityTable
+                projects={visibleProjects}
+                sessions={sourceSessions}
+                searchQuery={projectSearch}
+                selectedProject={selectedProject}
+                onSelect={setSelectedProject}
+                onSearchChange={setProjectSearch}
+                formatCurrency={formatCurrency}
+              />
+            </section>
+
+            <section>
+              <ProjectDetailCard
+                project={selectedProjectSummary}
+                onClear={() => setSelectedProject(null)}
+                formatCurrency={formatCurrency}
+                formatPercent={formatPercent}
+              />
+            </section>
+
+            {selectedProjectSummary ? (
+              <section>
+                <TokenChart
+                  data={projectChartData}
+                  title={`Token & Cost Trend — ${selectedProjectSummary.projectLabel}`}
+                />
+              </section>
+            ) : null}
+
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {selectedProjectSummary ? (
+                <>
+                  <BreakdownChart testId="source-breakdown" title="Cost by Source" data={selectedSourceData} formatValue={(v) => `$${v.toFixed(2)}`} />
+                  <BreakdownChart
+                    testId="selected-model-breakdown"
+                    title="Cost by Model"
+                    data={selectedModelData}
+                    formatValue={(v) => `$${v.toFixed(2)}`}
+                    selectedName={modelFilter}
+                    onSelect={setModelFilter}
+                  />
+                  <BreakdownChart testId="machine-breakdown" title="Cost by Machine" data={selectedMachineData} formatValue={(v) => `$${v.toFixed(2)}`} />
+                </>
+              ) : (
+                <>
+                  <BreakdownChart
+                    testId="project-breakdown"
+                    title="Cost by Project"
+                    data={projectData}
+                    formatValue={(v) => `$${v.toFixed(2)}`}
+                    selectedName={selectedProjectLabel}
+                    onSelect={(name) => {
+                      if (name == null) {
+                        setSelectedProject(null);
+                        return;
+                      }
+                      const match = sourceProjects.find((p) => p.projectLabel === name);
+                      setSelectedProject(match ? match.projectKey : null);
+                    }}
+                  />
+                  <BreakdownChart
+                    testId="model-breakdown"
+                    title="Cost by Model"
+                    data={modelData}
+                    formatValue={(v) => `$${v.toFixed(2)}`}
+                    selectedName={modelFilter}
+                    onSelect={setModelFilter}
+                  />
+                  <BreakdownChart
+                    testId="agent-breakdown"
+                    title="Cost by Agent"
+                    data={agentData}
+                    formatValue={(v) => `$${v.toFixed(2)}`}
+                    selectedName={agentSelectedLabel}
+                    onSelect={(name) => {
+                      if (name == null) {
+                        setSourceFilter("all");
+                        return;
+                      }
+                      const entry = (Object.entries(SOURCE_LABELS) as Array<[Source, string]>).find(
+                        ([, label]) => label === name,
+                      );
+                      setSourceFilter(entry ? entry[0] : "all");
+                    }}
+                  />
+                </>
+              )}
+            </section>
+          </>
+        ) : tab === "sessions" ? (
+          <section
+            className="rounded-2xl border p-4"
+            style={{ background: "var(--bg-panel)", borderColor: "var(--border)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}
+          >
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+                  Sessions
+                </div>
+                <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {buildSessionsSubtitle(selectedProjectSummary?.projectLabel, modelFilter, agentSelectedLabel)}
+                </div>
+              </div>
+              <input
+                data-testid="search-input"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search project, prompt, or model"
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none ring-0 sm:max-w-xs"
+                style={{
+                  background: "var(--bg-input)",
+                  color: "var(--text-primary)",
+                  borderColor: "var(--border)",
+                }}
+              />
             </div>
-            <input
-              data-testid="search-input"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search project, prompt, or model"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none ring-0 placeholder:text-slate-400 sm:max-w-xs"
+            <SessionTable
+              sessions={filteredSessions}
+              onSelect={(session, trigger) => {
+                selectedSessionTriggerRef.current = trigger;
+                setSelectedSession(session);
+              }}
             />
-          </div>
-          <SessionTable
-            sessions={filteredSessions.slice(0, 50)}
-            onSelect={(session, trigger) => {
-              selectedSessionTriggerRef.current = trigger;
-              setSelectedSession(session);
-            }}
-          />
-        </section>
+          </section>
+        ) : (
+          <SettingsTab />
+        )}
       </div>
       {selectedSession ? <SessionDetailModal session={selectedSession} onClose={handleCloseSessionModal} formatCurrency={formatCurrency} /> : null}
+      <ActiveFiltersBar
+        range={range}
+        onClearRange={() => setRange("all")}
+        sourceLabel={agentSelectedLabel}
+        onClearSource={() => setSourceFilter("all")}
+        projectLabel={selectedProjectSummary?.projectLabel ?? null}
+        onClearProject={() => setSelectedProject(null)}
+        modelLabel={modelFilter}
+        onClearModel={() => setModelFilter(null)}
+        search={search}
+        onClearSearch={() => setSearch("")}
+        projectSearch={projectSearch}
+        onClearProjectSearch={() => setProjectSearch("")}
+        onClearAll={() => {
+          setRange("all");
+          setSourceFilter("all");
+          setSelectedProject(null);
+          setModelFilter(null);
+          setSearch("");
+          setProjectSearch("");
+        }}
+      />
     </main>
   );
 
@@ -340,6 +563,26 @@ function shortenModelName(model: string): string {
     .replace(/-latest$/, "");
 }
 
+function sessionMatchesModel(session: Session, modelLabel: string): boolean {
+  const matches = (name: string) => name === modelLabel || shortenModelName(name) === modelLabel;
+  if (session.modelUsage && Object.keys(session.modelUsage).length > 0) {
+    for (const name of Object.keys(session.modelUsage)) {
+      if (matches(name)) return true;
+    }
+    return false;
+  }
+  return matches(session.model);
+}
+
+function buildSessionsSubtitle(project: string | undefined, model: string | null, agent: string | null): string {
+  const filters: string[] = [];
+  if (project) filters.push(`project: ${project}`);
+  if (agent) filters.push(`agent: ${agent}`);
+  if (model) filters.push(`model: ${model}`);
+  if (filters.length === 0) return "Showing sessions for all projects in range.";
+  return `Filtered by ${filters.join(" · ")}.`;
+}
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 }
@@ -348,40 +591,138 @@ function formatPercent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-function formatDuration(seconds: number): string {
-  // Handle invalid/extreme values
-  if (!Number.isFinite(seconds) || seconds < 0 || seconds > 365 * 24 * 3600) {
-    return "—";
-  }
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+function formatInteger(value: number): string {
+  return Math.round(value).toLocaleString("en-US");
+}
+
+function formatCurrencyDelta(delta: number): string {
+  const sign = delta > 0 ? "+" : "−";
+  return `${sign}${formatCurrency(Math.abs(delta))}`;
+}
+
+function formatIntDelta(delta: number): string {
+  const sign = delta > 0 ? "+" : "−";
+  return `${sign}${formatInteger(Math.abs(delta))}`;
+}
+
+function formatPercentDelta(delta: number): string {
+  const sign = delta > 0 ? "+" : "−";
+  return `${sign}${(Math.abs(delta) * 100).toFixed(1)}pp`;
 }
 
 function getSessionKey(session: Pick<Session, "machineId" | "source" | "id">): string {
   return `${session.machineId}:${session.source}:${session.id}`;
 }
 
-function SourceFilter({ sources, value, onChange }: { sources: Source[]; value: Source | "all"; onChange: (v: Source | "all") => void }) {
-  if (sources.length <= 1) return null;
-  const options: Array<Source | "all"> = ["all", ...sources];
+function TabBar({ value, onChange }: { value: Tab; onChange: (v: Tab) => void }) {
+  const tabs: Array<{ id: Tab; label: string }> = [
+    { id: "overview", label: "Overview" },
+    { id: "projects", label: "Projects" },
+    { id: "sessions", label: "Sessions" },
+    { id: "settings", label: "Settings" },
+  ];
   return (
-    <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
-      {options.map((option) => (
-        <button
-          key={option}
-          type="button"
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-            value === option ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-          }`}
-          onClick={() => onChange(option)}
-        >
-          {option === "all" ? "All Agents" : SOURCE_LABELS[option] ?? option}
-        </button>
-      ))}
+    <div
+      className="inline-flex self-start rounded-lg border p-1"
+      style={{ background: "var(--bg-panel)", borderColor: "var(--border)", boxShadow: "var(--shadow-card)" }}
+    >
+      {tabs.map((t) => {
+        const active = value === t.id;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            className="rounded-md px-4 py-1.5 text-sm font-medium transition"
+            style={{
+              background: active ? "var(--accent)" : "transparent",
+              color: active ? "var(--accent-fg)" : "var(--text-secondary)",
+            }}
+            onClick={() => onChange(t.id)}
+          >
+            {t.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
+
+function RefreshButton({ isRefreshing, onClick }: { isRefreshing: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isRefreshing}
+      aria-label={isRefreshing ? "Refreshing" : "Refresh now"}
+      title={isRefreshing ? "Refreshing…" : "Refresh now"}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
+      style={{
+        background: "var(--bg-panel)",
+        borderColor: "var(--border)",
+        color: "var(--text-secondary)",
+        boxShadow: "var(--shadow-card)",
+      }}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          animation: isRefreshing ? "tokmon-spin 0.9s linear infinite" : undefined,
+        }}
+      >
+        <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16" />
+        <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8" />
+        <path d="M21 3v5h-5" />
+        <path d="M3 21v-5h5" />
+      </svg>
+    </button>
+  );
+}
+
+function SourceFilter({
+  sources,
+  value,
+  onChange,
+}: {
+  sources: AgentFilter[];
+  value: AgentFilter;
+  onChange: (v: AgentFilter) => void;
+}) {
+  if (sources.length <= 1) return null;
+  const options: AgentFilter[] = ["all", ...sources];
+  return (
+    <div
+      className="inline-flex rounded-lg border p-1"
+      style={{ background: "var(--bg-panel)", borderColor: "var(--border)", boxShadow: "var(--shadow-card)" }}
+    >
+      {options.map((option) => {
+        const active = value === option;
+        return (
+          <button
+            key={option}
+            type="button"
+            className="rounded-md px-3 py-1.5 text-sm font-medium transition"
+            style={{
+              background: active ? "var(--accent)" : "transparent",
+              color: active ? "var(--accent-fg)" : "var(--text-secondary)",
+            }}
+            onClick={() => onChange(option)}
+          >
+            {option === "all" ? "All Agents" : AGENT_FILTER_LABELS[option] ?? option}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 
 function computeFilteredTotals(sessions: Session[]): DataResponse["totals"] {
   let totalCost = 0, inputCost = 0, outputCost = 0, cacheCreationCost = 0, cacheReadCost = 0;
@@ -415,7 +756,7 @@ function computeFilteredTotals(sessions: Session[]): DataResponse["totals"] {
   };
 }
 
-function buildFilteredProjects(sessions: Session[]): ProjectSummary[] {
+function buildFilteredProjects(sessions: Session[], machineNames?: Map<string, string>): ProjectSummary[] {
   const grouped = new Map<string, Session[]>();
   for (const s of sessions) {
     const existing = grouped.get(s.project) ?? [];
@@ -478,7 +819,9 @@ function buildFilteredProjects(sessions: Session[]): ProjectSummary[] {
 
       const sourceBreakdown = toBreakdown(sourceMap);
       const modelBreakdown = toBreakdown(modelMap);
-      const machineBreakdown = toBreakdown(machineMap);
+      const machineBreakdown = [...machineMap.entries()]
+        .map(([key, { cost, sessions }]) => ({ key, label: machineNames?.get(key) ?? key, cost, sessions }))
+        .sort((a, b) => b.cost - a.cost || b.sessions - a.sessions || a.label.localeCompare(b.label));
 
       return {
         projectKey: project,

@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { getMachineId } from "./machine.js";
+import { getMachineId, getMachineName } from "./machine.js";
 import { getRemoteMachinesDirectory, loadMachineDataFromPathSafe } from "./config.js";
 import { loadMachineData } from "./data.js";
 import type {
@@ -23,22 +23,28 @@ type RangeWindow = {
   previousEnd: Date;
 };
 
-type BreakdownDimension = "source" | "model" | "machine";
+type BreakdownDimension = "source" | "model" | "machine" | "mars-task";
 
 export async function aggregateData(filters: DataFilters = {}): Promise<DataResponse> {
   const localMachineId = await getMachineId();
+  const localName = await getMachineName();
   const localData = await loadMachineData(localMachineId);
+  // Reflect any rename even before the next collect() writes the data file.
+  localData.name = localName;
 
   const remoteMachines = await loadRemoteMachines();
+  const allMachines = [localData, ...remoteMachines];
+  const nameById = new Map(allMachines.map((m) => [m.machineId, machineDisplayName(m)]));
+
   const allSessions = [...Object.values(localData.sessions), ...remoteMachines.flatMap((machine) => Object.values(machine.sessions))];
   const currentSessions = applyFilters(allSessions, filters);
   const comparisonSessions = applyComparisonFilters(allSessions, filters);
 
   return {
-    machines: [localData, ...remoteMachines].map(toMachineInfo),
+    machines: allMachines.map(toMachineInfo),
     sessions: sortSessionsByCreatedAt(currentSessions),
     totals: computeTotals(currentSessions),
-    projects: buildProjectSummaries(currentSessions, comparisonSessions),
+    projects: buildProjectSummaries(currentSessions, comparisonSessions, nameById),
   };
 }
 
@@ -55,21 +61,30 @@ export function applyComparisonFilters(sessions: Session[], filters: DataFilters
   return sessions.filter((session) => matchesFilters(session, filters, comparisonWindow.previousStart, comparisonWindow.previousEnd));
 }
 
-export function buildProjectSummaries(currentSessions: Session[], comparisonSessions: Session[]): ProjectSummary[] {
+export function buildProjectSummaries(
+  currentSessions: Session[],
+  comparisonSessions: Session[],
+  machineNameById?: Map<string, string>,
+): ProjectSummary[] {
   const projectKeys = new Set(currentSessions.map((session) => session.project));
 
   return [...projectKeys]
-    .map((projectKey) => computeProjectSummary(projectKey, currentSessions, comparisonSessions))
+    .map((projectKey) => computeProjectSummary(projectKey, currentSessions, comparisonSessions, machineNameById))
     .sort(compareProjectSummaries);
 }
 
-export function computeProjectSummary(projectKey: string, sessions: Session[], comparisonSessions: Session[]): ProjectSummary {
+export function computeProjectSummary(
+  projectKey: string,
+  sessions: Session[],
+  comparisonSessions: Session[],
+  machineNameById?: Map<string, string>,
+): ProjectSummary {
   const projectSessions = sessions.filter((session) => session.project === projectKey);
   const comparisonProjectSessions = comparisonSessions.filter((session) => session.project === projectKey);
   const totals = computeTotals(projectSessions);
   const sourceBreakdown = buildBreakdownItems(projectSessions, "source");
   const modelBreakdown = buildBreakdownItems(projectSessions, "model");
-  const machineBreakdown = buildBreakdownItems(projectSessions, "machine");
+  const machineBreakdown = buildBreakdownItems(projectSessions, "machine", machineNameById);
   const totalTokens = totals.tokens.input + totals.tokens.output + totals.tokens.cacheCreation + totals.tokens.cacheRead;
   const previousCost = computeTotals(comparisonProjectSessions).cost.total;
   const trend = comparisonSessions.length > 0
@@ -106,11 +121,15 @@ export function computeActiveDays(sessions: Session[]): number {
   return new Set(sessions.map((session) => session.createdAt.slice(0, 10))).size;
 }
 
-export function buildBreakdownItems(sessions: Session[], dimension: BreakdownDimension): BreakdownItem[] {
+export function buildBreakdownItems(
+  sessions: Session[],
+  dimension: BreakdownDimension,
+  machineNameById?: Map<string, string>,
+): BreakdownItem[] {
   const grouped = new Map<string, BreakdownItem>();
 
   for (const session of sessions) {
-    const { key, label } = getBreakdownIdentity(session, dimension);
+    const { key, label } = getBreakdownIdentity(session, dimension, machineNameById);
     const item = grouped.get(key) ?? { key, label, cost: 0, sessions: 0 };
     item.cost += session.cost.total;
     item.sessions += 1;
@@ -205,10 +224,22 @@ function matchesFilters(session: Session, filters: DataFilters, rangeStart?: Dat
     return false;
   }
 
+  if (filters.orchestrator === "none") {
+    return session.orchestrator === undefined;
+  }
+
+  if (filters.orchestrator) {
+    return session.orchestrator?.kind === filters.orchestrator;
+  }
+
   return true;
 }
 
-function getBreakdownIdentity(session: Session, dimension: BreakdownDimension): { key: string; label: string } {
+function getBreakdownIdentity(
+  session: Session,
+  dimension: BreakdownDimension,
+  machineNameById?: Map<string, string>,
+): { key: string; label: string } {
   if (dimension === "source") {
     return { key: session.source, label: session.source };
   }
@@ -217,7 +248,15 @@ function getBreakdownIdentity(session: Session, dimension: BreakdownDimension): 
     return { key: session.model, label: session.model };
   }
 
-  return { key: session.machineId, label: session.machineId };
+  if (dimension === "mars-task") {
+    if (session.orchestrator?.kind === "mars" && session.orchestrator.taskTitle) {
+      return { key: session.orchestrator.taskTitle, label: session.orchestrator.taskTitle };
+    }
+    return { key: "__untagged__", label: "__untagged__" };
+  }
+
+  const label = machineNameById?.get(session.machineId) ?? session.machineId;
+  return { key: session.machineId, label };
 }
 
 function compareProjectSummaries(left: ProjectSummary, right: ProjectSummary): number {
@@ -243,9 +282,14 @@ async function loadRemoteMachines(): Promise<MachineData[]> {
   return machines.filter((machine): machine is MachineData => machine !== null);
 }
 
+function machineDisplayName(machine: MachineData): string {
+  return machine.name?.trim() || machine.hostname || machine.machineId;
+}
+
 function toMachineInfo(machine: MachineData): MachineInfo {
   return {
     machineId: machine.machineId,
+    name: machineDisplayName(machine),
     hostname: machine.hostname,
     sessionCount: Object.keys(machine.sessions).length,
     lastUpdatedAt: machine.lastUpdatedAt,

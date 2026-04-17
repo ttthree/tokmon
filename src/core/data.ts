@@ -9,10 +9,12 @@ export function getSessionKey(machineId: string, session: Pick<Session, "source"
   return `${machineId}:${session.source}:${session.id}`;
 }
 
-export function createEmptyMachineData(machineId: string): MachineData {
+export function createEmptyMachineData(machineId: string, name?: string): MachineData {
+  const hostname = os.hostname();
   return {
     machineId,
-    hostname: os.hostname(),
+    name: name ?? hostname,
+    hostname,
     os: `${process.platform}-${process.arch}`,
     lastUpdatedAt: new Date(0).toISOString(),
     sessions: {},
@@ -29,9 +31,12 @@ export async function loadMachineData(machineId: string): Promise<MachineData> {
   return loadMachineDataFromPath(machinePath);
 }
 
-export async function saveMachineData(machineData: MachineData): Promise<void> {
+export async function saveMachineData(machineData: MachineData, name?: string): Promise<void> {
   await ensureTokmonDirectories();
   machineData.lastUpdatedAt = new Date().toISOString();
+  if (name !== undefined) {
+    machineData.name = name;
+  }
   await fs.writeFile(getMachineDataPath(machineData.machineId), JSON.stringify(machineData, null, 2) + "\n", "utf8");
 }
 

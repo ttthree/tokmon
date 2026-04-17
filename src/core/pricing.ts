@@ -20,6 +20,7 @@ export const SOURCE_DEFAULT_PRICING: Record<Source, ModelPricing> = {
   codex: { input: 2, output: 8, cacheWrite: 2.5, cacheRead: 0.5 },
   "copilot-cli": { input: 3, output: 15, cacheWrite: 3.75, cacheRead: 0.3 },
   eureka: { input: 3, output: 15, cacheWrite: 3.75, cacheRead: 0.3 },
+  mars: { input: 3, output: 15, cacheWrite: 3.75, cacheRead: 0.3 },
 };
 
 export function normalizeModelName(model: string): string[] {

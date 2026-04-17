@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { getClaudeDirectory, getCodexDirectory } from "./config.js";
+import { getClaudeDirectory, getCodexDirectory, getCopilotDirectory } from "./config.js";
 import type { Session } from "./types.js";
 
 export async function resolveSourcePath(session: Session): Promise<string | null> {
@@ -18,6 +18,10 @@ export async function resolveSourcePath(session: Session): Promise<string | null
     return resolveCodexPath(session);
   }
 
+  if (session.source === "copilot-cli") {
+    return resolveCopilotCliPath(session);
+  }
+
   return null;
 }
 
@@ -31,20 +35,25 @@ function resolveClaudeCodePath(session: Session): string | null {
 }
 
 async function resolveEurekaPath(session: Session): Promise<string | null> {
-  const workspacesDir = path.join(os.homedir(), ".craft-agent", "workspaces");
-  try {
-    const workspaces = await fs.readdir(workspacesDir);
-    for (const workspace of workspaces) {
-      const candidate = path.join(workspacesDir, workspace, "sessions", session.id, "session.jsonl");
-      try {
-        await fs.access(candidate);
-        return candidate;
-      } catch {
-        // not in this workspace, try next
+  const workspacesDirs = [
+    path.join(os.homedir(), ".craft-agent", "workspaces"),
+    path.join(os.homedir(), ".eureka", "workspaces"),
+  ];
+  for (const workspacesDir of workspacesDirs) {
+    try {
+      const workspaces = await fs.readdir(workspacesDir);
+      for (const workspace of workspaces) {
+        const candidate = path.join(workspacesDir, workspace, "sessions", session.id, "session.jsonl");
+        try {
+          await fs.access(candidate);
+          return candidate;
+        } catch {
+          // not in this workspace, try next
+        }
       }
+    } catch {
+      // workspaces dir doesn't exist
     }
-  } catch {
-    // workspaces dir doesn't exist
   }
   return null;
 }
@@ -72,6 +81,18 @@ async function findCodexRollout(dir: string, sessionId: string): Promise<string 
     }
   }
   return null;
+}
+
+async function resolveCopilotCliPath(session: Session): Promise<string | null> {
+  // Copilot CLI conversation data is in ~/.copilot/session-store.db `turns` table.
+  // We return the DB path only if it exists and has turns for this session.
+  const dbPath = path.join(getCopilotDirectory(), "session-store.db");
+  try {
+    await fs.access(dbPath);
+    return dbPath;
+  } catch {
+    return null;
+  }
 }
 
 export function encodeClaudeProjectPath(projectPath: string): string | null {

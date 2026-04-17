@@ -4,6 +4,7 @@ import path from "node:path";
 import readline from "node:readline";
 
 import { getCraftAgentClaudeDirectory, getHomeDirectory } from "../core/config.js";
+import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
 import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown } from "../core/types.js";
 
@@ -68,9 +69,9 @@ interface SessionHeaderEntry {
 interface SessionMeta {
   firstTimestamp?: string;
   lastTimestamp?: string;
+  eventTimestampsMs: number[];
   turns: Set<string>;
   calls: number;
-  totalDurationMs: number;
   models: Set<string>;
   providers: Set<string>;
   tokens: TokenBreakdown;
@@ -92,21 +93,29 @@ interface SessionMeta {
 export const eurekaParser: Parser = {
   source: "eureka",
   async parse(context: ParserContext): Promise<ParseResult> {
+    claimedCcSessionIds.clear();
     const sessions: Session[] = [];
     const cursorUpdates: Record<string, FileCursor> = {};
 
     // Eureka stores sessions in ~/.craft-agent/workspaces/{workspace-id}/sessions/{session-id}/
-    const craftAgentDir = path.join(getHomeDirectory(), ".craft-agent");
-    const workspacesDir = path.join(craftAgentDir, "workspaces");
+    const enabledEureka = (context.sources ?? [])
+      .filter((s) => s.enabled && s.type === "eureka")
+      .map((s) => s.path);
+    const workspacesDirs =
+      enabledEureka.length > 0
+        ? enabledEureka
+        : [
+            path.join(getHomeDirectory(), ".craft-agent", "workspaces"),
+            path.join(getHomeDirectory(), ".eureka", "workspaces"),
+          ];
 
-    const stat = await safeStat(workspacesDir);
-    if (!stat?.isDirectory()) {
-      return { sessions, cursorUpdates };
-    }
+    for (const workspacesDir of workspacesDirs) {
+      const stat = await safeStat(workspacesDir);
+      if (!stat?.isDirectory()) continue;
 
-    // Iterate through workspaces
-    const workspaces = await fs.readdir(workspacesDir, { withFileTypes: true }).catch(() => []);
-    for (const workspace of workspaces) {
+      // Iterate through workspaces
+      const workspaces = await fs.readdir(workspacesDir, { withFileTypes: true }).catch(() => []);
+      for (const workspace of workspaces) {
       if (!workspace.isDirectory()) continue;
       const sessionsDir = path.join(workspacesDir, workspace.name, "sessions");
       const sessionsDirStat = await safeStat(sessionsDir);
@@ -159,6 +168,7 @@ export const eurekaParser: Parser = {
         }
       }
     }
+    }
 
     return { sessions, cursorUpdates };
   },
@@ -173,9 +183,9 @@ async function parseEurekaSession(
   machineId: string,
 ): Promise<Session | null> {
   const meta: SessionMeta = {
+    eventTimestampsMs: [],
     turns: new Set(),
     calls: 0,
-    totalDurationMs: 0,
     models: new Set(),
     providers: new Set(),
     tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
@@ -254,14 +264,13 @@ async function parseEurekaSession(
         meta.lastTimestamp = entry.timestamp;
       }
 
+      // Capture per-event timestamp for active-duration calculation.
+      const ms = Date.parse(entry.timestamp);
+      if (Number.isFinite(ms)) meta.eventTimestampsMs.push(ms);
+
       // Track turns and calls
       if (entry.turnId) meta.turns.add(entry.turnId);
       meta.calls += 1;
-
-      // Track duration
-      if (entry.durationMs && Number.isFinite(entry.durationMs)) {
-        meta.totalDurationMs += entry.durationMs;
-      }
 
       // Track providers (models come from session files, not telemetry)
       if (entry.provider) meta.providers.add(entry.provider);
@@ -324,9 +333,7 @@ async function parseEurekaSession(
 
   const createdAt = meta.firstTimestamp ?? new Date(0).toISOString();
   const modifiedAt = meta.lastTimestamp ?? createdAt;
-  const durationSeconds = meta.totalDurationMs > 0
-    ? Math.round(meta.totalDurationMs / 1000)
-    : Math.max(0, Math.round((Date.parse(modifiedAt) - Date.parse(createdAt)) / 1000));
+  const durationSeconds = computeActiveDurationSeconds(meta.eventTimestampsMs);
 
   // Build model string — use specific models from session files, fallback to engine
   const modelList = Array.from(meta.models);
@@ -345,7 +352,7 @@ async function parseEurekaSession(
   const projectPath = meta.workingDirectory ?? meta.workspacePath ?? sessionPath;
 
   // If projectPath is a .craft-agent/workspaces UUID path, label as "Eureka" instead of UUID
-  const isWorkspacePath = projectPath.includes("/.craft-agent/workspaces/");
+  const isWorkspacePath = /\/\.(craft-agent|eureka)\/workspaces\//.test(projectPath.replace(/\\/g, "/"));
   const project = isWorkspacePath
     ? "Eureka"
     : path.basename(normalizeProjectPath(projectPath)) || workspaceId;
@@ -354,6 +361,7 @@ async function parseEurekaSession(
     id: sessionId,
     machineId,
     source: "eureka",
+    engine: formatEurekaEngine(meta.engine, meta.providers),
     projectPath,
     project,
     summary: meta.name ?? (meta.sessionType ? `${meta.sessionType} session` : undefined),
@@ -370,6 +378,7 @@ async function parseEurekaSession(
     cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
     toolBreakdown: meta.toolBreakdown,
     modelUsage: meta.modelUsage && Object.keys(meta.modelUsage).length > 0 ? meta.modelUsage : undefined,
+    orchestrator: { kind: "eureka" },
   };
 }
 
@@ -659,6 +668,22 @@ async function walkDir(dir: string, ext: string): Promise<string[]> {
 
 function numberOrZero(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function formatEurekaEngine(engine: string | undefined, providers?: Set<string>): string {
+  const engineStr = (engine ?? "").toLowerCase();
+  // Prefer provider signal — the Eureka header's `engine` only reflects the
+  // SDK protocol (claude/codex), not the actual upstream. For claude-engine
+  // sessions, the real provider (anthropic / github_copilot / ...) comes
+  // from llm-telemetry.
+  if (engineStr.includes("codex")) return "Eureka + Codex";
+  if (providers && providers.size > 0) {
+    const lowered = new Set(Array.from(providers).map((p) => p.toLowerCase()));
+    if ([...lowered].some((p) => p.includes("copilot"))) return "Eureka + Copilot";
+    if (lowered.has("anthropic")) return "Eureka + CC";
+  }
+  if (engineStr.includes("claude")) return "Eureka + CC";
+  return "Eureka";
 }
 
 async function safeStat(target: string): Promise<Awaited<ReturnType<typeof fs.stat>> | null> {

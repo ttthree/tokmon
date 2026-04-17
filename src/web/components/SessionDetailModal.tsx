@@ -91,36 +91,92 @@ export function SessionDetailModal({ session, onClose, formatCurrency }: Session
   const renderItems = useMemo(() => buildRenderItems(state.messages), [state.messages]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/40 p-2 sm:p-3" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 p-2 sm:p-3"
+      style={{ background: "var(--overlay-bg)" }}
+      onClick={onClose}
+    >
       <div
         ref={modalRef}
         data-testid="session-modal"
         role="dialog"
         aria-modal="true"
-        className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-2xl"
+        className="flex h-full w-full flex-col overflow-hidden rounded-2xl border shadow-2xl"
+        style={{
+          background: "var(--bg-app)",
+          borderColor: "var(--border)",
+          borderRadius: "var(--radius-card)",
+          color: "var(--text-primary)",
+          fontFamily: "var(--font-body)",
+        }}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-4">
+        <header
+          className="flex items-start justify-between gap-4 border-b px-6 py-4"
+          style={{ borderColor: "var(--border)", background: "var(--bg-panel)" }}
+        >
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-slate-900">{session.project} · {session.source} · {session.model} · {formatCurrency(session.cost.total)}</div>
-            <div className="mt-1 text-xs text-slate-500">{formatDate(session.createdAt)} · {formatDuration(session.durationSeconds)} · {session.turns} turns</div>
+            <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              {session.project} · {session.source} · {session.model} · {formatCurrency(session.cost.total)}
+            </div>
+            <div className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
+              {formatDate(session.createdAt)} · {session.turns} turns
+            </div>
           </div>
-          <button ref={closeButtonRef} type="button" className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600" onClick={onClose}>Close</button>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            className="rounded-full border px-3 py-1.5 text-sm"
+            style={{ borderColor: "var(--border)", background: "var(--bg-panel-muted)", color: "var(--text-secondary)" }}
+            onClick={onClose}
+          >
+            Close
+          </button>
         </header>
         <div className="flex-1 overflow-y-auto px-6 py-6">
           <div className="mx-auto flex max-w-4xl flex-col gap-5">
-            {state.loading ? <div className="text-sm text-slate-500">Loading conversation…</div> : null}
-            {!state.loading && !state.supported ? <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">Conversation replay not available for {session.source} sessions.</div> : null}
-            {!state.loading && state.supported && state.error && state.messages.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">{state.error}</div> : null}
-            {!state.loading && state.supported ? renderItems.map((item, index) => (
-              item.type === "bubble"
-                ? <ChatBubble key={`b-${index}`} role={item.role} testId={item.role === "user" ? "user-bubble" : "assistant-bubble"}>{item.text}</ChatBubble>
-                : <StepGroup key={`g-${index}`} steps={item.steps} testId={item.testId} />
-            )) : null}
+            {state.loading ? (
+              <div className="text-sm" style={{ color: "var(--text-muted)" }}>Loading conversation…</div>
+            ) : null}
+            {!state.loading && !state.supported ? (
+              <div
+                className="rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: "var(--border)", background: "var(--bg-panel)", color: "var(--text-secondary)" }}
+              >
+                Conversation replay not available for {session.source} sessions.
+              </div>
+            ) : null}
+            {!state.loading && state.supported && state.error && state.messages.length === 0 ? (
+              <div
+                className="rounded-2xl border px-4 py-3 text-sm"
+                style={{ borderColor: "var(--border)", background: "var(--bg-panel)", color: "var(--text-secondary)" }}
+              >
+                {state.error}
+              </div>
+            ) : null}
+            {!state.loading && state.supported
+              ? renderItems.map((item, index) =>
+                  item.type === "bubble" ? (
+                    <ChatBubble
+                      key={`b-${index}`}
+                      role={item.role}
+                      testId={item.role === "user" ? "user-bubble" : "assistant-bubble"}
+                    >
+                      {item.text}
+                    </ChatBubble>
+                  ) : (
+                    <StepGroup key={`g-${index}`} steps={item.steps} testId={item.testId} />
+                  ),
+                )
+              : null}
           </div>
         </div>
-        <footer className="border-t border-slate-200 bg-white px-6 py-3 text-xs text-slate-600">
-          Input: {formatNumber(session.tokens.input)} · Output: {formatNumber(session.tokens.output)} · Cache: {formatNumber(session.tokens.cacheCreation + session.tokens.cacheRead)} · Tools: {session.toolCallCount}
+        <footer
+          className="border-t px-6 py-3 text-xs"
+          style={{ borderColor: "var(--border)", background: "var(--bg-panel)", color: "var(--text-secondary)" }}
+        >
+          Input: {formatNumber(session.tokens.input)} · Output: {formatNumber(session.tokens.output)} · Cache:{" "}
+          {formatNumber(session.tokens.cacheCreation + session.tokens.cacheRead)} · Tools: {session.toolCallCount}
         </footer>
       </div>
     </div>
@@ -135,19 +191,36 @@ function StepGroup({ steps, testId }: { steps: StepItem[]; testId?: string }) {
   if (thinkingCount > 0) parts.push(`${thinkingCount} thinking`);
   if (toolCount > 0) parts.push(`${toolCount} tool call${toolCount > 1 ? "s" : ""}`);
   const label = parts.join(", ");
+  const hasThinking = thinkingCount > 0;
 
   return (
-    <div data-testid={testId} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80 shadow-sm">
+    <div
+      data-testid={testId}
+      className="overflow-hidden rounded-2xl border"
+      style={{
+        borderColor: hasThinking ? "var(--thinking-border)" : "var(--border)",
+        background: hasThinking ? "var(--thinking-bg)" : "var(--bg-panel-muted)",
+        boxShadow: "var(--shadow-card)",
+      }}
+    >
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-4 px-4 py-2.5 text-left text-xs font-medium text-slate-500"
+        className="flex w-full items-center justify-between gap-4 px-4 py-2.5 text-left text-xs font-medium"
+        style={{ color: "var(--text-secondary)" }}
         onClick={() => setExpanded((v) => !v)}
       >
-        <span>{expanded ? "▼" : "▶"} {label}</span>
-        <span className="text-xs text-slate-400">{expanded ? "Hide" : "Show"}</span>
+        <span>
+          {expanded ? "▼" : "▶"} {label}
+        </span>
+        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+          {expanded ? "Hide" : "Show"}
+        </span>
       </button>
       {expanded ? (
-        <div className="flex flex-col gap-px border-t border-slate-200 bg-slate-200">
+        <div
+          className="flex flex-col border-t"
+          style={{ borderColor: "var(--border)", background: "var(--border)", gap: "1px" }}
+        >
           {steps.map((step, index) => (
             <StepRow key={index} step={step} />
           ))}
@@ -162,19 +235,30 @@ function StepRow({ step }: { step: StepItem }) {
   const icon = step.tone === "thinking" ? "💭" : "🔧";
 
   return (
-    <div className="bg-white">
+    <div style={{ background: "var(--bg-panel)" }}>
       <button
         type="button"
-        className="flex w-full items-center gap-2 px-4 py-2 text-left text-xs text-slate-600 hover:bg-slate-50"
+        className="flex w-full items-center gap-2 px-4 py-2 text-left text-xs"
+        style={{ color: "var(--text-secondary)" }}
         onClick={() => setExpanded((v) => !v)}
       >
         <span className="shrink-0">{icon}</span>
         <span className="min-w-0 flex-1 truncate">{step.summary}</span>
-        <span className="shrink-0 text-slate-400">{expanded ? "▼" : "▶"}</span>
+        <span className="shrink-0" style={{ color: "var(--text-muted)" }}>
+          {expanded ? "▼" : "▶"}
+        </span>
       </button>
       {expanded ? (
-        <div className="border-t border-slate-100 px-4 py-3">
-          <pre className="whitespace-pre-wrap break-words text-xs font-mono text-slate-700">{step.detail}</pre>
+        <div
+          className="border-t px-4 py-3"
+          style={{ borderColor: "var(--border)", background: "var(--code-bg)" }}
+        >
+          <pre
+            className="whitespace-pre-wrap break-words text-xs"
+            style={{ color: "var(--code-fg)", fontFamily: "var(--font-mono)" }}
+          >
+            {step.detail}
+          </pre>
         </div>
       ) : null}
     </div>
@@ -304,12 +388,6 @@ function truncateOneLine(text: string, maxLength: number): string {
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
-function formatDuration(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 }
 
 function formatNumber(value: number): string {

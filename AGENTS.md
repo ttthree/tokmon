@@ -1,5 +1,20 @@
 # tokmon — Data Source Architecture
 
+## Workflow for Coding Agents
+
+After making any code changes, you MUST:
+
+1. Run `npm run build` to produce a fresh `dist/` (both the CLI in `dist/src/` and the web bundle).
+2. Run `npm link` from the repo root so the global `tokmon` command points at the freshly built CLI.
+
+This ensures the user's globally installed `tokmon` reflects your edits. Do this before declaring work complete, and re-run after every subsequent code change — the built output is not updated automatically.
+
+```bash
+npm run build && npm link
+```
+
+If tests are relevant to the change, also run `npm run test:unit` before the build/link step.
+
 ## Overview
 
 tokmon collects token usage and cost data from multiple AI coding agents. Each agent stores session data in different formats and locations. This document describes the data flow, parsing rules, and critical constraints.

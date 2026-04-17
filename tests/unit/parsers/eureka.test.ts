@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { createEurekaCodexFixture, createTestHome } from "../../helpers/fixtures.js";
 import { createEmptyCursorState } from "../../../src/core/cursor.js";
-import { eurekaParser } from "../../../src/parsers/eureka.js";
+import { claimedCcSessionIds, eurekaParser } from "../../../src/parsers/eureka.js";
 
 let testHome = "";
 
@@ -72,5 +72,13 @@ describe("eureka parser", () => {
     expect(session.modelUsage).toEqual({
       "gpt-5.4": { input: 500, output: 25, cacheCreation: 0, cacheRead: 400 },
     });
+  });
+
+  it("clears claimed session ids at the start of parse", async () => {
+    claimedCcSessionIds.add("stale-id");
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+    await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
+    expect(claimedCcSessionIds.has("stale-id")).toBe(false);
   });
 });

@@ -1,10 +1,22 @@
+import fs from "node:fs/promises";
 import path from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { getClaudeDirectory } from "../../src/core/config.js";
 import { resolveSourcePath } from "../../src/core/source-resolver.js";
 import type { Session } from "../../src/core/types.js";
+import { createTestHome } from "../helpers/fixtures.js";
+
+let testHome = "";
+
+afterEach(async () => {
+  if (testHome) {
+    await fs.rm(testHome, { recursive: true, force: true });
+    testHome = "";
+  }
+  delete process.env.TOKMON_HOME;
+});
 
 describe("source resolver", () => {
   it("resolves a claude-code session to the expected jsonl path", async () => {
@@ -18,6 +30,8 @@ describe("source resolver", () => {
   });
 
   it("returns null for unsupported sources", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
     expect(await resolveSourcePath(createSession({ source: "codex" }))).toBeNull();
     expect(await resolveSourcePath(createSession({ source: "copilot-cli" }))).toBeNull();
   });

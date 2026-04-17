@@ -143,6 +143,21 @@ describe("aggregate helpers", () => {
     expect(buildProjectSummaries([], [])).toEqual([]);
   });
 
+  it("supports mars-task breakdown grouping", () => {
+    const sessions = [
+      makeSession({ id: "m1", orchestrator: { kind: "mars", taskTitle: "Task One", marsSessionId: "x1" }, costTotal: 3 }),
+      makeSession({ id: "m2", orchestrator: { kind: "mars", taskTitle: "Task One", marsSessionId: "x2" }, costTotal: 2 }),
+      makeSession({ id: "m3", orchestrator: { kind: "mars", taskTitle: "Task Two", marsSessionId: "x3" }, costTotal: 5 }),
+      makeSession({ id: "n1", costTotal: 1 }),
+    ];
+
+    expect(buildBreakdownItems(sessions, "mars-task")).toEqual([
+      { key: "Task One", label: "Task One", cost: 5, sessions: 2 },
+      { key: "Task Two", label: "Task Two", cost: 5, sessions: 1 },
+      { key: "__untagged__", label: "__untagged__", cost: 1, sessions: 1 },
+    ]);
+  });
+
   it("uses documented inclusive and exclusive range boundaries", () => {
     const comparisonSessions = applyComparisonFilters([
       makeSession({ id: "prev-start", createdAt: "2026-03-29T12:00:00.000Z" }),
@@ -165,6 +180,29 @@ describe("aggregateData", () => {
     expect(data.machines).toHaveLength(1);
     expect(data.sessions).toEqual([]);
     expect(data.projects).toEqual([]);
+  });
+
+  it("applies orchestrator filter", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+    const machineId = "local-machine";
+    const machinePath = path.join(testHome, ".tokmon", "machines", `${machineId}.json`);
+    await fs.mkdir(path.dirname(machinePath), { recursive: true });
+    const sessions = {
+      [`${machineId}:claude-code:mars`]: makeSession({ id: "mars", machineId, orchestrator: { kind: "mars", taskTitle: "Task", marsSessionId: "m" } }),
+      [`${machineId}:eureka:eureka`]: makeSession({ id: "eureka", source: "eureka", machineId, orchestrator: { kind: "eureka" } }),
+      [`${machineId}:codex:none`]: makeSession({ id: "none", source: "codex", machineId }),
+    };
+    await fs.writeFile(machinePath, JSON.stringify({ machineId, hostname: "h", os: "darwin-arm64", lastUpdatedAt: new Date().toISOString(), sessions, _cursor: { version: 1, updatedAt: new Date(0).toISOString(), files: {} } }), "utf8");
+    await fs.writeFile(path.join(testHome, ".tokmon", ".machine-id"), `${machineId}\n`, "utf8");
+
+    const marsOnly = await aggregateData({ orchestrator: "mars" });
+    expect(marsOnly.sessions).toHaveLength(1);
+    expect(marsOnly.sessions[0].id).toBe("mars");
+
+    const noneOnly = await aggregateData({ orchestrator: "none" });
+    expect(noneOnly.sessions).toHaveLength(1);
+    expect(noneOnly.sessions[0].id).toBe("none");
   });
 });
 
@@ -195,5 +233,6 @@ function makeSession(overrides: (Partial<Session> & Pick<Session, "id"> & { cost
       total: costTotal,
     },
     toolBreakdown: overrides.toolBreakdown ?? { Read: 1 },
+    orchestrator: overrides.orchestrator,
   };
 }

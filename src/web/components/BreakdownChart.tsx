@@ -1,6 +1,6 @@
-import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Cell, Customized, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-const COLORS = ["#0f766e", "#2563eb", "#7c3aed", "#ea580c", "#16a34a", "#64748b", "#dc2626", "#0891b2"];
+import { useTheme } from "../theme/ThemeProvider.js";
 
 interface BreakdownItem {
   name: string;
@@ -14,28 +14,125 @@ interface BreakdownChartProps {
   dataKey?: "value" | "tokens";
   formatValue?: (value: number) => string;
   testId?: string;
+  selectedName?: string | null;
+  onSelect?: (name: string | null) => void;
 }
 
-export function BreakdownChart({ title, data, dataKey = "value", formatValue, testId }: BreakdownChartProps) {
+function makeRightAlignedLabels(insideColor: string, outsideColor: string) {
+  return function RightAlignedLabels(props: any) {
+    const { xAxisMap, formattedGraphicalItems } = props;
+    if (!xAxisMap || !formattedGraphicalItems?.length) return null;
+    const xAxis: any = Object.values(xAxisMap)[0];
+    const rightEdge = xAxis.x + xAxis.width;
+    const padding = 8;
+    const points: any[] = formattedGraphicalItems[0]?.props?.data ?? [];
+    return (
+      <g pointerEvents="none">
+        {points.map((p: any, i: number) => {
+          const barRight = p.x + (p.width ?? 0);
+          const insideBar = barRight >= rightEdge - padding;
+          const labelX = rightEdge - padding;
+          const labelY = p.y + (p.height ?? 0) / 2;
+          const name = p.payload?.name ?? "";
+          return (
+            <text
+              key={i}
+              x={labelX}
+              y={labelY}
+              textAnchor="end"
+              dominantBaseline="central"
+              fill={insideBar ? insideColor : outsideColor}
+              fontSize={12}
+              fontWeight={500}
+            >
+              {name}
+            </text>
+          );
+        })}
+      </g>
+    );
+  };
+}
+
+export function BreakdownChart({
+  title,
+  data,
+  dataKey = "value",
+  formatValue,
+  testId,
+  selectedName,
+  onSelect,
+}: BreakdownChartProps) {
+  const { theme } = useTheme();
+  const { colors } = theme;
   const formatter = formatValue ?? ((v: number) => `$${v.toFixed(2)}`);
+  const clickable = Boolean(onSelect);
+
+  const handleBarClick = (payload: any) => {
+    if (!onSelect) return;
+    const name: string | undefined = payload?.name ?? payload?.payload?.name;
+    if (!name) return;
+    onSelect(name === selectedName ? null : name);
+  };
+
+  const insideLabelColor = theme.cssVars["--accent-fg"] ?? "#ffffff";
+  const outsideLabelColor = theme.cssVars["--text-secondary"] ?? "#334155";
+  const LabelLayer = makeRightAlignedLabels(insideLabelColor, outsideLabelColor);
 
   return (
-    <div data-testid={testId} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-4 text-sm font-semibold text-slate-700">{title}</div>
+    <div
+      data-testid={testId}
+      className="rounded-2xl border p-4"
+      style={{
+        background: "var(--bg-panel)",
+        borderColor: "var(--border)",
+        borderRadius: "var(--radius-card)",
+        boxShadow: "var(--shadow-card)",
+      }}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <div className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+          {title}
+        </div>
+        {selectedName && onSelect ? (
+          <button
+            type="button"
+            onClick={() => onSelect(null)}
+            className="text-xs font-medium"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Clear
+          </button>
+        ) : null}
+      </div>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ left: 0, right: 20, top: 5, bottom: 5 }}>
-            <XAxis type="number" stroke="#64748b" tickFormatter={formatter} fontSize={12} />
-            <YAxis type="category" dataKey="name" stroke="#64748b" width={100} fontSize={12} tick={{ fill: "#334155" }} />
+          <BarChart data={data} layout="vertical" margin={{ left: 4, right: 20, top: 5, bottom: 5 }}>
+            <XAxis type="number" stroke={colors.chartAxis} tickFormatter={formatter} fontSize={12} />
+            <YAxis type="category" dataKey="name" hide />
             <Tooltip
               formatter={(v: number) => formatter(v)}
-              contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }}
+              contentStyle={{
+                borderRadius: "8px",
+                border: `1px solid ${colors.chartGrid}`,
+                background: theme.cssVars["--bg-panel"],
+                color: theme.cssVars["--text-primary"],
+              }}
             />
-            <Bar dataKey={dataKey} radius={[0, 4, 4, 0]}>
-              {data.map((_, index) => (
-                <Cell key={index} fill={COLORS[index % COLORS.length]} />
-              ))}
+            <Bar
+              dataKey={dataKey}
+              radius={[0, 4, 4, 0]}
+              onClick={clickable ? handleBarClick : undefined}
+              style={clickable ? { cursor: "pointer" } : undefined}
+            >
+              {data.map((item, index) => {
+                const baseColor = colors.chartPalette[index % colors.chartPalette.length];
+                const isSelected = selectedName != null && item.name === selectedName;
+                const isDimmed = selectedName != null && !isSelected;
+                return <Cell key={index} fill={isDimmed ? colors.chartDim : baseColor} />;
+              })}
             </Bar>
+            <Customized component={LabelLayer} />
           </BarChart>
         </ResponsiveContainer>
       </div>

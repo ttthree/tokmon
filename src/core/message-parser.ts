@@ -1,5 +1,7 @@
 import fs from "node:fs/promises";
 
+import Database from "better-sqlite3";
+
 import type { ContentBlock, ConversationMessage, ParsedMessagesResult, TextBlock, ThinkingBlock, ToolResultBlock, ToolUseBlock } from "./messages.js";
 
 interface RawUsage {
@@ -391,6 +393,36 @@ function stringifyValue(value: unknown): string {
 
 function truncate(value: string, maxLength: number): string {
   return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
+}
+
+export async function parseCopilotCliMessagesDetailed(dbPath: string, sessionId: string): Promise<ParsedMessagesResult> {
+  const messages: ConversationMessage[] = [];
+  let hadParseErrors = false;
+  let db: Database.Database;
+  try {
+    db = new Database(dbPath, { readonly: true, fileMustExist: true });
+  } catch {
+    return { messages, hadParseErrors: true };
+  }
+  try {
+    const rows = db.prepare(
+      "SELECT turn_index, user_message, assistant_response, timestamp FROM turns WHERE session_id = ? ORDER BY turn_index ASC",
+    ).all(sessionId) as { turn_index: number; user_message: string | null; assistant_response: string | null; timestamp: string | null }[];
+    for (const row of rows) {
+      const ts = typeof row.timestamp === "string" ? row.timestamp : undefined;
+      if (typeof row.user_message === "string" && row.user_message.trim()) {
+        messages.push({ role: "user", blocks: [{ type: "text", text: row.user_message.trim() }], timestamp: ts });
+      }
+      if (typeof row.assistant_response === "string" && row.assistant_response.trim()) {
+        messages.push({ role: "assistant", blocks: [{ type: "text", text: row.assistant_response.trim() }], timestamp: ts });
+      }
+    }
+  } catch {
+    hadParseErrors = true;
+  } finally {
+    try { db.close(); } catch { /* ignore */ }
+  }
+  return { messages, hadParseErrors };
 }
 
 function stringOrUndefined(value: unknown): string | undefined {

@@ -2,16 +2,26 @@ import express from "express";
 import path from "node:path";
 import fs from "node:fs/promises";
 import net from "node:net";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 
 import { aggregateData } from "../core/aggregate.js";
 import { loadMachineData } from "../core/data.js";
-import { loadMachineDataFromPathSafe, getRemoteMachinesDirectory } from "../core/config.js";
-import { parseClaudeCodeMessagesDetailed, parseCodexMessagesDetailed, parseEurekaMessagesDetailed } from "../core/message-parser.js";
+import {
+  loadMachineDataFromPathSafe,
+  getRemoteMachinesDirectory,
+  loadConfig,
+  saveConfig,
+  detectAvailableSources,
+  mergeAutoDetectedSources,
+  pathExists,
+} from "../core/config.js";
+import { parseClaudeCodeMessagesDetailed, parseCodexMessagesDetailed, parseCopilotCliMessagesDetailed, parseEurekaMessagesDetailed } from "../core/message-parser.js";
 import { getMachineId } from "../core/machine.js";
 import type { SessionMessages } from "../core/messages.js";
 import { resolveSourcePath } from "../core/source-resolver.js";
-import type { DataFilters, Session } from "../core/types.js";
+import type { AppConfig, DataFilters, MachineConfig, Session, SourceEntry } from "../core/types.js";
+import { collectCommand, type CollectProgressEvent } from "../cli/commands/collect.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HOST = "127.0.0.1";
@@ -38,6 +48,7 @@ export async function serve(port = 3000): Promise<void> {
 
 export function createApp(): express.Express {
   const app = express();
+  app.use(express.json({ limit: "1mb" }));
   const staticDir = getStaticDir();
 
   app.get("/api/data", async (req, res, next) => {
@@ -47,6 +58,7 @@ export function createApp(): express.Express {
         months: parseNumber(req.query.months),
         project: asOptionalString(req.query.project),
         machine: asOptionalString(req.query.machine),
+        orchestrator: asOptionalOrchestrator(req.query.orchestrator),
       };
       const data = await aggregateData(filters);
       res.json(data);
@@ -84,12 +96,14 @@ export function createApp(): express.Express {
         return;
       }
 
-      const parser = session.source === "eureka"
-        ? parseEurekaMessagesDetailed
-        : session.source === "codex"
-          ? parseCodexMessagesDetailed
-          : parseClaudeCodeMessagesDetailed;
-      const result = await parser(sourcePath);
+      const result =
+        session.source === "copilot-cli"
+          ? await parseCopilotCliMessagesDetailed(sourcePath, session.id)
+          : await (session.source === "eureka"
+              ? parseEurekaMessagesDetailed
+              : session.source === "codex"
+                ? parseCodexMessagesDetailed
+                : parseClaudeCodeMessagesDetailed)(sourcePath);
       const payload: SessionMessages = {
         sessionId: session.id,
         source: session.source,
@@ -98,6 +112,97 @@ export function createApp(): express.Express {
         error: result.hadParseErrors ? "Some messages could not be parsed" : undefined,
       };
       res.json(payload);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/settings", async (_req, res, next) => {
+    try {
+      const config = await loadConfig();
+      res.json(config);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/machine", async (_req, res, next) => {
+    try {
+      const [id, config] = await Promise.all([getMachineId(), loadConfig()]);
+      const hostname = os.hostname();
+      const name = config.machine?.name?.trim() || hostname;
+      res.json({ id, hostname, name });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/settings", async (req, res, next) => {
+    try {
+      const current = await loadConfig();
+      const body = (req.body ?? {}) as Partial<AppConfig>;
+      const updated: AppConfig = {
+        ...current,
+        github: { ...current.github, ...body.github },
+        privacy: body.privacy ?? current.privacy,
+        projects: body.projects ?? current.projects,
+        excludeFolders: body.excludeFolders ?? current.excludeFolders,
+        pricing: { ...current.pricing, ...body.pricing },
+        sources: Array.isArray(body.sources)
+          ? sanitizeSources(body.sources)
+          : current.sources,
+        machine: sanitizeMachine(body.machine, current.machine),
+      };
+      // Re-run detection to keep autoDetected entries fresh
+      const detected = await detectAvailableSources();
+      updated.sources = mergeAutoDetectedSources(updated.sources, detected);
+      await saveConfig(updated);
+      res.json(updated);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/sources/detect", async (_req, res, next) => {
+    try {
+      const detected = await detectAvailableSources();
+      res.json({ sources: detected });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/sources/validate", async (req, res, next) => {
+    try {
+      const p = typeof req.body?.path === "string" ? req.body.path : "";
+      if (!p) {
+        res.status(400).json({ error: "path is required" });
+        return;
+      }
+      const exists = await pathExists(p);
+      res.json({ exists });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/collect", async (req, res, next) => {
+    try {
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.flushHeaders?.();
+      const reset = Boolean(req.body?.reset);
+      const send = (event: CollectProgressEvent) => {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      };
+      try {
+        await collectCommand({ silent: true, reset, onProgress: send });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.write(`data: ${JSON.stringify({ phase: "error", message })}\n\n`);
+      }
+      res.end();
     } catch (error) {
       next(error);
     }
@@ -122,9 +227,10 @@ export function createApp(): express.Express {
 }
 
 function getStaticDir(): string {
-  const isCompiledDist = __dirname.includes("/dist/");
+  const normalized = __dirname.replace(/\\/g, "/");
+  const isCompiledDist = normalized.includes("/dist/");
   return isCompiledDist
-    ? path.resolve(__dirname, "../../web")
+    ? path.resolve(__dirname, "../web")
     : path.resolve(__dirname, "../../dist/web");
 }
 
@@ -187,4 +293,41 @@ function parseNumber(value: unknown): number | undefined {
 
 function asOptionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function asOptionalOrchestrator(value: unknown): DataFilters["orchestrator"] {
+  const raw = asOptionalString(value);
+  if (!raw) return undefined;
+  if (raw === "mars" || raw === "eureka" || raw === "none") return raw;
+  return undefined;
+}
+
+const VALID_SOURCE_TYPES = new Set(["claude-code", "codex", "copilot-cli", "eureka", "mars"]);
+
+function sanitizeMachine(input: unknown, current: MachineConfig | undefined): MachineConfig | undefined {
+  if (input === undefined) return current;
+  if (input === null || typeof input !== "object") return current;
+  const raw = input as Partial<MachineConfig>;
+  const rawName = typeof raw.name === "string" ? raw.name.trim() : undefined;
+  return { name: rawName && rawName.length > 0 ? rawName : undefined };
+}
+
+function sanitizeSources(input: unknown[]): SourceEntry[] {
+  const result: SourceEntry[] = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== "object") continue;
+    const s = raw as Partial<SourceEntry>;
+    if (typeof s.type !== "string" || !VALID_SOURCE_TYPES.has(s.type)) continue;
+    if (typeof s.path !== "string" || !s.path) continue;
+    const id = typeof s.id === "string" && s.id ? s.id : `${s.type}:${s.path}`;
+    result.push({
+      id,
+      type: s.type as SourceEntry["type"],
+      path: s.path,
+      enabled: s.enabled !== false,
+      autoDetected: Boolean(s.autoDetected),
+      label: typeof s.label === "string" ? s.label : undefined,
+    });
+  }
+  return result;
 }

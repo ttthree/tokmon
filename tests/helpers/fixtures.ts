@@ -2,8 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import Database from "better-sqlite3";
 
 import { encodeClaudeProjectPath } from "../../src/core/source-resolver.js";
 import type { PricingSnapshot } from "../../src/core/types.js";
@@ -130,8 +129,8 @@ export async function createCodexFixture(testHome: string, options?: { includeRo
   const codexDir = path.join(testHome, ".codex");
   await fs.mkdir(codexDir, { recursive: true });
   const dbPath = path.join(codexDir, "state_1.sqlite");
-  const db = await open({ filename: dbPath, driver: sqlite3.Database });
-  await db.exec(`
+  const db = new Database(dbPath);
+  db.exec(`
     CREATE TABLE threads (
       id TEXT PRIMARY KEY,
       cwd TEXT,
@@ -144,21 +143,18 @@ export async function createCodexFixture(testHome: string, options?: { includeRo
       archived INTEGER
     );
   `);
-  await db.run(
-    `INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      "codex-session-1",
-      path.join(testHome, "work", "codex-project"),
-      "gpt-4.1",
-      null,
-      Math.floor(new Date("2026-04-05T10:00:00.000Z").getTime() / 1000),
-      Math.floor(new Date("2026-04-05T10:20:00.000Z").getTime() / 1000),
-      750,
-      "Session title",
-      0,
-    ],
+  db.prepare(`INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    "codex-session-1",
+    path.join(testHome, "work", "codex-project"),
+    "gpt-4.1",
+    null,
+    Math.floor(new Date("2026-04-05T10:00:00.000Z").getTime() / 1000),
+    Math.floor(new Date("2026-04-05T10:20:00.000Z").getTime() / 1000),
+    750,
+    "Session title",
+    0,
   );
-  await db.close();
+  db.close();
 
   if (options?.includeRollout) {
     const rolloutDir = path.join(codexDir, "sessions", "2026", "04", "05");

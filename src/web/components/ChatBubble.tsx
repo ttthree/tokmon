@@ -13,10 +13,13 @@ export function ChatBubble({ role, children, testId }: ChatBubbleProps) {
     <div className={isUser ? "flex justify-end" : ""}>
       <div
         data-testid={testId}
-        className={[
-          "rounded-2xl border px-5 py-4 text-sm leading-7 shadow-sm",
-          isUser ? "max-w-[85%] border-blue-100 bg-blue-50 text-slate-900" : "border-slate-200 bg-white text-slate-900",
-        ].join(" ")}
+        className={["rounded-2xl border px-5 py-4 text-sm leading-7", isUser ? "max-w-[85%]" : ""].join(" ")}
+        style={{
+          background: isUser ? "var(--bubble-user-bg)" : "var(--bubble-assistant-bg)",
+          color: isUser ? "var(--bubble-user-fg)" : "var(--bubble-assistant-fg)",
+          borderColor: "var(--border)",
+          boxShadow: "var(--shadow-card)",
+        }}
       >
         {isUser ? children : <MarkdownContent text={children} />}
       </div>
@@ -26,7 +29,7 @@ export function ChatBubble({ role, children, testId }: ChatBubbleProps) {
 
 function MarkdownContent({ text }: { text: string }) {
   return (
-    <div className="prose prose-sm prose-slate max-w-none prose-headings:mt-4 prose-headings:mb-2 prose-headings:text-slate-900 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-pre:bg-slate-50 prose-pre:border prose-pre:border-slate-200 prose-pre:rounded-xl prose-code:text-xs prose-code:before:content-none prose-code:after:content-none prose-a:text-blue-600 prose-blockquote:border-slate-300 prose-blockquote:text-slate-600 prose-hr:border-slate-200 prose-table:text-xs">
+    <div className="tm-prose max-w-none">
       <Markdown>{text}</Markdown>
     </div>
   );

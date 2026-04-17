@@ -23,17 +23,27 @@ const session: Session = {
   tokens: { input: 1, output: 1, cacheCreation: 0, cacheRead: 0 },
   cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
   toolBreakdown: {},
+  orchestrator: { kind: "mars", taskTitle: "Secret Task", sessionName: "coder", marsSessionId: "abc" },
 };
 
 describe("privacy", () => {
   it("redacts sensitive fields by default", () => {
     const redacted = redactSessionForSync(session, {
-      sync: { includeSummary: false, includeFirstPrompt: false, includeProjectPath: false, includeProjectName: false },
+      sync: { includeSummary: false, includeFirstPrompt: false, includeProjectPath: false, includeProjectName: false, includeOrchestratorMetadata: false },
     });
     expect(redacted.projectPath).toBe("[redacted]");
     expect(redacted.project).toBe("[redacted]");
     expect(redacted.summary).toBeUndefined();
     expect(redacted.firstPrompt).toBeUndefined();
+    expect(redacted.orchestrator).toEqual({ kind: "mars" });
+  });
+
+  it("retains orchestrator metadata when enabled", () => {
+    const redacted = redactSessionForSync(session, {
+      sync: { includeSummary: false, includeFirstPrompt: false, includeProjectPath: false, includeProjectName: false, includeOrchestratorMetadata: true },
+    });
+    expect(redacted.orchestrator?.taskTitle).toBe("Secret Task");
+    expect(redacted.orchestrator?.sessionName).toBe("coder");
   });
 
   it("removes cursor details from synced machine data", () => {
@@ -59,7 +69,7 @@ describe("privacy", () => {
     };
 
     const redacted = redactForSync(machineData, {
-      sync: { includeSummary: false, includeFirstPrompt: false, includeProjectPath: false, includeProjectName: false },
+      sync: { includeSummary: false, includeFirstPrompt: false, includeProjectPath: false, includeProjectName: false, includeOrchestratorMetadata: false },
     });
 
     expect(redacted._cursor.files).toEqual({});

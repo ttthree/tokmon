@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { ProjectSummary } from "../../src/core/types.js";
-import { MAX_VISIBLE_PROJECTS, getVisibleProjects } from "../../src/web/leaderboard.js";
+import { getVisibleProjects } from "../../src/web/leaderboard.js";
 
 describe("leaderboard filtering", () => {
-  it("filters by project label or key before applying the top-10 cap", () => {
+  it("returns all projects when the query is empty and filters by label or key", () => {
     const projects = Array.from({ length: 12 }, (_, index) => createProject(`project-${index + 1}`, `Team ${index + 1}`));
 
-    expect(getVisibleProjects(projects, "")).toHaveLength(MAX_VISIBLE_PROJECTS);
+    expect(getVisibleProjects(projects, "")).toHaveLength(12);
     expect(getVisibleProjects(projects, "team 12").map((project) => project.projectKey)).toEqual(["project-12"]);
     expect(getVisibleProjects(projects, "project-11").map((project) => project.projectKey)).toEqual(["project-11"]);
   });

@@ -3,13 +3,158 @@
 
 :root {
   color-scheme: light;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Defaults are set from JS by ThemeProvider; these are fallbacks. */
+  --bg-app: #f1f5f9;
+  --bg-panel: #ffffff;
+  --bg-panel-muted: #f8fafc;
+  --bg-input: #f8fafc;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+  --accent: #0f172a;
+  --accent-fg: #ffffff;
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --radius-card: 1rem;
+  --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --badge-bg: #f1f5f9;
+  --badge-fg: #475569;
+  --header-eyebrow: #64748b;
+  --code-bg: #f1f5f9;
+  --code-fg: #0f172a;
+  --code-border: #cbd5e1;
+  --bubble-user-bg: #dbeafe;
+  --bubble-user-fg: #0f172a;
+  --bubble-assistant-bg: #ffffff;
+  --bubble-assistant-fg: #0f172a;
+  --thinking-bg: #fef3c7;
+  --thinking-border: #fcd34d;
+  --overlay-bg: rgba(15, 23, 42, 0.4);
+  font-family: var(--font-body);
+}
+
+[data-theme="terminal"],
+[data-theme="trading"] {
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Markdown / prose overrides — make code blocks and inline code
+   visible across all themes by using theme CSS variables. */
+.tm-prose {
+  color: var(--text-primary);
+}
+.tm-prose p,
+.tm-prose li,
+.tm-prose blockquote {
+  color: var(--text-primary);
+}
+.tm-prose h1,
+.tm-prose h2,
+.tm-prose h3,
+.tm-prose h4,
+.tm-prose h5,
+.tm-prose h6 {
+  color: var(--text-primary);
+}
+.tm-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.tm-prose hr {
+  border-color: var(--border);
+}
+.tm-prose blockquote {
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-secondary);
+  padding-left: 0.75rem;
+}
+.tm-prose pre {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border: 1px solid var(--code-border);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.tm-prose pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: 0;
+  font-size: inherit;
+}
+.tm-prose code {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border: 1px solid var(--code-border);
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+.tm-prose table {
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+.tm-prose th,
+.tm-prose td {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.6rem;
+}
+.tm-prose th {
+  background: var(--bg-panel-muted);
+  color: var(--text-secondary);
+}
+
+@keyframes stat-card-delta-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.96);
+  }
+}
+
+.stat-card-delta-badge {
+  animation: stat-card-delta-rise 2.2s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-card-delta-badge {
+    animation-duration: 0.2s;
+  }
+}
+
+@keyframes tokmon-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

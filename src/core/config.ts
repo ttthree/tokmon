@@ -2,7 +2,7 @@ import os from "node:os";
 import path from "node:path";
 import fs from "node:fs/promises";
 
-import type { AppConfig, MachineData } from "./types.js";
+import type { AppConfig, MachineData, Source, SourceEntry } from "./types.js";
 
 export const DEFAULT_CONFIG: AppConfig = {
   github: {
@@ -15,6 +15,7 @@ export const DEFAULT_CONFIG: AppConfig = {
       includeFirstPrompt: false,
       includeProjectPath: false,
       includeProjectName: true,
+      includeOrchestratorMetadata: true,
     },
   },
   projects: {},
@@ -23,6 +24,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     autoUpdate: true,
     updateIntervalHours: 24,
   },
+  sources: [],
 };
 
 export function getHomeDirectory(): string {
@@ -77,6 +79,29 @@ export function getCopilotDirectory(): string {
   return path.join(getHomeDirectory(), ".copilot");
 }
 
+export function getMarsAppSupportDirectories(): string[] {
+  const home = getHomeDirectory();
+  if (process.platform === "darwin") {
+    return [
+      path.join(home, "Library", "Application Support", "com.marsiwe.app"),
+      path.join(home, "Library", "Application Support", "com.marsiwe.app.dev"),
+    ];
+  }
+  if (process.platform === "win32") {
+    const appData = process.env.APPDATA ?? path.join(home, "AppData", "Roaming");
+    return [
+      path.join(appData, "com.marsiwe.app"),
+      path.join(appData, "com.marsiwe.app.dev"),
+    ];
+  }
+  // Linux / other: XDG
+  const xdg = process.env.XDG_CONFIG_HOME ?? path.join(home, ".config");
+  return [
+    path.join(xdg, "com.marsiwe.app"),
+    path.join(xdg, "com.marsiwe.app.dev"),
+  ];
+}
+
 export async function ensureTokmonDirectories(): Promise<void> {
   await Promise.all([
     fs.mkdir(getTokmonDirectory(), { recursive: true }),
@@ -98,13 +123,18 @@ export async function pathExists(filePath: string): Promise<boolean> {
 export async function loadConfig(): Promise<AppConfig> {
   await ensureTokmonDirectories();
   const configPath = getConfigPath();
+  let config: AppConfig;
   if (!(await pathExists(configPath))) {
-    await saveConfig(DEFAULT_CONFIG);
-    return structuredClone(DEFAULT_CONFIG);
+    config = structuredClone(DEFAULT_CONFIG);
+  } else {
+    const raw = JSON.parse(await fs.readFile(configPath, "utf8")) as Partial<AppConfig>;
+    config = mergeConfig(DEFAULT_CONFIG, raw);
   }
 
-  const raw = JSON.parse(await fs.readFile(configPath, "utf8")) as Partial<AppConfig>;
-  return mergeConfig(DEFAULT_CONFIG, raw);
+  const detected = await detectAvailableSources();
+  config.sources = mergeAutoDetectedSources(config.sources, detected);
+  await saveConfig(config);
+  return config;
 }
 
 export async function saveConfig(config: AppConfig): Promise<void> {
@@ -161,7 +191,99 @@ function mergeConfig(base: AppConfig, override: Partial<AppConfig>): AppConfig {
       ...base.pricing,
       ...override.pricing,
     },
+    sources: override.sources ?? base.sources,
+    machine: {
+      ...base.machine,
+      ...override.machine,
+    },
   };
+}
+
+interface DetectedCandidate {
+  type: Source;
+  path: string;
+  label?: string;
+}
+
+async function collectDetectionCandidates(): Promise<DetectedCandidate[]> {
+  const candidates: DetectedCandidate[] = [];
+
+  for (const dir of getAllClaudeDirectories()) {
+    candidates.push({ type: "claude-code", path: dir });
+  }
+  candidates.push({ type: "codex", path: getCodexDirectory() });
+  candidates.push({ type: "copilot-cli", path: getCopilotDirectory() });
+  candidates.push({
+    type: "eureka",
+    path: path.join(getHomeDirectory(), ".craft-agent", "workspaces"),
+    label: "Eureka workspaces (legacy)",
+  });
+  candidates.push({
+    type: "eureka",
+    path: path.join(getHomeDirectory(), ".eureka", "workspaces"),
+    label: "Eureka workspaces",
+  });
+  for (const dir of getMarsAppSupportDirectories()) {
+    candidates.push({ type: "mars", path: dir });
+  }
+
+  const results = await Promise.all(
+    candidates.map(async (c) => ((await pathExists(c.path)) ? c : null)),
+  );
+  return results.filter((c): c is DetectedCandidate => c !== null);
+}
+
+function makeSourceId(type: Source, p: string): string {
+  return `${type}:${p}`;
+}
+
+export async function detectAvailableSources(): Promise<SourceEntry[]> {
+  const detected = await collectDetectionCandidates();
+  return detected.map((c) => ({
+    id: makeSourceId(c.type, c.path),
+    type: c.type,
+    path: c.path,
+    enabled: true,
+    autoDetected: true,
+    label: c.label,
+  }));
+}
+
+export function mergeAutoDetectedSources(
+  existing: SourceEntry[],
+  detected: SourceEntry[],
+): SourceEntry[] {
+  const result: SourceEntry[] = [];
+  const detectedById = new Map(detected.map((s) => [s.id, s]));
+  const seenIds = new Set<string>();
+
+  for (const entry of existing) {
+    if (!entry.autoDetected) {
+      // Preserve user custom entries untouched
+      result.push(entry);
+      seenIds.add(entry.id);
+      continue;
+    }
+    // Auto-detected: keep only if still present; preserve user's enabled state
+    const still = detectedById.get(entry.id);
+    if (still) {
+      result.push({
+        ...still,
+        enabled: entry.enabled,
+        label: entry.label ?? still.label,
+      });
+      seenIds.add(entry.id);
+    }
+  }
+
+  // Append newly-detected entries not previously tracked
+  for (const d of detected) {
+    if (!seenIds.has(d.id)) {
+      result.push(d);
+    }
+  }
+
+  return result;
 }
 
 function setNestedProperty(root: Record<string, unknown>, keyPath: string, value: unknown): void {

@@ -1,11 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import Database from "better-sqlite3";
 
 import { getCodexDirectory } from "../core/config.js";
+import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
+import { marsRegistry } from "./mars.js";
+import { applyMarsMeta } from "./orchestrator.js";
 import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown } from "../core/types.js";
 
 interface CodexThreadRow {
@@ -37,67 +39,80 @@ interface CodexRolloutStats {
   firstEventAt?: number;
   lastEventAt?: number;
   firstPrompt?: string;
+  eventTimestampsMs: number[];
 }
 
 export const codexParser: Parser = {
   source: "codex",
   async parse(context: ParserContext): Promise<ParseResult> {
-    const codexDir = getCodexDirectory();
-    const dbPath = await findStateDatabase(codexDir);
-    if (!dbPath) {
-      return { sessions: [], cursorUpdates: {} };
-    }
+    const enabledCodex = (context.sources ?? []).filter((s) => s.enabled && s.type === "codex").map((s) => s.path);
+    const roots = [
+      ...(enabledCodex.length > 0 ? enabledCodex : [getCodexDirectory()]),
+      ...marsRegistry.codexRoots,
+    ];
+    const sessionsByKey = new Map<string, Session>();
+    const cursorUpdates: Record<string, FileCursor> = {};
 
-    const stat = await safeStat(dbPath);
-    if (!stat?.isFile() || stat.size === 0) {
-      return { sessions: [], cursorUpdates: {} };
-    }
+    for (const codexDir of roots) {
+      const dbPath = await findStateDatabase(codexDir);
+      if (!dbPath) continue;
 
-    const cursor = context.existingCursor.files[dbPath] ?? null;
-    const lastUpdatedAt = shouldReuseCursor(stat, cursor) && cursor?.lastUpdatedAt
-      ? Number(cursor.lastUpdatedAt)
-      : 0;
+      const stat = await safeStat(dbPath);
+      if (!stat?.isFile() || stat.size === 0) continue;
 
-    const db = await open({ filename: dbPath, driver: sqlite3.Database });
-    try {
-      const rows = await db.all<CodexThreadRow[]>(
-        `
-          SELECT id, cwd, model, model_provider, created_at, updated_at, tokens_used, title, archived
-          FROM threads
-          WHERE updated_at > ? AND archived = 0
-          ORDER BY updated_at ASC
-        `,
-        [lastUpdatedAt],
-      );
+      const cursor = context.existingCursor.files[dbPath] ?? null;
+      const lastUpdatedAt = shouldReuseCursor(stat, cursor) && cursor?.lastUpdatedAt
+        ? Number(cursor.lastUpdatedAt)
+        : 0;
 
-      // Build rollout stats (tokens + turns/tools/duration) from session files
-      const statsMap = await buildRolloutStatsMap(codexDir, rows.map((r) => r.id));
-      const sessions = rows.map((row) => mapCodexThread(row, context.machineId, statsMap.get(row.id)));
-      const maxUpdated = await db.get<{ maxUpdatedAt: number | null }>(`SELECT MAX(updated_at) AS maxUpdatedAt FROM threads`);
+      const db = new Database(dbPath, { readonly: true, fileMustExist: true });
+      try {
+        const rows = db.prepare(
+          `
+            SELECT id, cwd, model, model_provider, created_at, updated_at, tokens_used, title, archived
+            FROM threads
+            WHERE updated_at > ? AND archived = 0
+            ORDER BY updated_at ASC
+          `,
+        ).all(lastUpdatedAt) as CodexThreadRow[];
 
-      return {
-        sessions,
-        cursorUpdates: {
-          [dbPath]: {
-            path: dbPath,
-            inode: Number(stat.ino),
-            size: Number(stat.size),
-            mtimeMs: Number(stat.mtimeMs),
-            byteOffset: 0,
-            lastUpdatedAt: String(maxUpdated?.maxUpdatedAt ?? lastUpdatedAt),
-            processedAt: new Date().toISOString(),
-          },
-        },
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("no such table")) {
-        return { sessions: [], cursorUpdates: {} };
+        const statsMap = await buildRolloutStatsMap(codexDir, rows.map((r) => r.id));
+        for (const row of rows) {
+          let session = mapCodexThread(row, context.machineId, statsMap.get(row.id));
+          const marsMeta = marsRegistry.byAgentSessionId.codex.get(session.id);
+          if (marsMeta) {
+            session = applyMarsMeta(session, marsMeta, "codex");
+          }
+          const key = `${session.source}:${session.id}`;
+          const existing = sessionsByKey.get(key);
+          if (!existing || existing.modifiedAt < session.modifiedAt) {
+            sessionsByKey.set(key, session);
+          }
+        }
+        const maxUpdated = db.prepare(`SELECT MAX(updated_at) AS maxUpdatedAt FROM threads`).get() as { maxUpdatedAt: number | null } | undefined;
+        cursorUpdates[dbPath] = {
+          path: dbPath,
+          inode: Number(stat.ino),
+          size: Number(stat.size),
+          mtimeMs: Number(stat.mtimeMs),
+          byteOffset: 0,
+          lastUpdatedAt: String(maxUpdated?.maxUpdatedAt ?? lastUpdatedAt),
+          processedAt: new Date().toISOString(),
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.includes("no such table")) {
+          throw error;
+        }
+      } finally {
+        db.close();
       }
-      throw error;
-    } finally {
-      await db.close();
     }
+
+    return {
+      sessions: [...sessionsByKey.values()],
+      cursorUpdates,
+    };
   },
 };
 
@@ -136,6 +151,7 @@ async function readRolloutStats(filePath: string): Promise<CodexRolloutStats | n
       messageCount: 0,
       toolCallCount: 0,
       toolBreakdown: {},
+      eventTimestampsMs: [],
     };
 
     // Track function_call → function_call_output pairing by call_id.
@@ -153,6 +169,7 @@ async function readRolloutStats(filePath: string): Promise<CodexRolloutStats | n
       if (Number.isFinite(ts)) {
         if (stats.firstEventAt === undefined) stats.firstEventAt = ts;
         stats.lastEventAt = ts;
+        stats.eventTimestampsMs.push(ts);
       }
 
       const type = parsed.type;
@@ -271,16 +288,19 @@ function mapCodexThread(row: CodexThreadRow, machineId: string, stats?: CodexRol
       }
     : { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
 
-  // Prefer active event span from rollout — SQLite updated_at can be many hours
-  // after the last event (threads stay alive as UI tabs), which inflates duration.
-  const durationSeconds = stats?.firstEventAt !== undefined && stats?.lastEventAt !== undefined
-    ? Math.max(0, Math.round((stats.lastEventAt - stats.firstEventAt) / 1000))
-    : Math.max(0, row.updated_at - row.created_at);
+  // Active duration = sum of inter-event gaps capped at the idle threshold.
+  // Wall-clock (lastEvent - firstEvent) inflates when sessions are left open
+  // idle for long stretches.
+  const activeFromEvents = stats?.eventTimestampsMs?.length
+    ? computeActiveDurationSeconds(stats.eventTimestampsMs)
+    : 0;
+  const durationSeconds = activeFromEvents;
 
   return {
     id: row.id,
     machineId,
     source: "codex",
+    engine: "Codex",
     projectPath,
     project: path.basename(normalizeProjectPath(projectPath)) || "other",
     summary: row.title ?? undefined,

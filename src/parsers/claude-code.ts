@@ -1,9 +1,13 @@
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 import { getClaudeDirectory, getCraftAgentClaudeDirectory } from "../core/config.js";
+import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
 import { claimedCcSessionIds } from "./eureka.js";
+import { marsRegistry } from "./mars.js";
+import { applyMarsMeta } from "./orchestrator.js";
 import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown } from "../core/types.js";
 
 interface ClaudeSessionIndexEntry {
@@ -52,9 +56,18 @@ export const claudeCodeParser: Parser = {
     // Scan ~/.claude (direct CLI sessions → source="claude-code") and
     // ~/.craft-agent/.claude (Eureka sub-agents → source="claude-code" for unclaimed files).
     // Files claimed by Eureka parser (via sdkSessionId) are skipped to avoid double-counting.
+    const enabledClaude = (context.sources ?? [])
+      .filter((s) => s.enabled && s.type === "claude-code")
+      .map((s) => s.path);
+    const craftAgentClaude = getCraftAgentClaudeDirectory();
     const directories: Array<{ dir: string; excludeClaimed: boolean }> = [
-      { dir: getClaudeDirectory(), excludeClaimed: false },
-      { dir: getCraftAgentClaudeDirectory(), excludeClaimed: true },
+      ...(enabledClaude.length > 0
+        ? enabledClaude.map((dir) => ({ dir, excludeClaimed: dir === craftAgentClaude }))
+        : [
+            { dir: getClaudeDirectory(), excludeClaimed: false },
+            { dir: craftAgentClaude, excludeClaimed: true },
+          ]),
+      ...marsRegistry.claudeRoots.map((dir) => ({ dir, excludeClaimed: false })),
     ];
 
     for (const { dir: claudeDir, excludeClaimed } of directories) {
@@ -104,7 +117,11 @@ export const claudeCodeParser: Parser = {
         const indexEntry = indexByPath.get(sessionPath);
         const entry = indexEntry ?? await synthesizeEntryFromFile(sessionPath, stat);
 
-        const session = await parseClaudeSessionFile(sessionPath, entry, context.machineId);
+        let session = await parseClaudeSessionFile(sessionPath, entry, context.machineId);
+        const marsMeta = marsRegistry.byAgentSessionId.claudeCode.get(session.id);
+        if (marsMeta) {
+          session = applyMarsMeta(session, marsMeta, "claude-code");
+        }
         // Skip empty sessions (no tokens = no meaningful API interactions)
         if (session.tokens.input === 0 && session.tokens.output === 0 && session.tokens.cacheRead === 0 && session.tokens.cacheCreation === 0) {
           cursorUpdates[sessionPath] = {
@@ -270,8 +287,10 @@ async function resolveSubagentProjectPathFromIndex(encodedProjectDir: string, pa
 }
 
 async function resolveEurekaWorkingDirectory(projectPath: string): Promise<string | null> {
-  const sessionDir = projectPath.replace(/^~(?=\/)/, process.env.TOKMON_HOME ?? process.env.HOME ?? "");
-  if (!sessionDir.includes("/.craft-agent/workspaces/") || !sessionDir.includes("/sessions/")) {
+  const home = process.env.TOKMON_HOME ?? os.homedir();
+  const sessionDir = projectPath.replace(/^~(?=[\\/])/, home);
+  const normalized = sessionDir.replace(/\\/g, "/");
+  if (!/\/\.(craft-agent|eureka)\/workspaces\//.test(normalized) || !normalized.includes("/sessions/")) {
     return projectPath;
   }
 
@@ -285,7 +304,7 @@ async function resolveEurekaWorkingDirectory(projectPath: string): Promise<strin
   try {
     const header = JSON.parse(firstLine) as { workingDirectory?: string };
     if (typeof header.workingDirectory === "string" && header.workingDirectory.trim()) {
-      return header.workingDirectory.replace(/^~(?=\/)/, process.env.TOKMON_HOME ?? process.env.HOME ?? "");
+      return header.workingDirectory.replace(/^~(?=[\\/])/, home);
     }
   } catch {
     // fall through
@@ -306,7 +325,7 @@ function decodeEncodedProjectPath(projectDirName: string): string {
 }
 
 function getHomeCraftAgentWorkspacesDir(): string {
-  const home = process.env.TOKMON_HOME ?? process.env.HOME ?? "";
+  const home = process.env.TOKMON_HOME ?? os.homedir();
   return path.join(home, ".craft-agent", "workspaces");
 }
 
@@ -357,6 +376,7 @@ async function parseClaudeSessionFile(sessionFile: string, entry: ClaudeSessionI
   let turns = 0;
   let messageCount = 0;
   let model = "unknown";
+  const eventTimestampsMs: number[] = [];
 
   // For large files (>5MB), only read the first 64KB of the file to extract
   // usage data from the message envelope. This avoids multi-GB allocations.
@@ -392,6 +412,13 @@ async function parseClaudeSessionFile(sessionFile: string, entry: ClaudeSessionI
     const isUser = line.includes('"user"');
     const isAssistant = line.includes('"assistant"');
     if (!isUser && !isAssistant) continue;
+
+    // Capture per-event timestamp for active-duration calculation.
+    const tsMatch = line.match(/"timestamp"\s*:\s*"([^"]+)"/);
+    if (tsMatch) {
+      const ms = Date.parse(tsMatch[1]);
+      if (Number.isFinite(ms)) eventTimestampsMs.push(ms);
+    }
 
     if (isUser && !isAssistant) {
       messageCount += 1;
@@ -436,6 +463,7 @@ async function parseClaudeSessionFile(sessionFile: string, entry: ClaudeSessionI
     id: entry.sessionId,
     machineId,
     source: "claude-code",
+    engine: "Claude Code",
     projectPath: entry.projectPath,
     project: path.basename(normalizedPath) || "other",
     summary: entry.summary,
@@ -443,7 +471,7 @@ async function parseClaudeSessionFile(sessionFile: string, entry: ClaudeSessionI
     model,
     createdAt,
     modifiedAt,
-    durationSeconds: Math.max(0, Math.round((Date.parse(modifiedAt) - Date.parse(createdAt)) / 1000)),
+    durationSeconds: computeActiveDurationSeconds(eventTimestampsMs),
     turns,
     messageCount: entry.messageCount ?? messageCount,
     toolCallCount,

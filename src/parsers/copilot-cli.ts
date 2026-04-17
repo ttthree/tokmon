@@ -3,6 +3,8 @@ import path from "node:path";
 
 import { getCopilotDirectory } from "../core/config.js";
 import { normalizeProjectPath } from "../core/project.js";
+import { marsRegistry } from "./mars.js";
+import { applyMarsMeta } from "./orchestrator.js";
 import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown } from "../core/types.js";
 
 export interface CopilotModelCall {
@@ -36,19 +38,37 @@ interface SessionAccumulator {
   apiIds: Set<string>;
   durationSeconds: number;
   tokens: TokenBreakdown;
+  matchKeys: Set<string>;
 }
 
 export const copilotCliParser: Parser = {
   source: "copilot-cli",
   async parse(context: ParserContext): Promise<ParseResult> {
-    const logsDir = path.join(getCopilotDirectory(), "logs");
-    const files = await fs.readdir(logsDir, { withFileTypes: true }).catch(() => []);
-    const logFiles = files.filter((entry) => entry.isFile() && /^process-.*\.log$/.test(entry.name)).map((entry) => path.join(logsDir, entry.name)).sort();
+    const enabledCopilot = (context.sources ?? [])
+      .filter((s) => s.enabled && s.type === "copilot-cli")
+      .map((s) => s.path);
+    const roots = [
+      ...(enabledCopilot.length > 0
+        ? enabledCopilot.map((dir) => ({ dir, isMars: false }))
+        : [{ dir: getCopilotDirectory(), isMars: false }]),
+      ...marsRegistry.copilotRoots.map((dir) => ({ dir, isMars: true })),
+    ];
+    const logFiles: Array<{ path: string; isMars: boolean }> = [];
+    for (const root of roots) {
+      const logsDir = path.join(root.dir, "logs");
+      const files = await fs.readdir(logsDir, { withFileTypes: true }).catch(() => []);
+      for (const entry of files) {
+        if (!entry.isFile() || !/^process-.*\.log$/.test(entry.name)) continue;
+        logFiles.push({ path: path.join(logsDir, entry.name), isMars: root.isMars });
+      }
+    }
+    logFiles.sort((a, b) => a.path.localeCompare(b.path));
 
     const sessionsByKey = new Map<string, Session>();
     const cursorUpdates: Record<string, FileCursor> = {};
 
-    for (const filePath of logFiles) {
+    for (const file of logFiles) {
+      const filePath = file.path;
       const stat = await fs.stat(filePath).catch(() => null);
       if (!stat?.isFile()) {
         continue;
@@ -59,7 +79,7 @@ export const copilotCliParser: Parser = {
         continue;
       }
 
-      const fileSessions = await parseCopilotLogFile(filePath, context.machineId);
+      const fileSessions = await parseCopilotLogFile(filePath, context.machineId, file.isMars);
       for (const session of fileSessions) {
         const key = `${session.source}:${session.id}`;
         const existing = sessionsByKey.get(key);
@@ -111,6 +131,8 @@ function mergeSessions(existing: Session, incoming: Session): Session {
       ...existing.toolBreakdown,
       ...incoming.toolBreakdown,
     },
+    orchestrator: existing.orchestrator ?? incoming.orchestrator,
+    engine: existing.engine ?? incoming.engine,
   };
 }
 
@@ -121,14 +143,14 @@ export function normalizeTokens(call: CopilotModelCall): { input: number; output
   };
 }
 
-async function parseCopilotLogFile(filePath: string, machineId: string): Promise<Session[]> {
+async function parseCopilotLogFile(filePath: string, machineId: string, isMarsRoot: boolean): Promise<Session[]> {
   const content = await fs.readFile(filePath, "utf8").catch(() => "");
   if (!content) {
     return [];
   }
   const fallbackTimestamp = (await fs.stat(filePath).catch(() => null))?.mtime.toISOString() ?? new Date().toISOString();
   const events = parseEvents(content, fallbackTimestamp);
-  return aggregateEvents(events, machineId);
+  return aggregateEvents(events, machineId, isMarsRoot);
 }
 
 function parseEvents(content: string, fallbackTimestamp: string): ParsedEvent[] {
@@ -163,7 +185,7 @@ function parseEvents(content: string, fallbackTimestamp: string): ParsedEvent[] 
   return events;
 }
 
-function aggregateEvents(events: ParsedEvent[], machineId: string): Session[] {
+function aggregateEvents(events: ParsedEvent[], machineId: string, isMarsRoot: boolean): Session[] {
   const grouped = new Map<string, SessionAccumulator>();
 
   for (const event of events) {
@@ -186,6 +208,7 @@ function aggregateEvents(events: ParsedEvent[], machineId: string): Session[] {
           cacheCreation: numberOrZero(event.call.cache_write_tokens),
           cacheRead: numberOrZero(event.call.cache_read_tokens),
         },
+        matchKeys: new Set(getCopilotMatchKeys(event.call)),
       });
       continue;
     }
@@ -199,28 +222,57 @@ function aggregateEvents(events: ParsedEvent[], machineId: string): Session[] {
     existing.tokens.output += tokens.output;
     existing.tokens.cacheCreation += numberOrZero(event.call.cache_write_tokens);
     existing.tokens.cacheRead += numberOrZero(event.call.cache_read_tokens);
+    for (const key of getCopilotMatchKeys(event.call)) {
+      existing.matchKeys.add(key);
+    }
     if (!existing.projectPath) {
       existing.projectPath = inferProjectPath(event.call) ?? existing.projectPath;
     }
   }
 
-  return [...grouped.values()].map((acc) => ({
-    id: acc.id,
-    machineId,
-    source: "copilot-cli",
-    projectPath: acc.projectPath,
-    project: path.basename(normalizeProjectPath(acc.projectPath)) || "other",
-    model: acc.model,
-    createdAt: new Date(acc.createdAt).toISOString(),
-    modifiedAt: new Date(acc.modifiedAt).toISOString(),
-    durationSeconds: acc.durationSeconds,
-    turns: acc.apiIds.size,
-    messageCount: acc.apiIds.size,
-    toolCallCount: 0,
-    tokens: acc.tokens,
-    cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
-    toolBreakdown: {},
-  }));
+  return [...grouped.values()].map((acc) => {
+    let session: Session = {
+      id: acc.id,
+      machineId,
+      source: "copilot-cli",
+      engine: "Copilot CLI",
+      projectPath: acc.projectPath,
+      project: path.basename(normalizeProjectPath(acc.projectPath)) || "other",
+      model: acc.model,
+      createdAt: new Date(acc.createdAt).toISOString(),
+      modifiedAt: new Date(acc.modifiedAt).toISOString(),
+      durationSeconds: acc.durationSeconds,
+      turns: acc.apiIds.size,
+      messageCount: acc.apiIds.size,
+      toolCallCount: 0,
+      tokens: acc.tokens,
+      cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
+      toolBreakdown: {},
+    };
+
+    const marsMeta = resolveCopilotMarsMeta(acc.matchKeys);
+    if (marsMeta) {
+      session = applyMarsMeta(session, marsMeta, "copilot-cli");
+    } else if (isMarsRoot) {
+      console.debug(`[mars] unmatched copilot session: ${acc.id} keys=${[...acc.matchKeys].join(",")}`);
+    }
+
+    return session;
+  });
+}
+
+function getCopilotMatchKeys(call: CopilotModelCall): string[] {
+  const keys = [call.session_id, call.interaction_id, call.copilot_pid, call.api_id]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+  return [...new Set(keys)];
+}
+
+function resolveCopilotMarsMeta(keys: Set<string>) {
+  for (const key of keys) {
+    const matched = marsRegistry.byAgentSessionId.copilotCli.get(key);
+    if (matched) return matched;
+  }
+  return undefined;
 }
 
 function normalizeRecord(raw: Record<string, unknown>, line: string): CopilotModelCall | null {
@@ -280,7 +332,7 @@ function parseInlineRecord(raw: Record<string, unknown>, line: string): CopilotM
 }
 
 function resolveSessionKey(call: CopilotModelCall): string {
-  return call.interaction_id ?? call.session_id ?? call.copilot_pid ?? call.api_id;
+  return call.session_id ?? call.interaction_id ?? call.copilot_pid ?? call.api_id;
 }
 
 function inferProjectPath(value: unknown): string | null {

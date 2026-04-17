@@ -14,8 +14,8 @@ const execFileAsync = promisify(execFile);
  * Also handles .codex/worktrees/NNNN/project-name -> extracts project-name as basename.
  */
 export function normalizeProjectPath(projectPath: string): string {
-  // Normalize double slashes first
-  const cleaned = projectPath.replace(/\/\//g, "/");
+  // Normalize backslashes (Windows) to forward slashes, and collapse double slashes
+  const cleaned = projectPath.replace(/\\/g, "/").replace(/\/\//g, "/");
 
   // Codex worktrees: ~/.codex/worktrees/XXXX/project-name — return project-name as
   // basename. Worktree IDs can be hex (e.g. 62f7), not just numeric.

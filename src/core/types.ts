@@ -1,4 +1,15 @@
-export type Source = "claude-code" | "codex" | "copilot-cli" | "eureka";
+export type Source = "claude-code" | "codex" | "copilot-cli" | "eureka" | "mars";
+
+export type OrchestratorKind = "mars" | "eureka";
+
+export interface OrchestratorInfo {
+  kind: OrchestratorKind;
+  taskTitle?: string;
+  taskId?: string;
+  taskStatus?: string;
+  sessionName?: string;
+  marsSessionId?: string;
+}
 
 export interface TokenBreakdown {
   input: number;
@@ -19,6 +30,8 @@ export interface Session {
   id: string;
   machineId: string;
   source: Source;
+  /** Human-readable engine label, e.g. "Claude Code", "Codex", "Copilot CLI", "Eureka + CC", "Eureka + Codex". */
+  engine?: string;
   projectPath: string;
   project: string;
   summary?: string;
@@ -35,6 +48,7 @@ export interface Session {
   toolBreakdown: Record<string, number>;
   /** Per-model token breakdown from individual API calls. Used for "Cost by Model" aggregation. */
   modelUsage?: Record<string, TokenBreakdown>;
+  orchestrator?: OrchestratorInfo;
 }
 
 export interface FileCursor {
@@ -55,6 +69,9 @@ export interface CursorState {
 
 export interface MachineData {
   machineId: string;
+  /** User-facing friendly name (defaults to os.hostname()). Preferred over `hostname`. */
+  name?: string;
+  /** Legacy field retained for backwards compatibility with older data files. */
   hostname: string;
   os: string;
   lastUpdatedAt: string;
@@ -68,6 +85,7 @@ export interface PrivacyConfig {
     includeFirstPrompt: boolean;
     includeProjectPath: boolean;
     includeProjectName: boolean;
+    includeOrchestratorMetadata: boolean;
   };
 }
 
@@ -86,20 +104,38 @@ export interface PricingConfig {
   updateIntervalHours: number;
 }
 
+export interface SourceEntry {
+  id: string;
+  type: Source;
+  path: string;
+  enabled: boolean;
+  autoDetected: boolean;
+  label?: string;
+}
+
 export interface GitHubConfig {
   repo: string;
   branch: string;
 }
 
+export interface MachineConfig {
+  /** Optional user-defined friendly name for this machine. Defaults to os.hostname(). */
+  name?: string;
+}
+
 export interface AppConfig extends ProjectConfig {
   machineId?: string;
+  machine?: MachineConfig;
   github: GitHubConfig;
   privacy: PrivacyConfig;
   pricing: PricingConfig;
+  sources: SourceEntry[];
 }
 
 export interface MachineInfo {
   machineId: string;
+  /** User-facing friendly name. Defaults to hostname. */
+  name: string;
   hostname: string;
   sessionCount: number;
   lastUpdatedAt: string;
@@ -110,6 +146,7 @@ export interface DataFilters {
   months?: number;
   project?: string;
   machine?: string;
+  orchestrator?: OrchestratorKind | "none";
 }
 
 export interface BreakdownItem {
@@ -195,6 +232,7 @@ export interface ParseResult {
 export interface ParserContext {
   machineId: string;
   existingCursor: CursorState;
+  sources: SourceEntry[];
 }
 
 export interface Parser {
