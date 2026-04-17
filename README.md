@@ -1,3 +1,2 @@
 # tokmon
-
-Monitor your AI coding agent token usage and costs.
+Token usage monitor for AI coding agents — track costs, review sessions, optimize workflows.

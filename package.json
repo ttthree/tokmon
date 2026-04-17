@@ -1,0 +1,51 @@
+{
+  "name": "tokmon",
+  "version": "0.1.0",
+  "description": "Token usage monitor for AI coding agents — track costs, review sessions, optimize workflows",
+  "type": "module",
+  "bin": {
+    "tokmon": "dist/src/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && vite build",
+    "build:web": "vite build",
+    "dev": "tsx src/cli/index.ts",
+    "test": "npm run test:unit",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.19",
+    "commander": "^13.1.0",
+    "express": "^5.1.0",
+    "minimatch": "^10.0.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "recharts": "^2.15.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.0",
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.5.2",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "tailwindcss": "^4.1.13",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5",
+    "vitest": "^3.2.4"
+  }
+}
