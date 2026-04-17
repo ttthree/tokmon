@@ -28,6 +28,17 @@ interface CodexTokenUsage {
   total_tokens?: number;
 }
 
+interface CodexRolloutStats {
+  usage?: CodexTokenUsage;
+  turns: number;
+  messageCount: number;
+  toolCallCount: number;
+  toolBreakdown: Record<string, number>;
+  firstEventAt?: number;
+  lastEventAt?: number;
+  firstPrompt?: string;
+}
+
 export const codexParser: Parser = {
   source: "codex",
   async parse(context: ParserContext): Promise<ParseResult> {
@@ -59,9 +70,9 @@ export const codexParser: Parser = {
         [lastUpdatedAt],
       );
 
-      // Build token map from session files for threads that need it
-      const tokenMap = await buildTokenMap(codexDir, rows.map((r) => r.id));
-      const sessions = rows.map((row) => mapCodexThread(row, context.machineId, tokenMap.get(row.id)));
+      // Build rollout stats (tokens + turns/tools/duration) from session files
+      const statsMap = await buildRolloutStatsMap(codexDir, rows.map((r) => r.id));
+      const sessions = rows.map((row) => mapCodexThread(row, context.machineId, statsMap.get(row.id)));
       const maxUpdated = await db.get<{ maxUpdatedAt: number | null }>(`SELECT MAX(updated_at) AS maxUpdatedAt FROM threads`);
 
       return {
@@ -90,9 +101,9 @@ export const codexParser: Parser = {
   },
 };
 
-async function buildTokenMap(codexDir: string, threadIds: string[]): Promise<Map<string, CodexTokenUsage>> {
+async function buildRolloutStatsMap(codexDir: string, threadIds: string[]): Promise<Map<string, CodexRolloutStats>> {
   const sessionsDir = path.join(codexDir, "sessions");
-  const map = new Map<string, CodexTokenUsage>();
+  const map = new Map<string, CodexRolloutStats>();
   const needed = new Set(threadIds);
   if (needed.size === 0) return map;
 
@@ -105,9 +116,9 @@ async function buildTokenMap(codexDir: string, threadIds: string[]): Promise<Map
       const threadId = match[1];
       if (!needed.has(threadId)) continue;
 
-      const usage = await readLastTokenUsage(file);
-      if (usage) {
-        map.set(threadId, usage);
+      const stats = await readRolloutStats(file);
+      if (stats) {
+        map.set(threadId, stats);
       }
     }
   } catch {
@@ -117,47 +128,88 @@ async function buildTokenMap(codexDir: string, threadIds: string[]): Promise<Map
   return map;
 }
 
-async function readLastTokenUsage(filePath: string): Promise<CodexTokenUsage | null> {
+async function readRolloutStats(filePath: string): Promise<CodexRolloutStats | null> {
   try {
-    const stat = await fs.stat(filePath);
-    const fileSize = Number(stat.size);
-    const handle = await fs.open(filePath, "r");
-    try {
-      // Search backwards in 64KB chunks for the last total_token_usage
-      const CHUNK = 64 * 1024;
-      let offset = Math.max(0, fileSize - CHUNK);
-      let leftover = "";
+    const raw = await fs.readFile(filePath, "utf8");
+    const stats: CodexRolloutStats = {
+      turns: 0,
+      messageCount: 0,
+      toolCallCount: 0,
+      toolBreakdown: {},
+    };
 
-      while (offset >= 0) {
-        const readSize = Math.min(CHUNK, fileSize - offset);
-        const buf = Buffer.alloc(readSize);
-        await handle.read(buf, 0, readSize, offset);
-        const chunk = buf.toString("utf8") + leftover;
-        const lines = chunk.split(/\r?\n/);
-        leftover = lines[0];
+    // Track function_call → function_call_output pairing by call_id.
+    // Codex re-emits function_call entries across turns; count each unique call_id once.
+    const seenCallIds = new Set<string>();
 
-        for (let i = lines.length - 1; i >= 1; i--) {
-          const line = lines[i];
-          if (!line.includes("total_token_usage")) continue;
-          try {
-            const parsed = JSON.parse(line) as { payload?: { info?: { total_token_usage?: CodexTokenUsage } } };
-            const usage = parsed?.payload?.info?.total_token_usage;
-            if (usage && typeof usage.input_tokens === "number") {
-              return usage;
-            }
-          } catch { /* malformed */ }
-        }
+    for (const line of raw.split(/\r?\n/)) {
+      if (!line.trim()) continue;
+      let parsed: CodexRolloutLine;
+      try {
+        parsed = JSON.parse(line) as CodexRolloutLine;
+      } catch { continue; }
 
-        if (offset === 0) break;
-        offset = Math.max(0, offset - CHUNK);
+      const ts = parsed.timestamp ? Date.parse(parsed.timestamp) : NaN;
+      if (Number.isFinite(ts)) {
+        if (stats.firstEventAt === undefined) stats.firstEventAt = ts;
+        stats.lastEventAt = ts;
       }
-    } finally {
-      await handle.close();
+
+      const type = parsed.type;
+      const payload = parsed.payload as CodexRolloutPayload | undefined;
+      if (!payload) continue;
+
+      if (type === "event_msg") {
+        if (payload.type === "token_count") {
+          const usage = payload.info?.total_token_usage;
+          if (usage && typeof usage.input_tokens === "number") {
+            stats.usage = usage;
+          }
+        } else if (payload.type === "user_message" && typeof payload.message === "string") {
+          stats.turns += 1;
+          stats.messageCount += 1;
+          if (!stats.firstPrompt) {
+            stats.firstPrompt = truncatePrompt(payload.message);
+          }
+        } else if (payload.type === "agent_message" && typeof payload.message === "string") {
+          stats.messageCount += 1;
+        }
+      } else if (type === "response_item") {
+        if (payload.type === "function_call") {
+          const callId = typeof payload.call_id === "string" ? payload.call_id : undefined;
+          if (callId && seenCallIds.has(callId)) continue;
+          if (callId) seenCallIds.add(callId);
+          const name = typeof payload.name === "string" ? payload.name : "tool";
+          stats.toolCallCount += 1;
+          stats.toolBreakdown[name] = (stats.toolBreakdown[name] ?? 0) + 1;
+        }
+      }
     }
+
+    return stats;
   } catch {
-    // file not readable
+    return null;
   }
-  return null;
+}
+
+function truncatePrompt(value: string, max = 500): string {
+  const cleaned = value.trim();
+  if (cleaned.length <= max) return cleaned;
+  return cleaned.slice(0, max) + "…";
+}
+
+interface CodexRolloutLine {
+  timestamp?: string;
+  type?: string;
+  payload?: CodexRolloutPayload;
+}
+
+interface CodexRolloutPayload {
+  type?: string;
+  message?: string;
+  info?: { total_token_usage?: CodexTokenUsage };
+  name?: string;
+  call_id?: string;
 }
 
 async function walkJsonlFiles(dir: string): Promise<string[]> {
@@ -196,7 +248,7 @@ async function findStateDatabase(codexDir: string): Promise<string | null> {
   }
 }
 
-function mapCodexThread(row: CodexThreadRow, machineId: string, usage?: CodexTokenUsage): Session {
+function mapCodexThread(row: CodexThreadRow, machineId: string, stats?: CodexRolloutStats): Session {
   const projectPath = row.cwd ?? "";
   const createdAt = new Date(row.created_at * 1000).toISOString();
   const modifiedAt = new Date(row.updated_at * 1000).toISOString();
@@ -209,6 +261,7 @@ function mapCodexThread(row: CodexThreadRow, machineId: string, usage?: CodexTok
       ? `codex (${row.model_provider})`
       : "unknown";
 
+  const usage = stats?.usage;
   const tokens: TokenBreakdown = usage
     ? {
         input: numberOrZero(usage.input_tokens) - numberOrZero(usage.cached_input_tokens),
@@ -218,6 +271,12 @@ function mapCodexThread(row: CodexThreadRow, machineId: string, usage?: CodexTok
       }
     : { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
 
+  // Prefer active event span from rollout — SQLite updated_at can be many hours
+  // after the last event (threads stay alive as UI tabs), which inflates duration.
+  const durationSeconds = stats?.firstEventAt !== undefined && stats?.lastEventAt !== undefined
+    ? Math.max(0, Math.round((stats.lastEventAt - stats.firstEventAt) / 1000))
+    : Math.max(0, row.updated_at - row.created_at);
+
   return {
     id: row.id,
     machineId,
@@ -225,16 +284,17 @@ function mapCodexThread(row: CodexThreadRow, machineId: string, usage?: CodexTok
     projectPath,
     project: path.basename(normalizeProjectPath(projectPath)) || "other",
     summary: row.title ?? undefined,
+    firstPrompt: stats?.firstPrompt,
     model,
     createdAt,
     modifiedAt,
-    durationSeconds: Math.max(0, row.updated_at - row.created_at),
-    turns: 0,
-    messageCount: 0,
-    toolCallCount: 0,
+    durationSeconds,
+    turns: stats?.turns ?? 0,
+    messageCount: stats?.messageCount ?? 0,
+    toolCallCount: stats?.toolCallCount ?? 0,
     tokens,
     cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
-    toolBreakdown: {},
+    toolBreakdown: stats?.toolBreakdown ?? {},
   };
 }
 

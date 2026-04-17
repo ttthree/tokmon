@@ -104,6 +104,108 @@ export async function parseEurekaMessagesDetailed(filePath: string): Promise<Par
   return { messages, hadParseErrors };
 }
 
+export async function parseCodexMessagesDetailed(filePath: string): Promise<ParsedMessagesResult> {
+  const raw = await fs.readFile(filePath, "utf8");
+  const lines = raw.split(/\r?\n/).filter((line) => line.trim());
+  const messages: ConversationMessage[] = [];
+  let hadParseErrors = false;
+
+  // Track function_call name by call_id so we can label the corresponding
+  // function_call_output. De-duplicate function_call entries that codex
+  // re-emits across turns with the same call_id.
+  const pendingCalls = new Map<string, { name: string }>();
+  const seenCallIds = new Set<string>();
+
+  for (const line of lines) {
+    let parsed: CodexRolloutLine;
+    try {
+      parsed = JSON.parse(line) as CodexRolloutLine;
+    } catch {
+      hadParseErrors = true;
+      continue;
+    }
+
+    const timestamp = parsed.timestamp;
+    const payload = parsed.payload;
+    if (!payload) continue;
+
+    if (parsed.type === "event_msg") {
+      if (payload.type === "user_message" && typeof payload.message === "string") {
+        const text = payload.message.trim();
+        if (text) {
+          messages.push({ role: "user", blocks: [{ type: "text", text }], timestamp });
+        }
+      } else if (payload.type === "agent_message" && typeof payload.message === "string") {
+        const text = payload.message.trim();
+        if (text) {
+          messages.push({ role: "assistant", blocks: [{ type: "text", text }], timestamp });
+        }
+      } else if (payload.type === "agent_reasoning" && typeof payload.text === "string") {
+        const text = payload.text.trim();
+        if (text) {
+          messages.push({
+            role: "assistant",
+            blocks: [{ type: "thinking", text: truncate(text, THINKING_TEXT_LIMIT) }],
+            timestamp,
+          });
+        }
+      }
+    } else if (parsed.type === "response_item") {
+      if (payload.type === "function_call") {
+        const callId = typeof payload.call_id === "string" ? payload.call_id : undefined;
+        if (!callId || seenCallIds.has(callId)) continue;
+        seenCallIds.add(callId);
+        const name = typeof payload.name === "string" ? payload.name : "tool";
+        const args = typeof payload.arguments === "string" ? payload.arguments : stringifyValue(payload.arguments);
+        pendingCalls.set(callId, { name });
+        messages.push({
+          role: "assistant",
+          blocks: [{
+            type: "tool_use",
+            name,
+            input: truncate(args, TOOL_TEXT_LIMIT),
+            toolUseId: callId,
+          }],
+          timestamp,
+        });
+      } else if (payload.type === "function_call_output") {
+        const callId = typeof payload.call_id === "string" ? payload.call_id : undefined;
+        const call = callId ? pendingCalls.get(callId) : undefined;
+        const output = typeof payload.output === "string"
+          ? payload.output
+          : stringifyValue(payload.output);
+        messages.push({
+          role: "assistant",
+          blocks: [{
+            type: "tool_result",
+            toolUseId: callId,
+            name: call?.name,
+            output: truncate(output, TOOL_TEXT_LIMIT),
+            isError: false,
+          }],
+          timestamp,
+        });
+      }
+    }
+  }
+
+  return { messages, hadParseErrors };
+}
+
+interface CodexRolloutLine {
+  timestamp?: string;
+  type?: string;
+  payload?: {
+    type?: string;
+    message?: string;
+    text?: string;
+    name?: string;
+    call_id?: string;
+    arguments?: unknown;
+    output?: unknown;
+  };
+}
+
 function normalizeEurekaLine(line: EurekaLine): ConversationMessage | null {
   const timestamp = line.timestamp ? new Date(line.timestamp).toISOString() : undefined;
 

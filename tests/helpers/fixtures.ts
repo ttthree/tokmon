@@ -126,7 +126,7 @@ export async function createCopilotFixture(testHome: string, fileName = "process
   );
 }
 
-export async function createCodexFixture(testHome: string): Promise<void> {
+export async function createCodexFixture(testHome: string, options?: { includeRollout?: boolean }): Promise<void> {
   const codexDir = path.join(testHome, ".codex");
   await fs.mkdir(codexDir, { recursive: true });
   const dbPath = path.join(codexDir, "state_1.sqlite");
@@ -159,6 +159,33 @@ export async function createCodexFixture(testHome: string): Promise<void> {
     ],
   );
   await db.close();
+
+  if (options?.includeRollout) {
+    const rolloutDir = path.join(codexDir, "sessions", "2026", "04", "05");
+    await fs.mkdir(rolloutDir, { recursive: true });
+    const lines = [
+      JSON.stringify({ timestamp: "2026-04-05T10:00:10.000Z", type: "event_msg", payload: { type: "user_message", message: "Review the auth flow and list issues." } }),
+      JSON.stringify({ timestamp: "2026-04-05T10:00:12.000Z", type: "response_item", payload: { type: "function_call", call_id: "call-1", name: "exec_command", arguments: "{\"cmd\":\"ls\"}" } }),
+      JSON.stringify({ timestamp: "2026-04-05T10:00:13.000Z", type: "response_item", payload: { type: "function_call_output", call_id: "call-1", output: "README.md\nsrc/" } }),
+      // Duplicate function_call entry that codex sometimes re-emits — should be de-duped.
+      JSON.stringify({ timestamp: "2026-04-05T10:00:14.000Z", type: "response_item", payload: { type: "function_call", call_id: "call-1", name: "exec_command", arguments: "{}" } }),
+      JSON.stringify({ timestamp: "2026-04-05T10:00:20.000Z", type: "event_msg", payload: { type: "agent_message", message: "Done." } }),
+      JSON.stringify({
+        timestamp: "2026-04-05T10:00:21.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: { total_token_usage: { input_tokens: 1200, cached_input_tokens: 400, output_tokens: 80, reasoning_output_tokens: 20, total_tokens: 1300 } },
+        },
+      }),
+      "",
+    ];
+    await fs.writeFile(
+      path.join(rolloutDir, "rollout-2026-04-05T10-00-10-codex-session-1.jsonl"),
+      lines.join("\n"),
+      "utf8",
+    );
+  }
 }
 
 export async function createEurekaCodexFixture(testHome: string, options?: {

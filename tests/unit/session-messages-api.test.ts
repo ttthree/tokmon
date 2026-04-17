@@ -36,15 +36,18 @@ describe("session messages api", () => {
     expect(response.body.messages).toHaveLength(3);
   });
 
-  it("returns supported false for unsupported sources", async () => {
+  it("returns parsed messages for a codex session with a rollout", async () => {
     const machineId = await setupCollectedHome(async (home) => {
-      await createCodexFixture(home);
+      await createCodexFixture(home, { includeRollout: true });
     });
 
     const response = await requestJson(`/api/session/${machineId}/codex/codex-session-1/messages`);
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ sessionId: "codex-session-1", source: "codex", supported: false, messages: [] });
+    expect(response.body.supported).toBe(true);
+    expect(response.body.sessionId).toBe("codex-session-1");
+    expect(response.body.source).toBe("codex");
+    expect(response.body.messages.length).toBeGreaterThan(0);
   });
 
   it("returns an error payload when the source file is missing", async () => {

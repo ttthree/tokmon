@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { aggregateData } from "../core/aggregate.js";
 import { loadMachineData } from "../core/data.js";
 import { loadMachineDataFromPathSafe, getRemoteMachinesDirectory } from "../core/config.js";
-import { parseClaudeCodeMessagesDetailed, parseEurekaMessagesDetailed } from "../core/message-parser.js";
+import { parseClaudeCodeMessagesDetailed, parseCodexMessagesDetailed, parseEurekaMessagesDetailed } from "../core/message-parser.js";
 import { getMachineId } from "../core/machine.js";
 import type { SessionMessages } from "../core/messages.js";
 import { resolveSourcePath } from "../core/source-resolver.js";
@@ -84,7 +84,11 @@ export function createApp(): express.Express {
         return;
       }
 
-      const parser = session.source === "eureka" ? parseEurekaMessagesDetailed : parseClaudeCodeMessagesDetailed;
+      const parser = session.source === "eureka"
+        ? parseEurekaMessagesDetailed
+        : session.source === "codex"
+          ? parseCodexMessagesDetailed
+          : parseClaudeCodeMessagesDetailed;
       const result = await parser(sourcePath);
       const payload: SessionMessages = {
         sessionId: session.id,

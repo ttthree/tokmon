@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { getClaudeDirectory } from "./config.js";
+import { getClaudeDirectory, getCodexDirectory } from "./config.js";
 import type { Session } from "./types.js";
 
 export async function resolveSourcePath(session: Session): Promise<string | null> {
@@ -12,6 +12,10 @@ export async function resolveSourcePath(session: Session): Promise<string | null
 
   if (session.source === "eureka") {
     return resolveEurekaPath(session);
+  }
+
+  if (session.source === "codex") {
+    return resolveCodexPath(session);
   }
 
   return null;
@@ -41,6 +45,31 @@ async function resolveEurekaPath(session: Session): Promise<string | null> {
     }
   } catch {
     // workspaces dir doesn't exist
+  }
+  return null;
+}
+
+async function resolveCodexPath(session: Session): Promise<string | null> {
+  // Codex rollout files: ~/.codex/sessions/YYYY/MM/DD/rollout-YYYY-MM-DDTHH-MM-SS-{threadId}.jsonl
+  const sessionsDir = path.join(getCodexDirectory(), "sessions");
+  try {
+    const match = await findCodexRollout(sessionsDir, session.id);
+    return match;
+  } catch {
+    return null;
+  }
+}
+
+async function findCodexRollout(dir: string, sessionId: string): Promise<string | null> {
+  const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      const nested = await findCodexRollout(full, sessionId);
+      if (nested) return nested;
+    } else if (entry.isFile() && entry.name.endsWith(`-${sessionId}.jsonl`)) {
+      return full;
+    }
   }
   return null;
 }
