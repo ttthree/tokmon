@@ -9,6 +9,7 @@ import { IconDropdown } from "./components/IconDropdown.js";
 import { ProjectActivityTable } from "./components/ProjectActivityTable.js";
 import { ProjectDetailCard } from "./components/ProjectDetailCard.js";
 import { SessionDetailModal } from "./components/SessionDetailModal.js";
+import { LogsTab, type LogEntry } from "./components/LogsTab.js";
 import { SessionTable } from "./components/SessionTable.js";
 import { SettingsTab } from "./components/SettingsTab.js";
 import { StatCard } from "./components/StatCard.js";
@@ -30,7 +31,57 @@ const SOURCE_LABELS: Record<Source, string> = {
 };
 
 type AgentFilter = Source | "mars" | "all";
-type Tab = "overview" | "projects" | "sessions" | "settings";
+type Tab = "overview" | "projects" | "sessions" | "logs" | "settings";
+
+const LOGS_STORAGE_KEY = "tokmon:change-log:v1";
+const LOGS_MAX_ENTRIES = 200;
+
+interface LogSnapshot {
+  sessions: number;
+  turns: number;
+  cost: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreation: number;
+  cacheRead: number;
+}
+
+function totalsToSnapshot(totals: DataResponse["totals"]): LogSnapshot {
+  return {
+    sessions: totals.sessions,
+    turns: totals.turns,
+    cost: totals.cost.total,
+    inputTokens: totals.tokens.input,
+    outputTokens: totals.tokens.output,
+    cacheCreation: totals.tokens.cacheCreation,
+    cacheRead: totals.tokens.cacheRead,
+  };
+}
+
+function diffSnapshot(prev: LogSnapshot, next: LogSnapshot) {
+  return {
+    sessions: next.sessions - prev.sessions,
+    turns: next.turns - prev.turns,
+    cost: next.cost - prev.cost,
+    tokens: {
+      input: next.inputTokens - prev.inputTokens,
+      output: next.outputTokens - prev.outputTokens,
+      cacheCreation: next.cacheCreation - prev.cacheCreation,
+      cacheRead: next.cacheRead - prev.cacheRead,
+    },
+  };
+}
+
+function isMeaningfulDelta(delta: ReturnType<typeof diffSnapshot>): boolean {
+  if (delta.sessions !== 0) return true;
+  if (delta.turns !== 0) return true;
+  if (Math.abs(delta.cost) >= 0.0005) return true;
+  if (delta.tokens.input !== 0) return true;
+  if (delta.tokens.output !== 0) return true;
+  if (delta.tokens.cacheCreation !== 0) return true;
+  if (delta.tokens.cacheRead !== 0) return true;
+  return false;
+}
 
 const AGENT_FILTER_LABELS: Record<Exclude<AgentFilter, "all">, string> = {
   "claude-code": "Claude Code",
@@ -60,6 +111,36 @@ export function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const collectingRef = useRef(false);
   const selectedSessionTriggerRef = useRef<HTMLElement | null>(null);
+  // Snapshot of the last seen totals; used to compute deltas for the Logs tab.
+  const lastSnapshotRef = useRef<LogSnapshot | null>(null);
+  const [logEntries, setLogEntries] = useState<LogEntry[]>(() => loadStoredLogs());
+
+  useEffect(() => {
+    try {
+      const trimmed = logEntries.slice(-LOGS_MAX_ENTRIES);
+      window.localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(trimmed));
+    } catch {
+      // localStorage may be unavailable (private mode); fail silently.
+    }
+  }, [logEntries]);
+
+  const recordSnapshot = useCallback(
+    (totals: DataResponse["totals"], trigger: LogEntry["trigger"]) => {
+      const snapshot = totalsToSnapshot(totals);
+      const previous = lastSnapshotRef.current;
+      lastSnapshotRef.current = snapshot;
+      if (!previous) return; // First observation — nothing to diff against.
+      const delta = diffSnapshot(previous, snapshot);
+      if (!isMeaningfulDelta(delta)) return;
+      const entry: LogEntry = { at: new Date().toISOString(), trigger, delta };
+      setLogEntries((current) => {
+        const next = [...current, entry];
+        if (next.length > LOGS_MAX_ENTRIES) next.splice(0, next.length - LOGS_MAX_ENTRIES);
+        return next;
+      });
+    },
+    [],
+  );
 
   const buildParams = useCallback(() => {
     const params = new URLSearchParams();
@@ -72,7 +153,7 @@ export function App() {
   // Shared refresh: run collect, reload data, bump token for animation.
   // Serialized via collectingRef so rapid clicks / overlapping polls
   // don't pile up.
-  const refreshNow = useCallback(async () => {
+  const refreshNow = useCallback(async (trigger: LogEntry["trigger"] = "manual") => {
     if (collectingRef.current) return;
     collectingRef.current = true;
     setIsRefreshing(true);
@@ -82,13 +163,14 @@ export function App() {
       setData(response);
       setError(null);
       setRefreshToken((token) => token + 1);
+      recordSnapshot(response.totals, trigger);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       collectingRef.current = false;
       setIsRefreshing(false);
     }
-  }, [buildParams]);
+  }, [buildParams, recordSnapshot]);
 
   // Identify the local machine so SessionTable can disable rows for sessions
   // collected on remote machines (their source files aren't reachable here).
@@ -117,6 +199,7 @@ export function App() {
         if (cancelled) return;
         setData(response);
         setError(null);
+        recordSnapshot(response.totals, "initial");
       })
       .catch((loadError: Error) => {
         if (cancelled) return;
@@ -125,7 +208,7 @@ export function App() {
 
     const intervalId = window.setInterval(() => {
       if (cancelled) return;
-      void refreshNow();
+      void refreshNow("poll");
     }, 30_000);
 
     return () => {
@@ -304,7 +387,7 @@ export function App() {
             />
             <TimeFilter value={range} onChange={setRange} />
             <span aria-hidden className="hidden sm:block h-5 w-px mx-1" style={{ background: "var(--border)" }} />
-            <RefreshButton isRefreshing={isRefreshing} onClick={() => void refreshNow()} />
+            <RefreshButton isRefreshing={isRefreshing} onClick={() => void refreshNow("manual")} />
             <ThemePicker />
           </div>
         </header>
@@ -495,6 +578,12 @@ export function App() {
               }}
             />
           </section>
+        ) : tab === "logs" ? (
+          <LogsTab
+            entries={logEntries}
+            formatCurrency={formatCurrency}
+            onClear={() => setLogEntries([])}
+          />
         ) : (
           <SettingsTab />
         )}
@@ -735,11 +824,43 @@ function getSessionKey(session: Pick<Session, "machineId" | "source" | "id">): s
   return `${session.machineId}:${session.source}:${session.id}`;
 }
 
+function loadStoredLogs(): LogEntry[] {
+  try {
+    const raw = window.localStorage.getItem(LOGS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isLogEntry).slice(-LOGS_MAX_ENTRIES);
+  } catch {
+    return [];
+  }
+}
+
+function isLogEntry(value: unknown): value is LogEntry {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Partial<LogEntry>;
+  if (typeof v.at !== "string") return false;
+  if (v.trigger !== "initial" && v.trigger !== "poll" && v.trigger !== "manual") return false;
+  const d = v.delta as LogEntry["delta"] | undefined;
+  if (!d || typeof d !== "object") return false;
+  if (typeof d.sessions !== "number") return false;
+  if (typeof d.turns !== "number") return false;
+  if (typeof d.cost !== "number") return false;
+  if (!d.tokens || typeof d.tokens !== "object") return false;
+  return (
+    typeof d.tokens.input === "number" &&
+    typeof d.tokens.output === "number" &&
+    typeof d.tokens.cacheCreation === "number" &&
+    typeof d.tokens.cacheRead === "number"
+  );
+}
+
 function TabBar({ value, onChange }: { value: Tab; onChange: (v: Tab) => void }) {
   const tabs: Array<{ id: Tab; label: string }> = [
     { id: "overview", label: "Overview" },
     { id: "projects", label: "Projects" },
     { id: "sessions", label: "Sessions" },
+    { id: "logs", label: "Logs" },
     { id: "settings", label: "Settings" },
   ];
   return (
