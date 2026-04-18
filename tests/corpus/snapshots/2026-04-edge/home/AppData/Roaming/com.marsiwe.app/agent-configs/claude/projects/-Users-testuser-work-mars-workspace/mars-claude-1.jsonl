@@ -1,0 +1,2 @@
+{"type":"user","sessionId":"mars-claude-1","timestamp":"2026-04-18T03:00:00.000Z","cwd":"/Users/testuser/work/mars-workspace","message":{"role":"user","content":[{"type":"text","text":"mars task one"}]}}
+{"type":"assistant","sessionId":"mars-claude-1","timestamp":"2026-04-18T03:01:00.000Z","cwd":"/Users/testuser/work/mars-workspace","message":{"role":"assistant","model":"claude-sonnet-4-20250514","content":[{"type":"text","text":"reply from claude-sonnet-4-20250514"}],"usage":{"input_tokens":70,"output_tokens":9,"cache_creation_input_tokens":0,"cache_read_input_tokens":15}}}

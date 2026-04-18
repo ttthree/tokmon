@@ -1,0 +1,5 @@
+{"id":"260213-sleek-rainbow","engine":"codex","tokenUsage":{"inputTokens":28494,"outputTokens":121,"totalTokens":28615,"contextTokens":0,"costUsd":0,"contextWindow":258400,"cacheReadTokens":11520,"cacheCreationTokens":0},"messageCount":4,"userMessageCount":2,"model":"gpt-5.3-codex","createdAt":1770969805988,"sdkCwd":"/Users/testuser/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f","workingDirectory":"~/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f","name":"session-9"}
+{"type":"user","timestamp":1770969768099}
+{"type":"assistant","timestamp":1770969772253}
+{"type":"user","timestamp":1770969805988}
+{"type":"assistant","timestamp":1770969808774}

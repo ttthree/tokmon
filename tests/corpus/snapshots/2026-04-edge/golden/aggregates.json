@@ -1,0 +1,590 @@
+{
+  "totals": {
+    "sessions": 10,
+    "turns": 14,
+    "durationSeconds": 430,
+    "tokens": {
+      "input": 667,
+      "output": 114,
+      "cacheCreation": 0,
+      "cacheRead": 194
+    },
+    "cost": {
+      "input": 0.002001,
+      "output": 0.00171,
+      "cacheCreation": 0,
+      "cacheRead": 0.0000582,
+      "total": 0.0037692
+    },
+    "cacheHitRate": 0.225319396051
+  },
+  "perSource": [
+    {
+      "key": "eureka",
+      "label": "eureka",
+      "cost": 0.0019563,
+      "sessions": 4
+    },
+    {
+      "key": "claude-code",
+      "label": "claude-code",
+      "cost": 0.0018129,
+      "sessions": 5
+    },
+    {
+      "key": "codex",
+      "label": "codex",
+      "cost": 0,
+      "sessions": 1
+    }
+  ],
+  "perModel": [
+    {
+      "key": "claude-sonnet-4-20250514",
+      "label": "claude-sonnet-4-20250514",
+      "cost": 0.0023508,
+      "sessions": 6
+    },
+    {
+      "key": "gpt-5.4",
+      "label": "gpt-5.4",
+      "cost": 0.000765,
+      "sessions": 1
+    },
+    {
+      "key": "claude-opus-4-6-1m",
+      "label": "claude-opus-4-6-1m",
+      "cost": 0.000441,
+      "sessions": 1
+    },
+    {
+      "key": "claude-haiku-4-5-20251001",
+      "label": "claude-haiku-4-5-20251001",
+      "cost": 0.0002124,
+      "sessions": 1
+    },
+    {
+      "key": "gpt-4.1",
+      "label": "gpt-4.1",
+      "cost": 0,
+      "sessions": 1
+    }
+  ],
+  "perMachine": [
+    {
+      "key": "machine",
+      "label": "machine",
+      "cost": 0.0037692,
+      "sessions": 10
+    }
+  ],
+  "perMarsTask": [
+    {
+      "key": "__untagged__",
+      "label": "__untagged__",
+      "cost": 0.0029787,
+      "sessions": 8
+    },
+    {
+      "key": "Edge Mars Task",
+      "label": "Edge Mars Task",
+      "cost": 0.0007905,
+      "sessions": 2
+    }
+  ],
+  "perDay": [
+    {
+      "date": "2026-04-18",
+      "cost": 0.0037692,
+      "sessions": 10,
+      "tokens": 975
+    }
+  ],
+  "projects": [
+    {
+      "projectKey": "eureka-cc",
+      "projectLabel": "eureka-cc",
+      "totalCost": 0.000822,
+      "totalTokens": 190,
+      "sessionCount": 1,
+      "totalTurns": 2,
+      "avgCostPerSession": 0.000822,
+      "avgTurnsPerSession": 2,
+      "activeDays": 1,
+      "topSource": "eureka",
+      "topModel": "claude-sonnet-4-20250514",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 120,
+        "output": 30,
+        "cacheCreation": 0,
+        "cacheRead": 40
+      },
+      "costBreakdown": {
+        "input": 0.00036,
+        "output": 0.00045,
+        "cacheCreation": 0,
+        "cacheRead": 0.000012,
+        "total": 0.000822
+      },
+      "sourceBreakdown": [
+        {
+          "key": "eureka",
+          "label": "eureka",
+          "cost": 0.000822,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-sonnet-4-20250514",
+          "label": "claude-sonnet-4-20250514",
+          "cost": 0.000822,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.000822,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "mars-workspace",
+      "projectLabel": "mars-workspace",
+      "totalCost": 0.0007905,
+      "totalTokens": 215,
+      "sessionCount": 2,
+      "totalTurns": 2,
+      "avgCostPerSession": 0.00039525,
+      "avgTurnsPerSession": 1,
+      "activeDays": 1,
+      "topSource": "claude-code",
+      "topModel": "claude-opus-4-6-1m",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 160,
+        "output": 20,
+        "cacheCreation": 0,
+        "cacheRead": 35
+      },
+      "costBreakdown": {
+        "input": 0.00048,
+        "output": 0.0003,
+        "cacheCreation": 0,
+        "cacheRead": 0.0000105,
+        "total": 0.0007905
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 0.0007905,
+          "sessions": 2
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-opus-4-6-1m",
+          "label": "claude-opus-4-6-1m",
+          "cost": 0.000441,
+          "sessions": 1
+        },
+        {
+          "key": "claude-sonnet-4-20250514",
+          "label": "claude-sonnet-4-20250514",
+          "cost": 0.0003495,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.0007905,
+          "sessions": 2
+        }
+      ]
+    },
+    {
+      "projectKey": "eureka-codex",
+      "projectLabel": "eureka-codex",
+      "totalCost": 0.000765,
+      "totalTokens": 220,
+      "sessionCount": 1,
+      "totalTurns": 2,
+      "avgCostPerSession": 0.000765,
+      "avgTurnsPerSession": 2,
+      "activeDays": 1,
+      "topSource": "eureka",
+      "topModel": "gpt-5.4",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 150,
+        "output": 20,
+        "cacheCreation": 0,
+        "cacheRead": 50
+      },
+      "costBreakdown": {
+        "input": 0.00045,
+        "output": 0.0003,
+        "cacheCreation": 0,
+        "cacheRead": 0.000015,
+        "total": 0.000765
+      },
+      "sourceBreakdown": [
+        {
+          "key": "eureka",
+          "label": "eureka",
+          "cost": 0.000765,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "gpt-5.4",
+          "label": "gpt-5.4",
+          "cost": 0.000765,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.000765,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "plain",
+      "projectLabel": "plain",
+      "totalCost": 0.000615,
+      "totalTokens": 170,
+      "sessionCount": 1,
+      "totalTurns": 1,
+      "avgCostPerSession": 0.000615,
+      "avgTurnsPerSession": 1,
+      "activeDays": 1,
+      "topSource": "claude-code",
+      "topModel": "claude-sonnet-4-20250514",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 100,
+        "output": 20,
+        "cacheCreation": 0,
+        "cacheRead": 50
+      },
+      "costBreakdown": {
+        "input": 0.0003,
+        "output": 0.0003,
+        "cacheCreation": 0,
+        "cacheRead": 0.000015,
+        "total": 0.000615
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 0.000615,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-sonnet-4-20250514",
+          "label": "claude-sonnet-4-20250514",
+          "cost": 0.000615,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.000615,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "subagent",
+      "projectLabel": "subagent",
+      "totalCost": 0.0003693,
+      "totalTokens": 81,
+      "sessionCount": 1,
+      "totalTurns": 2,
+      "avgCostPerSession": 0.0003693,
+      "avgTurnsPerSession": 2,
+      "activeDays": 1,
+      "topSource": "eureka",
+      "topModel": "claude-sonnet-4-20250514",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 57,
+        "output": 13,
+        "cacheCreation": 0,
+        "cacheRead": 11
+      },
+      "costBreakdown": {
+        "input": 0.000171,
+        "output": 0.000195,
+        "cacheCreation": 0,
+        "cacheRead": 0.0000033,
+        "total": 0.0003693
+      },
+      "sourceBreakdown": [
+        {
+          "key": "eureka",
+          "label": "eureka",
+          "cost": 0.0003693,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-sonnet-4-20250514",
+          "label": "claude-sonnet-4-20250514",
+          "cost": 0.0003693,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.0003693,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "multi",
+      "projectLabel": "multi",
+      "totalCost": 0.0002124,
+      "totalTokens": 54,
+      "sessionCount": 1,
+      "totalTurns": 1,
+      "avgCostPerSession": 0.0002124,
+      "avgTurnsPerSession": 1,
+      "activeDays": 1,
+      "topSource": "claude-code",
+      "topModel": "claude-haiku-4-5-20251001",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 40,
+        "output": 6,
+        "cacheCreation": 0,
+        "cacheRead": 8
+      },
+      "costBreakdown": {
+        "input": 0.00012,
+        "output": 0.00009,
+        "cacheCreation": 0,
+        "cacheRead": 0.0000024,
+        "total": 0.0002124
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 0.0002124,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-haiku-4-5-20251001",
+          "label": "claude-haiku-4-5-20251001",
+          "cost": 0.0002124,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.0002124,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "broken",
+      "projectLabel": "broken",
+      "totalCost": 0.000195,
+      "totalTokens": 45,
+      "sessionCount": 1,
+      "totalTurns": 1,
+      "avgCostPerSession": 0.000195,
+      "avgTurnsPerSession": 1,
+      "activeDays": 1,
+      "topSource": "claude-code",
+      "topModel": "claude-sonnet-4-20250514",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 40,
+        "output": 5,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0.00012,
+        "output": 0.000075,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0.000195
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 0.000195,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-sonnet-4-20250514",
+          "label": "claude-sonnet-4-20250514",
+          "cost": 0.000195,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.000195,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "codex-empty",
+      "projectLabel": "codex-empty",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 1,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 1,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "gpt-4.1",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "gpt-4.1",
+          "label": "gpt-4.1",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "eureka-orphan",
+      "projectLabel": "eureka-orphan",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 2,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 2,
+      "activeDays": 1,
+      "topSource": "eureka",
+      "topModel": "claude-sonnet-4-20250514",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "eureka",
+          "label": "eureka",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-sonnet-4-20250514",
+          "label": "claude-sonnet-4-20250514",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    }
+  ],
+  "leaderboards": {
+    "topProjects": [
+      "eureka-cc",
+      "mars-workspace",
+      "eureka-codex",
+      "plain",
+      "subagent",
+      "multi",
+      "broken",
+      "codex-empty",
+      "eureka-orphan"
+    ],
+    "topModels": [
+      "claude-sonnet-4-20250514",
+      "gpt-5.4",
+      "claude-opus-4-6-1m",
+      "claude-haiku-4-5-20251001",
+      "gpt-4.1"
+    ]
+  }
+}

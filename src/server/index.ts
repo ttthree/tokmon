@@ -82,6 +82,15 @@ export async function serve(port = 3000, options: ServeOptions = {}): Promise<nu
 export function createApp(): express.Express {
   const app = express();
   app.use(express.json({ limit: "1mb" }));
+  app.use((req, res, next) => {
+    const start = Date.now();
+    res.on("finish", () => {
+      const ms = Date.now() - start;
+      const tag = res.statusCode >= 500 ? "ERR" : res.statusCode >= 400 ? "WRN" : "OK ";
+      console.log(`[req ${tag}] ${res.statusCode} ${req.method} ${req.originalUrl} ${ms}ms`);
+    });
+    next();
+  });
   const staticDir = getStaticDir();
 
   app.get("/api/data", async (req, res, next) => {
@@ -275,8 +284,11 @@ export function createApp(): express.Express {
     }
   });
 
-  app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error(`[server] 500 on ${req.method} ${req.originalUrl}: ${message}`);
+    if (stack) console.error(stack);
     res.status(500).json({ error: message });
   });
 

@@ -1,0 +1,2 @@
+{"type":"user","sessionId":"mars-claude-2","timestamp":"2026-04-18T03:03:00.000Z","cwd":"/Users/testuser/work/mars-workspace","message":{"role":"user","content":[{"type":"text","text":"mars task two"}]}}
+{"type":"assistant","sessionId":"mars-claude-2","timestamp":"2026-04-18T03:04:00.000Z","cwd":"/Users/testuser/work/mars-workspace","message":{"role":"assistant","model":"claude-opus-4-6-1m","content":[{"type":"text","text":"reply from claude-opus-4-6-1m"}],"usage":{"input_tokens":90,"output_tokens":11,"cache_creation_input_tokens":0,"cache_read_input_tokens":20}}}

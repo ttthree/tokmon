@@ -1,0 +1,6 @@
+{"id":"260310-young-salmon","engine":"claude","tokenUsage":{"inputTokens":34687,"outputTokens":657,"totalTokens":35344,"contextTokens":0,"costUsd":0.15700949999999997,"cacheReadTokens":29788,"cacheCreationTokens":4898,"contextWindow":200000},"messageCount":6,"userMessageCount":1,"model":"claude-sonnet-4.6","createdAt":1773106156999,"sdkCwd":"/Users/testuser/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","workingDirectory":"~/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","name":"session-3"}
+{"type":"user","timestamp":1773106156970}
+{"type":"tool","timestamp":1773106163842}
+{}
+{"type":"assistant","timestamp":1773106169952}
+{"type":"assistant","timestamp":1773106181515}

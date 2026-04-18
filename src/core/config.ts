@@ -138,9 +138,20 @@ export async function loadConfig(): Promise<AppConfig> {
 }
 
 export async function saveConfig(config: AppConfig): Promise<void> {
+  // Serialize concurrent saves to avoid races on the .tmp file (rename ENOENT
+  // when two callers race writeFile→rename on the same path).
+  saveConfigQueue = saveConfigQueue.then(() => doSaveConfig(config), () => doSaveConfig(config));
+  await saveConfigQueue;
+}
+
+let saveConfigQueue: Promise<void> = Promise.resolve();
+
+async function doSaveConfig(config: AppConfig): Promise<void> {
   await ensureTokmonDirectories();
   const finalPath = getConfigPath();
-  const tmpPath = `${finalPath}.tmp`;
+  // Per-process unique tmp path so even if two writers slip past the queue
+  // (e.g. multiple tokmon processes), they don't trample each other's .tmp.
+  const tmpPath = `${finalPath}.${process.pid}.${Date.now()}.tmp`;
   await fs.writeFile(tmpPath, JSON.stringify(config, null, 2) + "\n", "utf8");
   await fs.rename(tmpPath, finalPath);
 }

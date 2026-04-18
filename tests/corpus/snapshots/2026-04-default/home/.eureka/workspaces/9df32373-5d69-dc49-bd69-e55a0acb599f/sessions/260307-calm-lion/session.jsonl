@@ -1,0 +1,12 @@
+{"id":"260307-calm-lion","engine":"claude","tokenUsage":{"inputTokens":38855,"outputTokens":1945,"totalTokens":40800,"contextTokens":0,"costUsd":0.969897,"cacheReadTokens":37090,"cacheCreationTokens":1764,"contextWindow":200000},"messageCount":13,"userMessageCount":1,"model":"claude-opus-4.6-1m","createdAt":1772871060911,"sdkCwd":"/Users/testuser/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","workingDirectory":"~/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","name":"session-1"}
+{"type":"user","timestamp":1772871060909}
+{}
+{"type":"tool","timestamp":1772871069827}
+{"type":"assistant","timestamp":1772871069841}
+{"type":"tool","timestamp":1772871119457}
+{"type":"tool","timestamp":1772871120649}
+{"type":"tool","timestamp":1772871121006}
+{"type":"tool","timestamp":1772871122153}
+{"type":"tool","timestamp":1772871122402}
+{"type":"assistant","timestamp":1772871123624}
+{"type":"assistant","timestamp":1772871164092}

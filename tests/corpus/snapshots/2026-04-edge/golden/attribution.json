@@ -1,0 +1,85 @@
+{
+  "summary": {
+    "totalSessions": 10,
+    "perSource": {
+      "claude-code": 5,
+      "codex": 1,
+      "eureka": 4
+    },
+    "perEngine": {
+      "Claude Code": 3,
+      "Codex": 1,
+      "Eureka + CC": 3,
+      "Eureka + Codex": 1,
+      "Mars + CC": 2
+    },
+    "marsSessionCount": 2
+  },
+  "eurekaLinkage": [
+    {
+      "eurekaSessionId": "eureka-cc-normal",
+      "engine": "Eureka + CC",
+      "tokens": {
+        "input": 120,
+        "output": 30,
+        "cacheCreation": 0,
+        "cacheRead": 40
+      },
+      "resolved": true
+    },
+    {
+      "eurekaSessionId": "eureka-cc-orphan",
+      "engine": "Eureka + CC",
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "resolved": false
+    },
+    {
+      "eurekaSessionId": "eureka-codex",
+      "engine": "Eureka + Codex",
+      "tokens": {
+        "input": 150,
+        "output": 20,
+        "cacheCreation": 0,
+        "cacheRead": 50
+      },
+      "resolved": true
+    },
+    {
+      "eurekaSessionId": "eureka-subagent",
+      "engine": "Eureka + CC",
+      "tokens": {
+        "input": 57,
+        "output": 13,
+        "cacheCreation": 0,
+        "cacheRead": 11
+      },
+      "resolved": true
+    }
+  ],
+  "marsTrees": [
+    {
+      "taskId": "11111111111111111111111111111111",
+      "taskTitle": "Edge Mars Task",
+      "sessionIds": [
+        "mars-claude-1",
+        "mars-claude-2"
+      ],
+      "totalCost": 0.0007905,
+      "totalTokens": 215
+    }
+  ],
+  "claimedCcSessionIds": [
+    "019dedgecodex000000000000000001",
+    "cc-sdk-normal",
+    "cc-sdk-orphan",
+    "cc-sdk-subagent"
+  ],
+  "doubleCounting": {
+    "ccIdsBothStandaloneAndClaimed": []
+  }
+}

@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: "tests/e2e",
   testMatch: /.*\.spec\.ts/,
   fullyParallel: false,
+  workers: 1,
   use: {
     headless: true,
     viewport: { width: 1440, height: 900 },

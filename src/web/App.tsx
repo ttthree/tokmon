@@ -501,11 +501,16 @@ export function App() {
 }
 
 function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter) {
-  const formatter = range === "12m"
+  const isMonthly = range === "12m";
+  const formatter = isMonthly
     ? (value: string) => value.slice(0, 7)
     : (value: string) => value.slice(5, 10);
   const grouped = new Map<string, { input: number; output: number; cacheCreation: number; cacheRead: number; cost: number }>();
+  // Track full ISO date so we can compute span for filling gaps
+  const seenIso: string[] = [];
   for (const session of sessions) {
+    const iso = session.createdAt.slice(0, 10); // YYYY-MM-DD
+    seenIso.push(iso);
     const label = formatter(session.createdAt);
     const bucket = grouped.get(label) ?? { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0 };
     bucket.input += session.tokens.input;
@@ -515,9 +520,57 @@ function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter) 
     bucket.cost += session.cost.total;
     grouped.set(label, bucket);
   }
-  return [...grouped.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([label, bucket]) => ({ label, ...bucket }));
+
+  // Build the full label list so chart x-axis includes every day/month in the
+  // selected range — even if there are no sessions on a given day.
+  const labels = buildContinuousLabels(range, seenIso, isMonthly);
+  const empty = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0 };
+  return labels.map((label) => ({ label, ...(grouped.get(label) ?? empty) }));
+}
+
+function buildContinuousLabels(range: RangeFilter, seenIso: string[], isMonthly: boolean): string[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Determine [start, end] anchor based on range; for "all", fall back to data span.
+  let start: Date;
+  let end: Date = today;
+  if (range === "7d") {
+    start = new Date(today);
+    start.setDate(start.getDate() - 6);
+  } else if (range === "30d") {
+    start = new Date(today);
+    start.setDate(start.getDate() - 29);
+  } else if (range === "12m") {
+    start = new Date(today.getFullYear(), today.getMonth() - 11, 1);
+    end = new Date(today.getFullYear(), today.getMonth(), 1);
+  } else {
+    // "all": span the data we actually have
+    if (seenIso.length === 0) return [];
+    const sorted = [...seenIso].sort();
+    start = new Date(sorted[0] + "T00:00:00");
+    end = new Date(sorted[sorted.length - 1] + "T00:00:00");
+    if (isMonthly) {
+      start = new Date(start.getFullYear(), start.getMonth(), 1);
+      end = new Date(end.getFullYear(), end.getMonth(), 1);
+    }
+  }
+
+  const labels: string[] = [];
+  if (isMonthly) {
+    const cur = new Date(start.getFullYear(), start.getMonth(), 1);
+    while (cur <= end) {
+      labels.push(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}`);
+      cur.setMonth(cur.getMonth() + 1);
+    }
+  } else {
+    const cur = new Date(start);
+    while (cur <= end) {
+      labels.push(`${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`);
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
+  return labels;
 }
 
 function buildProjectData(projects: ProjectSummary[]) {

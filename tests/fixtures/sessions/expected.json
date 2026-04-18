@@ -1,0 +1,38 @@
+{
+  "cc-large-session": {
+    "tokens": {
+      "input": 90000,
+      "output": 36000,
+      "cacheCreation": 18000,
+      "cacheRead": 18000
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  "260418-eureka-claude": {
+    "tokens": {
+      "input": 120,
+      "output": 30,
+      "cacheCreation": 10,
+      "cacheRead": 5
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  "260418-copilot-shutdown": {
+    "tokens": {
+      "input": 180,
+      "output": 40,
+      "cacheCreation": 8,
+      "cacheRead": 20
+    },
+    "tokenProvenance": "sdk-shutdown"
+  },
+  "260418-copilot-no-shutdown": {
+    "tokens": {
+      "input": 84,
+      "output": 22,
+      "cacheCreation": 2,
+      "cacheRead": 6
+    },
+    "tokenProvenance": "sdk-events"
+  }
+}

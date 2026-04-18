@@ -1,0 +1,1 @@
+{"id":"eureka-cc-normal","createdAt":1776474000000,"lastUsedAt":1776474180000,"name":"eureka cc","engine":"claude","model":"claude-sonnet-4-20250514","runtimeProvider":"claude_agent_sdk","type":"task","messageCount":4,"userMessageCount":2,"workingDirectory":"/Users/testuser/proj/eureka-cc","sdkSessionId":"cc-sdk-normal","sdkCwd":"/Users/testuser/proj/eureka-cc"}

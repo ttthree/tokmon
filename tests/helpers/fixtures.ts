@@ -286,6 +286,161 @@ export async function createEurekaCodexFixture(testHome: string, options?: {
   );
 }
 
+export async function createEurekaClaudeSdkFixture(testHome: string, options?: {
+  sessionId?: string;
+  sdkSessionId?: string;
+  headerModel?: string;
+  workingDirectory?: string;
+  includeSdkFile?: boolean;
+  telemetryLines?: string[];
+  sdkLines?: string[];
+}): Promise<void> {
+  const sessionId = options?.sessionId ?? "260418-calm-sky";
+  const sdkSessionId = options?.sdkSessionId ?? "claude-sdk-session-1";
+  const headerModel = options?.headerModel ?? "claude-sonnet-4-20250514";
+  const workingDirectory = options?.workingDirectory ?? path.join(testHome, "work", "lumina");
+  const includeSdkFile = options?.includeSdkFile ?? true;
+  const sessionDir = path.join(testHome, ".craft-agent", "workspaces", "workspace-1", "sessions", sessionId);
+
+  await fs.mkdir(sessionDir, { recursive: true });
+  await fs.writeFile(
+    path.join(sessionDir, "session.jsonl"),
+    [
+      JSON.stringify({
+        id: sessionId,
+        createdAt: Date.parse("2026-04-18T09:00:00.000Z"),
+        lastUsedAt: Date.parse("2026-04-18T09:05:00.000Z"),
+        name: "Claude SDK task",
+        engine: "claude",
+        model: headerModel,
+        runtimeProvider: "claude_agent_sdk",
+        type: "task",
+        messageCount: 2,
+        userMessageCount: 1,
+        workingDirectory,
+        sdkSessionId,
+        sdkCwd: workingDirectory,
+      }),
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+
+  const telemetryLines = options?.telemetryLines ?? [
+    JSON.stringify({
+      kind: "llm_telemetry",
+      timestamp: "2026-04-18T09:00:01.000Z",
+      taskId: sessionId,
+      turnId: "turn-1",
+      callId: "call-1",
+      sessionType: "task",
+      runtimeProvider: "claude_agent_sdk",
+      provider: "anthropic",
+      model: headerModel,
+      status: "ok",
+      workspaceRootPath: workingDirectory,
+    }),
+    "",
+  ];
+  await fs.writeFile(path.join(sessionDir, "llm-telemetry.jsonl"), telemetryLines.join("\n"), "utf8");
+
+  if (!includeSdkFile) return;
+
+  const projectDir = path.join(testHome, ".craft-agent", ".claude", "projects", encodeClaudeProjectPath(workingDirectory) ?? "project");
+  await fs.mkdir(projectDir, { recursive: true });
+  const sdkLines = options?.sdkLines ?? [
+    JSON.stringify({ type: "user", sessionId: sdkSessionId, timestamp: "2026-04-18T09:00:00.000Z", message: { role: "user", content: [{ type: "text", text: "Inspect the repo" }] } }),
+    JSON.stringify({
+      type: "assistant",
+      sessionId: sdkSessionId,
+      timestamp: "2026-04-18T09:00:05.000Z",
+      message: {
+        role: "assistant",
+        model: headerModel,
+        usage: { input_tokens: 120, output_tokens: 30, cache_creation_input_tokens: 10, cache_read_input_tokens: 5 },
+        content: [{ type: "text", text: "done" }],
+      },
+    }),
+    "",
+  ];
+  await fs.writeFile(path.join(projectDir, `${sdkSessionId}.jsonl`), sdkLines.join("\n"), "utf8");
+}
+
+export async function createEurekaCopilotFixture(testHome: string, options?: {
+  sessionId?: string;
+  sdkSessionId?: string;
+  headerModel?: string;
+  workingDirectory?: string;
+  includeSdkFile?: boolean;
+  telemetryLines?: string[];
+  eventLines?: string[];
+}): Promise<void> {
+  const sessionId = options?.sessionId ?? "260418-quiet-woods";
+  const sdkSessionId = options?.sdkSessionId ?? "copilot-sdk-session-1";
+  const headerModel = options?.headerModel ?? "gpt-4.1";
+  const workingDirectory = options?.workingDirectory ?? path.join(testHome, "work", "copilot-lab");
+  const includeSdkFile = options?.includeSdkFile ?? true;
+  const sessionDir = path.join(testHome, ".craft-agent", "workspaces", "workspace-1", "sessions", sessionId);
+
+  await fs.mkdir(sessionDir, { recursive: true });
+  await fs.writeFile(
+    path.join(sessionDir, "session.jsonl"),
+    [
+      JSON.stringify({
+        id: sessionId,
+        createdAt: Date.parse("2026-04-18T09:44:17.000Z"),
+        lastUsedAt: Date.parse("2026-04-18T09:49:17.000Z"),
+        name: "Copilot SDK task",
+        engine: "claude",
+        model: headerModel,
+        runtimeProvider: "copilot_sdk",
+        type: "task",
+        messageCount: 2,
+        userMessageCount: 1,
+        workingDirectory,
+        sdkSessionId,
+        sdkCwd: workingDirectory,
+      }),
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+
+  const telemetryLines = options?.telemetryLines ?? [
+    JSON.stringify({
+      kind: "llm_telemetry",
+      timestamp: "2026-04-18T09:44:18.000Z",
+      taskId: sessionId,
+      turnId: "turn-1",
+      callId: "call-1",
+      sessionType: "task",
+      runtimeProvider: "copilot_sdk",
+      provider: "github_copilot",
+      model: headerModel,
+      status: "ok",
+      workspaceRootPath: workingDirectory,
+      inputTokens: 60,
+      outputTokens: 12,
+      cacheReadTokens: 10,
+      cacheCreationTokens: 4,
+    }),
+    "",
+  ];
+  await fs.writeFile(path.join(sessionDir, "llm-telemetry.jsonl"), telemetryLines.join("\n"), "utf8");
+
+  if (!includeSdkFile) return;
+
+  const sdkDir = path.join(sessionDir, ".copilot-sdk", "session-state", sdkSessionId);
+  await fs.mkdir(sdkDir, { recursive: true });
+  const eventLines = options?.eventLines ?? [
+    JSON.stringify({ type: "session.start", data: {} }),
+    JSON.stringify({ type: "assistant.turn_end", data: { usage: { inputTokens: 80, outputTokens: 20, cacheReadTokens: 5, cacheWriteTokens: 2 } } }),
+    JSON.stringify({ type: "session.shutdown", data: { modelMetrics: { [headerModel]: { usage: { inputTokens: 200, outputTokens: 40, cacheReadTokens: 20, cacheWriteTokens: 8 } } } } }),
+    "",
+  ];
+  await fs.writeFile(path.join(sdkDir, "events.jsonl"), eventLines.join("\n"), "utf8");
+}
+
 export async function createClaudeCraftAgentsSubagentFixture(testHome: string, options?: {
   parentSessionId?: string;
   subagentId?: string;

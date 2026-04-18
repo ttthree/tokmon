@@ -1,0 +1,6 @@
+{"id":"260418-quiet-woods","engine":"codex","sdkSessionId":"cd21df07-98e1-423f-a7bf-f4ccb49a077b","tokenUsage":{"inputTokens":32389,"outputTokens":213,"totalTokens":32602,"contextTokens":0,"costUsd":1,"contextWindow":272000,"cacheReadTokens":28544,"cacheCreationTokens":0},"messageCount":5,"userMessageCount":1,"model":"gpt-5.4","createdAt":1776476256297,"sdkCwd":"~/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","workingDirectory":"~/work/tokmon","name":"session-11"}
+{"type":"user","timestamp":1776476256283}
+{"type":"tool","timestamp":1776476283401}
+{"type":"tool","timestamp":1776476283402}
+{"type":"tool","timestamp":1776476283402}
+{"type":"assistant","timestamp":1776476295167}

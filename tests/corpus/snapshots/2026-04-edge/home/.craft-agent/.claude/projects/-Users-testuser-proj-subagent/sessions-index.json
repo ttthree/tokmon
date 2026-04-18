@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "sessionId": "cc-sdk-subagent",
+      "fullPath": "cc-sdk-subagent.jsonl",
+      "fileMtime": 1776476100000,
+      "firstPrompt": "subagent parent",
+      "summary": "claimed parent",
+      "messageCount": 2,
+      "created": "2026-04-18T01:30:00.000Z",
+      "modified": "2026-04-18T01:35:00.000Z",
+      "projectPath": "/Users/testuser/proj/subagent",
+      "isSidechain": false
+    }
+  ]
+}

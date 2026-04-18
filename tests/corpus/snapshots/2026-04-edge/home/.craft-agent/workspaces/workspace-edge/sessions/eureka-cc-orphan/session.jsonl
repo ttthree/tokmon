@@ -1,0 +1,1 @@
+{"id":"eureka-cc-orphan","createdAt":1776474600000,"lastUsedAt":1776474660000,"name":"orphan","engine":"claude","model":"claude-sonnet-4-20250514","runtimeProvider":"claude_agent_sdk","type":"task","messageCount":4,"userMessageCount":2,"workingDirectory":"/Users/testuser/proj/eureka-orphan","sdkSessionId":"cc-sdk-orphan","sdkCwd":"/Users/testuser/proj/eureka-orphan"}

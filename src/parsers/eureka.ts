@@ -1,12 +1,11 @@
-import { createReadStream } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
-import readline from "node:readline";
 
 import { getCraftAgentClaudeDirectory, getHomeDirectory } from "../core/config.js";
 import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
-import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown } from "../core/types.js";
+import { streamJsonl } from "./util/jsonl-stream.js";
+import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown, TokenProvenance } from "../core/types.js";
 
 // Set of CC session IDs claimed by Eureka (populated during parse, read by CC parser)
 export const claimedCcSessionIds = new Set<string>();
@@ -75,12 +74,13 @@ interface SessionMeta {
   models: Set<string>;
   providers: Set<string>;
   tokens: TokenBreakdown;
-  headerTokens?: { input: number; output: number; cacheRead: number; cacheCreation: number };
   sdkSessionId?: string;
   sdkCwd?: string;
   engine?: string;
+  runtimeProvider?: string;
   headerModel?: string;
   modelUsage?: Record<string, TokenBreakdown>;
+  tokenProvenance?: TokenProvenance;
   toolBreakdown: Record<string, number>;
   workspacePath?: string;
   workingDirectory?: string;
@@ -140,13 +140,22 @@ export const eurekaParser: Parser = {
 
         if (!primaryStat?.isFile()) continue;
 
+        const sessionMtimeMs = await getEurekaSessionMtime(sessionPath);
+
         // Check cursor for incremental processing
         const cursor = context.existingCursor.files[primaryFile] ?? null;
-        if (cursor && cursor.inode === Number(primaryStat.ino) && cursor.size === primaryStat.size && cursor.mtimeMs === primaryStat.mtimeMs) {
+        if (cursor && cursor.inode === Number(primaryStat.ino) && cursor.size === primaryStat.size && cursor.mtimeMs === sessionMtimeMs) {
+          // Re-register the SDK session claim so the CC parser still skips this file.
+          // Without this, incremental runs leave claimedCcSessionIds empty and CC double-counts SDK sessions.
+          if (cursor.claimedSdkSessionId) {
+            claimedCcSessionIds.add(cursor.claimedSdkSessionId);
+          }
+          // Carry the existing cursor entry forward so the persisted cursor never loses claim info.
+          cursorUpdates[primaryFile] = cursor;
           continue; // Already processed and unchanged
         }
 
-        const session = await parseEurekaSession(
+        const result = await parseEurekaSession(
           sessionDir.name,
           sessionPath,
           telemetryStat?.isFile() ? telemetryPath : null,
@@ -155,15 +164,16 @@ export const eurekaParser: Parser = {
           context.machineId,
         );
 
-        if (session) {
-          sessions.push(session);
+        if (result) {
+          sessions.push(result.session);
           cursorUpdates[primaryFile] = {
             path: primaryFile,
             inode: Number(primaryStat.ino),
             size: Number(primaryStat.size),
-            mtimeMs: Number(primaryStat.mtimeMs),
+            mtimeMs: sessionMtimeMs,
             byteOffset: Number(primaryStat.size),
             processedAt: new Date().toISOString(),
+            claimedSdkSessionId: result.sdkSessionId,
           };
         }
       }
@@ -181,7 +191,7 @@ async function parseEurekaSession(
   sessionJsonlPath: string | null,
   workspaceId: string,
   machineId: string,
-): Promise<Session | null> {
+): Promise<{ session: Session; sdkSessionId?: string } | null> {
   const meta: SessionMeta = {
     eventTimestampsMs: [],
     turns: new Set(),
@@ -215,19 +225,6 @@ async function parseEurekaSession(
           meta.lastTimestamp = new Date(header.lastUsedAt).toISOString();
         }
 
-        // Token usage from header: used for Anthropic sessions only.
-        // The header's tokenUsage has accurate cache breakdown (inputTokens is INCLUSIVE).
-        // For Codex sessions, we use per-call telemetry data instead (see below).
-        // Sessions never mix Anthropic and Codex providers.
-        if (header.tokenUsage) {
-          meta.headerTokens = {
-            input: header.tokenUsage.inputTokens ?? 0,
-            output: header.tokenUsage.outputTokens ?? 0,
-            cacheRead: header.tokenUsage.cacheReadTokens ?? 0,
-            cacheCreation: header.tokenUsage.cacheCreationTokens ?? 0,
-          };
-        }
-
         // SDK session mapping — the key to getting precise token data
         if (header.sdkSessionId) {
           meta.sdkSessionId = header.sdkSessionId;
@@ -239,6 +236,7 @@ async function parseEurekaSession(
           meta.engine = header.engine;
         }
         if (header.runtimeProvider) {
+          meta.runtimeProvider = header.runtimeProvider;
           meta.providers.add(header.runtimeProvider);
         }
       }
@@ -301,30 +299,49 @@ async function parseEurekaSession(
   }
 
   // Read precise token data + model info from the underlying SDK session files.
-  const engine = (meta.engine ?? "").toLowerCase();
-  const hasNonAnthropicTokens = meta.tokens.input > 0 || meta.tokens.output > 0 || meta.tokens.cacheRead > 0;
-
   if (meta.sdkSessionId) {
-    if (engine.includes("codex")) {
-      const result = await readCodexSessionTokens(sessionPath, meta.sdkSessionId, meta.headerModel);
+    const runtimeProvider = (meta.runtimeProvider ?? "").toLowerCase();
+    const engine = (meta.engine ?? "").toLowerCase();
+
+    if (runtimeProvider.includes("copilot")) {
+      const result = await readSdkSessionTokens(sessionPath, meta.sdkSessionId, meta.headerModel);
       if (result) {
         meta.tokens = result.tokens;
         meta.modelUsage = result.modelUsage;
-        for (const m of result.models) meta.models.add(m);
+        meta.tokenProvenance = result.provenance;
+        for (const modelId of result.models) meta.models.add(modelId);
+      } else {
+        meta.tokenProvenance = "telemetry-incomplete";
       }
-      claimedCcSessionIds.add(meta.sdkSessionId);
+    } else if (engine.includes("codex") || runtimeProvider.includes("codex")) {
+      const result = await readSdkSessionTokens(sessionPath, meta.sdkSessionId, meta.headerModel);
+      if (result) {
+        meta.tokens = result.tokens;
+        meta.modelUsage = result.modelUsage;
+        meta.tokenProvenance = result.provenance;
+        for (const modelId of result.models) meta.models.add(modelId);
+      } else {
+        meta.tokenProvenance = telemetryProvenance(meta.tokens, "telemetry");
+      }
     } else {
       const result = await readCcSessionTokens(meta.sdkSessionId, meta.sdkCwd);
       if (result) {
         meta.tokens = result.tokens;
         meta.modelUsage = result.modelUsage;
-        for (const m of result.models) meta.models.add(m);
+        meta.tokenProvenance = result.provenance;
+        for (const modelId of result.models) meta.models.add(modelId);
+      } else {
+        meta.tokenProvenance = "telemetry-incomplete";
       }
-      claimedCcSessionIds.add(meta.sdkSessionId);
     }
+
+    claimedCcSessionIds.add(meta.sdkSessionId);
+  } else {
+    meta.tokens = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
+    meta.modelUsage = undefined;
+    meta.models.clear();
+    meta.tokenProvenance = "none";
   }
-  // Sessions without sdkSessionId: no token/cost attribution here.
-  // Their CC sub-agent files are picked up by the CC parser as source="claude-code".
 
   // Need at least some data to create a session
   if (!meta.firstTimestamp && !meta.lastTimestamp) {
@@ -357,7 +374,7 @@ async function parseEurekaSession(
     ? "Eureka"
     : path.basename(normalizeProjectPath(projectPath)) || workspaceId;
 
-  return {
+  const session: Session = {
     id: sessionId,
     machineId,
     source: "eureka",
@@ -378,14 +395,17 @@ async function parseEurekaSession(
     cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
     toolBreakdown: meta.toolBreakdown,
     modelUsage: meta.modelUsage && Object.keys(meta.modelUsage).length > 0 ? meta.modelUsage : undefined,
+    tokenProvenance: meta.tokenProvenance,
     orchestrator: { kind: "eureka" },
   };
+  return { session, sdkSessionId: meta.sdkSessionId };
 }
 
 interface SdkTokenResult {
   tokens: TokenBreakdown;
   models: string[];
   modelUsage: Record<string, TokenBreakdown>;
+  provenance: TokenProvenance;
 }
 
 /**
@@ -402,8 +422,7 @@ async function readCcSessionTokens(sdkSessionId: string, sdkCwd?: string): Promi
   const modelUsage: Record<string, TokenBreakdown> = {};
   let found = false;
 
-  if (await safeStat(mainFile)) {
-    extractTokensFromCcFile(await readFileWithSizeLimit(mainFile), tokens, models, modelUsage);
+  if (await accumulateCcJsonl(mainFile, tokens, models, modelUsage)) {
     found = true;
   }
 
@@ -412,18 +431,25 @@ async function readCcSessionTokens(sdkSessionId: string, sdkCwd?: string): Promi
     const subs = await fs.readdir(subDir);
     for (const sub of subs) {
       if (!sub.endsWith(".jsonl")) continue;
-      extractTokensFromCcFile(await readFileWithSizeLimit(path.join(subDir, sub)), tokens, models, modelUsage);
-      found = true;
+      if (await accumulateCcJsonl(path.join(subDir, sub), tokens, models, modelUsage)) {
+        found = true;
+      }
     }
   } catch { /* no sub-agents */ }
 
-  return found ? { tokens, models: [...models], modelUsage } : null;
+  return found ? { tokens, models: [...models], modelUsage, provenance: "sdk-cc-jsonl" } : null;
 }
 
 /**
- * Read tokens from a Codex session file in .codex-home/sessions/.
+ * Read tokens from a Copilot or Codex SDK session file in the Eureka session directory.
  */
-async function readCodexSessionTokens(sessionPath: string, sdkSessionId: string, fallbackModel?: string): Promise<SdkTokenResult | null> {
+async function readSdkSessionTokens(sessionPath: string, sdkSessionId: string, fallbackModel?: string): Promise<SdkTokenResult | null> {
+  const copilotEventsPath = path.join(sessionPath, ".copilot-sdk", "session-state", sdkSessionId, "events.jsonl");
+  const copilotResult = await readCopilotSdkSessionTokens(copilotEventsPath, fallbackModel);
+  if (copilotResult) {
+    return copilotResult;
+  }
+
   const codexHome = path.join(sessionPath, ".codex-home", "sessions");
   try {
     const files = await walkDir(codexHome, ".jsonl");
@@ -448,6 +474,23 @@ interface CodexRolloutEvent {
   };
 }
 
+interface CopilotSdkEvent {
+  type?: string;
+  data?: {
+    usage?: CopilotSdkUsage;
+    modelMetrics?: CopilotModelMetrics;
+  };
+}
+
+interface CopilotSdkUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
+}
+
+type CopilotModelMetrics = Record<string, { usage?: CopilotSdkUsage }>;
+
 async function extractCodexTurnModelUsage(filePath: string, fallbackModel?: string): Promise<SdkTokenResult | null> {
   const tokens: TokenBreakdown = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
   const models = new Set<string>();
@@ -456,57 +499,45 @@ async function extractCodexTurnModelUsage(filePath: string, fallbackModel?: stri
   let previousUsage: CodexTokenUsage | null = null;
   let foundUsage = false;
 
-  const stream = createReadStream(filePath, { encoding: "utf8" });
-  const reader = readline.createInterface({ input: stream, crlfDelay: Infinity });
+  const stats = await streamJsonl(filePath, (obj) => {
+    if (!obj || typeof obj !== "object") return;
+    const parsed = obj as CodexRolloutEvent;
 
-  try {
-    for await (const line of reader) {
-      if (!line.trim()) continue;
-      const parsed = parseJsonLine<CodexRolloutEvent>(line);
-      if (!parsed) continue;
-
-      if (parsed.type === "turn_context") {
-        const turnModel = typeof parsed.payload?.model === "string" ? parsed.payload.model : undefined;
-        if (turnModel) {
-          currentModel = turnModel;
-          models.add(turnModel);
-        }
-        continue;
+    if (parsed.type === "turn_context") {
+      const turnModel = typeof parsed.payload?.model === "string" ? parsed.payload.model : undefined;
+      if (turnModel) {
+        currentModel = turnModel;
+        models.add(turnModel);
       }
-
-      const totalUsage = parsed.payload?.info?.total_token_usage;
-      if (!totalUsage || typeof totalUsage.input_tokens !== "number") continue;
-
-      const delta = previousUsage
-        ? diffCodexUsage(totalUsage, previousUsage)
-        : {
-            input_tokens: numberOrZero(totalUsage.input_tokens),
-            cached_input_tokens: numberOrZero(totalUsage.cached_input_tokens),
-            output_tokens: numberOrZero(totalUsage.output_tokens),
-          };
-      previousUsage = totalUsage;
-
-      if (!delta) continue;
-
-      foundUsage = true;
-      const currentTokens = codexUsageToBreakdown(delta);
-      tokens.input += currentTokens.input;
-      tokens.output += currentTokens.output;
-      tokens.cacheCreation += currentTokens.cacheCreation;
-      tokens.cacheRead += currentTokens.cacheRead;
-
-      const attributionModel = currentModel ?? fallbackModel;
-      if (!attributionModel) continue;
-      models.add(attributionModel);
-      const usage = modelUsage[attributionModel] ?? (modelUsage[attributionModel] = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 });
-      usage.input += currentTokens.input;
-      usage.output += currentTokens.output;
-      usage.cacheCreation += currentTokens.cacheCreation;
-      usage.cacheRead += currentTokens.cacheRead;
+      return;
     }
-  } finally {
-    reader.close();
-    stream.close();
+
+    const totalUsage = parsed.payload?.info?.total_token_usage;
+    if (!totalUsage || typeof totalUsage.input_tokens !== "number") return;
+
+    const delta = previousUsage
+      ? diffCodexUsage(totalUsage, previousUsage)
+      : {
+          input_tokens: numberOrZero(totalUsage.input_tokens),
+          cached_input_tokens: numberOrZero(totalUsage.cached_input_tokens),
+          output_tokens: numberOrZero(totalUsage.output_tokens),
+        };
+    previousUsage = totalUsage;
+    if (!delta) return;
+
+    foundUsage = true;
+    const currentTokens = codexUsageToBreakdown(delta);
+    addBreakdown(tokens, currentTokens);
+
+    const attributionModel = currentModel ?? fallbackModel;
+    if (!attributionModel) return;
+    models.add(attributionModel);
+    const usage = modelUsage[attributionModel] ?? (modelUsage[attributionModel] = emptyBreakdown());
+    addBreakdown(usage, currentTokens);
+  });
+
+  if (!stats) {
+    return null;
   }
 
   if (!foundUsage) {
@@ -518,7 +549,63 @@ async function extractCodexTurnModelUsage(filePath: string, fallbackModel?: stri
     modelUsage[fallbackModel] = { ...tokens };
   }
 
-  return { tokens, models: [...models], modelUsage };
+  return { tokens, models: [...models], modelUsage, provenance: "sdk-codex-rollout" };
+}
+
+async function readCopilotSdkSessionTokens(eventsPath: string, fallbackModel?: string): Promise<SdkTokenResult | null> {
+  const aggregate = emptyBreakdown();
+  const modelUsage: Record<string, TokenBreakdown> = {};
+  let lastShutdown: SdkTokenResult | null = null;
+  const turnEndUsage = emptyBreakdown();
+  const messageUsage = emptyBreakdown();
+  const otherUsage = emptyBreakdown();
+  let sawTurnEndUsage = false;
+  let sawEventUsage = false;
+
+  const stats = await streamJsonl(eventsPath, (obj) => {
+    if (!obj || typeof obj !== "object") return;
+    const event = obj as CopilotSdkEvent;
+    if (event.type === "session.shutdown") {
+      const shutdownResult = shutdownMetricsToResult(event.data?.modelMetrics);
+      if (shutdownResult) {
+        lastShutdown = shutdownResult;
+      }
+      return;
+    }
+
+    const usage = copilotUsageToBreakdown(event.data?.usage);
+    if (!hasAnyBreakdown(usage)) return;
+
+    sawEventUsage = true;
+    if (event.type === "assistant.turn_end") {
+      sawTurnEndUsage = true;
+      addBreakdown(turnEndUsage, usage);
+    } else if (event.type === "assistant.message") {
+      addBreakdown(messageUsage, usage);
+    } else {
+      addBreakdown(otherUsage, usage);
+    }
+  });
+
+  if (!stats) {
+    return null;
+  }
+  if (lastShutdown) {
+    return lastShutdown;
+  }
+  if (!sawEventUsage) {
+    return null;
+  }
+
+  addBreakdown(aggregate, otherUsage);
+  addBreakdown(aggregate, sawTurnEndUsage ? turnEndUsage : messageUsage);
+
+  const models = fallbackModel ? [fallbackModel] : [];
+  if (fallbackModel) {
+    modelUsage[fallbackModel] = { ...aggregate };
+  }
+
+  return { tokens: aggregate, modelUsage, models, provenance: "sdk-events" };
 }
 
 function diffCodexUsage(current: CodexTokenUsage, previous: CodexTokenUsage): CodexTokenUsage | null {
@@ -548,109 +635,17 @@ function codexUsageToBreakdown(usage: CodexTokenUsage): TokenBreakdown {
   };
 }
 
-/** Read a file, capping large files to head+tail to avoid OOM. */
-async function readFileWithSizeLimit(filePath: string): Promise<string> {
-  const stat = await safeStat(filePath);
-  const fileSize = Number(stat?.size ?? 0);
-  const THRESHOLD = 5 * 1024 * 1024;
-  if (fileSize <= THRESHOLD) {
-    return fs.readFile(filePath, "utf8");
-  }
-  // Large file: read first 256KB + last 64KB
-  const handle = await fs.open(filePath, "r");
-  try {
-    const headSize = 256 * 1024;
-    const tailSize = 64 * 1024;
-    const headBuf = Buffer.alloc(headSize);
-    const tailBuf = Buffer.alloc(tailSize);
-    await handle.read(headBuf, 0, headSize, 0);
-    await handle.read(tailBuf, 0, tailSize, fileSize - tailSize);
-    return headBuf.toString("utf8") + "\n" + tailBuf.toString("utf8");
-  } finally {
-    await handle.close();
-  }
-}
-
 interface CodexTokenUsage {
   input_tokens?: number;
   cached_input_tokens?: number;
   output_tokens?: number;
 }
 
-/** Search backwards through a file for the last total_token_usage entry. Reads in 64KB chunks from the end. */
-async function searchBackwardsForTokenUsage(handle: fs.FileHandle, fileSize: number): Promise<CodexTokenUsage | null> {
-  const CHUNK = 64 * 1024;
-  let offset = Math.max(0, fileSize - CHUNK);
-  let leftover = "";
-
-  while (offset >= 0) {
-    const readSize = Math.min(CHUNK, fileSize - offset);
-    const buf = Buffer.alloc(readSize);
-    await handle.read(buf, 0, readSize, offset);
-    const chunk = buf.toString("utf8") + leftover;
-
-    // Scan lines in reverse
-    const lines = chunk.split(/\r?\n/);
-    leftover = lines[0]; // partial first line carries over to next chunk
-    for (let i = lines.length - 1; i >= 1; i--) {
-      const line = lines[i];
-      if (!line.includes("total_token_usage")) continue;
-      try {
-        const parsed = JSON.parse(line) as { payload?: { info?: { total_token_usage?: CodexTokenUsage } } };
-        const usage = parsed?.payload?.info?.total_token_usage;
-        if (usage && typeof usage.input_tokens === "number") {
-          return usage;
-        }
-      } catch { /* malformed line */ }
-    }
-
-    if (offset === 0) break;
-    offset = Math.max(0, offset - CHUNK);
-  }
-  return null;
-}
-
-/** Extract token usage and models from CC .jsonl content. */
-function extractTokensFromCcFile(content: string, tokens: TokenBreakdown, models: Set<string>, modelUsage: Record<string, TokenBreakdown>): void {
-  for (const line of content.split(/\r?\n/)) {
-    if (!line.includes('"assistant"')) continue;
-
-    const modelMatch = line.match(/"model"\s*:\s*"([^"]+)"/);
-    const lineModel = modelMatch?.[1];
-    if (lineModel && !lineModel.startsWith("<")) {
-      models.add(lineModel);
-    }
-
-    if (!line.includes('"usage"')) continue;
-    const start = line.indexOf('"usage"');
-    const brace = line.indexOf("{", start + 7);
-    if (brace === -1) continue;
-    let depth = 0;
-    let end = brace;
-    for (; end < line.length && end < brace + 1000; end++) {
-      if (line[end] === "{") depth++;
-      else if (line[end] === "}") { depth--; if (depth === 0) break; }
-    }
-    if (depth !== 0) continue;
-    try {
-      const usage = JSON.parse(line.slice(brace, end + 1)) as Record<string, unknown>;
-      const inp = numberOrZero(usage.input_tokens);
-      const out = numberOrZero(usage.output_tokens);
-      const cw = numberOrZero(usage.cache_creation_input_tokens);
-      const cr = numberOrZero(usage.cache_read_input_tokens);
-      tokens.input += inp;
-      tokens.output += out;
-      tokens.cacheCreation += cw;
-      tokens.cacheRead += cr;
-      if (lineModel && (inp > 0 || out > 0 || cr > 0)) {
-        const mu = modelUsage[lineModel] ?? (modelUsage[lineModel] = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 });
-        mu.input += inp;
-        mu.output += out;
-        mu.cacheCreation += cw;
-        mu.cacheRead += cr;
-      }
-    } catch { /* malformed */ }
-  }
+interface CcUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
 }
 
 async function walkDir(dir: string, ext: string): Promise<string[]> {
@@ -666,8 +661,138 @@ async function walkDir(dir: string, ext: string): Promise<string[]> {
   return results;
 }
 
+async function accumulateCcJsonl(
+  filePath: string,
+  tokens: TokenBreakdown,
+  models: Set<string>,
+  modelUsage: Record<string, TokenBreakdown>,
+): Promise<boolean> {
+  let found = false;
+  const stats = await streamJsonl(filePath, (obj) => {
+    if (!obj || typeof obj !== "object") return;
+    const envelope = obj as { type?: string; model?: string; usage?: CcUsage; message?: { model?: string; usage?: CcUsage } };
+    if (envelope.type !== "assistant") return;
+
+    const model = stringOrUndefined(envelope.message?.model ?? envelope.model);
+    if (model && !model.startsWith("<")) {
+      models.add(model);
+    }
+
+    const usage = ccUsageToBreakdown(envelope.message?.usage ?? envelope.usage);
+    if (!hasAnyBreakdown(usage)) return;
+
+    found = true;
+    addBreakdown(tokens, usage);
+    if (!model) return;
+    const bucket = modelUsage[model] ?? (modelUsage[model] = emptyBreakdown());
+    addBreakdown(bucket, usage);
+  });
+
+  return Boolean(stats && found);
+}
+
+function shutdownMetricsToResult(metrics: CopilotModelMetrics | undefined): SdkTokenResult | null {
+  if (!metrics || typeof metrics !== "object") return null;
+
+  const tokens = emptyBreakdown();
+  const modelUsage: Record<string, TokenBreakdown> = {};
+  const models = (Object.entries(metrics) as Array<[string, { usage?: CopilotSdkUsage }]> )
+    .map(([modelId, metric]) => [modelId, copilotUsageToBreakdown(metric.usage)] as const)
+    .filter(([, usage]) => hasAnyBreakdown(usage))
+    .sort(([left], [right]) => left.localeCompare(right));
+
+  if (models.length === 0) return null;
+
+  for (const [modelId, usage] of models) {
+    addBreakdown(tokens, usage);
+    modelUsage[modelId] = { ...usage };
+  }
+
+  return { tokens, modelUsage, models: models.map(([modelId]) => modelId), provenance: "sdk-shutdown" };
+}
+
+function ccUsageToBreakdown(usage: CcUsage | undefined): TokenBreakdown {
+  return {
+    input: numberOrZero(usage?.input_tokens),
+    output: numberOrZero(usage?.output_tokens),
+    cacheCreation: numberOrZero(usage?.cache_creation_input_tokens),
+    cacheRead: numberOrZero(usage?.cache_read_input_tokens),
+  };
+}
+
+function copilotUsageToBreakdown(usage: CopilotSdkUsage | undefined): TokenBreakdown {
+  const cacheRead = numberOrZero(usage?.cacheReadTokens);
+  return {
+    input: Math.max(0, numberOrZero(usage?.inputTokens) - cacheRead),
+    output: numberOrZero(usage?.outputTokens),
+    cacheCreation: numberOrZero(usage?.cacheWriteTokens),
+    cacheRead,
+  };
+}
+
+function emptyBreakdown(): TokenBreakdown {
+  return { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
+}
+
+function addBreakdown(target: TokenBreakdown, delta: TokenBreakdown): void {
+  target.input += delta.input;
+  target.output += delta.output;
+  target.cacheCreation += delta.cacheCreation;
+  target.cacheRead += delta.cacheRead;
+}
+
+function hasAnyBreakdown(tokens: TokenBreakdown): boolean {
+  return tokens.input > 0 || tokens.output > 0 || tokens.cacheCreation > 0 || tokens.cacheRead > 0;
+}
+
+function telemetryProvenance(tokens: TokenBreakdown, provenance: TokenProvenance): TokenProvenance | undefined {
+  return hasAnyBreakdown(tokens) ? provenance : undefined;
+}
+
+async function getEurekaSessionMtime(sessionPath: string, sdkSessionId?: string): Promise<number> {
+  const candidates = [
+    path.join(sessionPath, "session.jsonl"),
+    path.join(sessionPath, "llm-telemetry.jsonl"),
+  ];
+  if (sdkSessionId) {
+    candidates.push(path.join(sessionPath, ".copilot-sdk", "session-state", sdkSessionId, "events.jsonl"));
+  }
+
+  let maxMtime = 0;
+  for (const candidate of candidates) {
+    const stat = await safeStat(candidate);
+    if (stat?.isFile()) {
+      maxMtime = Math.max(maxMtime, Number(stat.mtimeMs));
+    }
+  }
+
+  const copilotEvents = sdkSessionId
+    ? [path.join(sessionPath, ".copilot-sdk", "session-state", sdkSessionId, "events.jsonl")]
+    : await walkDir(path.join(sessionPath, ".copilot-sdk", "session-state"), ".jsonl");
+  for (const file of copilotEvents) {
+    const stat = await safeStat(file);
+    if (stat?.isFile()) {
+      maxMtime = Math.max(maxMtime, Number(stat.mtimeMs));
+    }
+  }
+
+  const rolloutFiles = await walkDir(path.join(sessionPath, ".codex-home", "sessions"), ".jsonl");
+  for (const file of rolloutFiles) {
+    const stat = await safeStat(file);
+    if (stat?.isFile()) {
+      maxMtime = Math.max(maxMtime, Number(stat.mtimeMs));
+    }
+  }
+
+  return maxMtime;
+}
+
 function numberOrZero(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function stringOrUndefined(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined;
 }
 
 function formatEurekaEngine(engine: string | undefined, providers?: Set<string>): string {

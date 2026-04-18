@@ -5,6 +5,7 @@ import path from "node:path";
 import { getClaudeDirectory, getCraftAgentClaudeDirectory } from "../core/config.js";
 import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
+import { streamJsonl } from "./util/jsonl-stream.js";
 import { claimedCcSessionIds } from "./eureka.js";
 import { marsRegistry } from "./mars.js";
 import { applyMarsMeta } from "./orchestrator.js";
@@ -26,6 +27,7 @@ interface ClaudeSessionIndexEntry {
 interface ClaudeMessageEnvelope {
   type?: string;
   sessionId?: string;
+  timestamp?: string;
   usage?: {
     input_tokens?: number;
     output_tokens?: number;
@@ -46,6 +48,13 @@ interface ClaudeMessageEnvelope {
     content?: Array<{ type?: string; name?: string }>;
   };
 }
+
+type ClaudeUsage = {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
+};
 
 export const claudeCodeParser: Parser = {
   source: "claude-code",
@@ -378,83 +387,45 @@ async function parseClaudeSessionFile(sessionFile: string, entry: ClaudeSessionI
   let model = "unknown";
   const eventTimestampsMs: number[] = [];
 
-  // For large files (>5MB), only read the first 64KB of the file to extract
-  // usage data from the message envelope. This avoids multi-GB allocations.
-  const stat = await safeStat(sessionFile);
-  const fileSize = Number(stat?.size ?? 0);
-  const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024;
-  const LARGE_FILE_READ_SIZE = 64 * 1024;
+  await streamJsonl(sessionFile, (obj) => {
+    if (!obj || typeof obj !== "object") return;
+    const envelope = obj as ClaudeMessageEnvelope;
 
-  let content: string;
-  if (fileSize > LARGE_FILE_THRESHOLD) {
-    // Read only first chunk + last chunk (usage is typically in assistant turns spread throughout)
-    // For large files, do a targeted scan: read file in 64KB chunks, extract usage via regex
-    const handle = await fs.open(sessionFile, "r");
-    try {
-      const buf = Buffer.alloc(Math.min(fileSize, 256 * 1024));
-      await handle.read(buf, 0, buf.length, 0);
-      content = buf.toString("utf8");
-      // Also read last 64KB for final usage/model
-      if (fileSize > buf.length) {
-        const tailBuf = Buffer.alloc(LARGE_FILE_READ_SIZE);
-        await handle.read(tailBuf, 0, tailBuf.length, fileSize - tailBuf.length);
-        content += "\n" + tailBuf.toString("utf8");
-      }
-    } finally {
-      await handle.close();
-    }
-  } else {
-    content = await fs.readFile(sessionFile, "utf8");
-  }
-
-  for (const line of content.split(/\r?\n/)) {
-    if (!line.trim()) continue;
-    const isUser = line.includes('"user"');
-    const isAssistant = line.includes('"assistant"');
-    if (!isUser && !isAssistant) continue;
-
-    // Capture per-event timestamp for active-duration calculation.
-    const tsMatch = line.match(/"timestamp"\s*:\s*"([^"]+)"/);
-    if (tsMatch) {
-      const ms = Date.parse(tsMatch[1]);
-      if (Number.isFinite(ms)) eventTimestampsMs.push(ms);
+    const timestampMs = envelope.timestamp ? Date.parse(envelope.timestamp) : NaN;
+    if (Number.isFinite(timestampMs)) {
+      eventTimestampsMs.push(timestampMs);
     }
 
-    if (isUser && !isAssistant) {
+    if (envelope.type === "user") {
       messageCount += 1;
-      if (!line.includes('"tool_result"')) turns += 1;
-      continue;
+      if (!hasToolResultOnly(envelope.message?.content)) {
+        turns += 1;
+      }
+      return;
+    }
+
+    if (envelope.type !== "assistant") {
+      return;
     }
 
     messageCount += 1;
-
-    // Extract model name for this interaction
-    const modelMatch = line.match(/"model"\s*:\s*"([^"]+)"/);
-    const lineModel = modelMatch?.[1];
-    if (lineModel && model === "unknown") model = lineModel;
-
-    // Extract usage and accumulate both total and per-model
-    const lineTokens: TokenBreakdown = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
-    extractUsageFromString(line, lineTokens);
-    tokens.input += lineTokens.input;
-    tokens.output += lineTokens.output;
-    tokens.cacheCreation += lineTokens.cacheCreation;
-    tokens.cacheRead += lineTokens.cacheRead;
-
-    if (lineModel && (lineTokens.input > 0 || lineTokens.output > 0 || lineTokens.cacheRead > 0)) {
-      const mu = modelUsage[lineModel] ?? (modelUsage[lineModel] = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 });
-      mu.input += lineTokens.input;
-      mu.output += lineTokens.output;
-      mu.cacheCreation += lineTokens.cacheCreation;
-      mu.cacheRead += lineTokens.cacheRead;
+    const lineModel = extractEnvelopeModel(envelope);
+    if (lineModel && model === "unknown") {
+      model = lineModel;
     }
 
-    const toolMatches = line.matchAll(/"type"\s*:\s*"tool_use"[^}]*?"name"\s*:\s*"([^"]+)"/g);
-    for (const m of toolMatches) {
+    const lineTokens = usageToBreakdown(envelope.message?.usage ?? envelope.usage);
+    addTokens(tokens, lineTokens);
+    if (lineModel && hasAnyTokens(lineTokens)) {
+      const usage = modelUsage[lineModel] ?? (modelUsage[lineModel] = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 });
+      addTokens(usage, lineTokens);
+    }
+
+    for (const toolName of extractToolUses(envelope)) {
       toolCallCount += 1;
-      toolBreakdown[m[1]] = (toolBreakdown[m[1]] ?? 0) + 1;
+      toolBreakdown[toolName] = (toolBreakdown[toolName] ?? 0) + 1;
     }
-  }
+  });
 
   const createdAt = toIso(entry.created, entry.fileMtime);
   const modifiedAt = toIso(entry.modified, entry.fileMtime);
@@ -479,6 +450,7 @@ async function parseClaudeSessionFile(sessionFile: string, entry: ClaudeSessionI
     cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
     toolBreakdown,
     modelUsage: Object.keys(modelUsage).length > 0 ? modelUsage : undefined,
+    tokenProvenance: "sdk-cc-jsonl",
   };
 }
 
@@ -574,45 +546,48 @@ async function walk(rootDir: string, onFile: (filePath: string) => Promise<void>
   }
 }
 
-function extractUsageFromString(line: string, tokens: TokenBreakdown): void {
-  const start = line.indexOf('"usage"');
-  if (start === -1) return;
+function extractEnvelopeModel(envelope: ClaudeMessageEnvelope): string | undefined {
+  const model = envelope.message?.model ?? envelope.model;
+  return typeof model === "string" && model.trim() ? model : undefined;
+}
 
-  // Find the opening brace after "usage":
-  const braceStart = line.indexOf("{", start + 7);
-  if (braceStart === -1) return;
+function usageToBreakdown(usage: ClaudeUsage | undefined): TokenBreakdown {
+  return {
+    input: numberOrZero(usage?.input_tokens),
+    output: numberOrZero(usage?.output_tokens),
+    cacheCreation: numberOrZero(usage?.cache_creation_input_tokens),
+    cacheRead: numberOrZero(usage?.cache_read_input_tokens),
+  };
+}
 
-  // Match balanced braces to handle nested objects like cache_creation: {...}
-  let depth = 0;
-  let end = braceStart;
-  for (; end < line.length && end < braceStart + 1000; end++) {
-    if (line[end] === "{") depth++;
-    else if (line[end] === "}") { depth--; if (depth === 0) break; }
-  }
-  if (depth !== 0) return;
+function addTokens(target: TokenBreakdown, delta: TokenBreakdown): void {
+  target.input += delta.input;
+  target.output += delta.output;
+  target.cacheCreation += delta.cacheCreation;
+  target.cacheRead += delta.cacheRead;
+}
 
-  try {
-    const usage = JSON.parse(line.slice(braceStart, end + 1)) as Record<string, unknown>;
-    tokens.input += numberOrZero(usage.input_tokens);
-    tokens.output += numberOrZero(usage.output_tokens);
-    tokens.cacheCreation += numberOrZero(usage.cache_creation_input_tokens);
-    tokens.cacheRead += numberOrZero(usage.cache_read_input_tokens);
-  } catch {
-    // malformed usage block
-  }
+function hasAnyTokens(tokens: TokenBreakdown): boolean {
+  return tokens.input > 0 || tokens.output > 0 || tokens.cacheCreation > 0 || tokens.cacheRead > 0;
+}
+
+function hasToolResultOnly(content: Array<{ type?: string; name?: string }> | undefined): boolean {
+  if (!Array.isArray(content) || content.length === 0) return false;
+  return content.some((item) => item && typeof item === "object" && item.type === "tool_result");
+}
+
+function extractToolUses(envelope: ClaudeMessageEnvelope): string[] {
+  const content = envelope.message?.content ?? envelope.content;
+  if (!Array.isArray(content)) return [];
+  return content.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    return item.type === "tool_use" && typeof item.name === "string" ? [item.name] : [];
+  });
 }
 
 async function safeStat(target: string): Promise<Awaited<ReturnType<typeof fs.stat>> | null> {
   try {
     return await fs.stat(target);
-  } catch {
-    return null;
-  }
-}
-
-function parseJsonLine(line: string): ClaudeMessageEnvelope | null {
-  try {
-    return JSON.parse(line) as ClaudeMessageEnvelope;
   } catch {
     return null;
   }

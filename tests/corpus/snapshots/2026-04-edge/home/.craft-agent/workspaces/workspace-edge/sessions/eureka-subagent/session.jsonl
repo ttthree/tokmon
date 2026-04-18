@@ -1,0 +1,1 @@
+{"id":"eureka-subagent","createdAt":1776475800000,"lastUsedAt":1776476100000,"name":"eureka sub","engine":"claude","model":"claude-sonnet-4-20250514","runtimeProvider":"claude_agent_sdk","type":"task","messageCount":4,"userMessageCount":2,"workingDirectory":"/Users/testuser/proj/subagent","sdkSessionId":"cc-sdk-subagent","sdkCwd":"/Users/testuser/proj/subagent"}

@@ -1,0 +1,2 @@
+{"type":"user","sessionId":"cc-sdk-subagent","timestamp":"2026-04-18T01:33:00.000Z","cwd":"/Users/testuser/proj/subagent","message":{"role":"user","content":"child task"}}
+{"type":"assistant","sessionId":"cc-sdk-subagent","timestamp":"2026-04-18T01:33:00.000Z","cwd":"/Users/testuser/proj/subagent","message":{"role":"assistant","model":"claude-haiku-4-5-20251001","content":[{"type":"text","text":"subagent"}],"usage":{"input_tokens":7,"output_tokens":3,"cache_creation_input_tokens":0,"cache_read_input_tokens":1}}}

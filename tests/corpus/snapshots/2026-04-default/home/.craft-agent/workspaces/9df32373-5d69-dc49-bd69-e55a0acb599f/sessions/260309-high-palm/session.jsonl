@@ -1,0 +1,9 @@
+{"id":"260309-high-palm","engine":"codex","tokenUsage":{"inputTokens":342237,"outputTokens":1391,"totalTokens":343628,"contextTokens":0,"costUsd":0,"cacheReadTokens":154880,"cacheCreationTokens":0},"messageCount":14,"userMessageCount":1,"model":"gpt-5.4","createdAt":1773025446614,"sdkCwd":"/Users/testuser/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","workingDirectory":"~/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","name":"session-7"}
+{"type":"user","timestamp":1773025446611}
+{"type":"assistant","timestamp":1773025452935}
+{"type":"tool","timestamp":1773025453142}
+{"type":"assistant","timestamp":1773025457042}
+{"type":"tool","timestamp":1773025457047}
+{"type":"assistant","timestamp":1773025465905}
+{}
+{"type":"assistant","timestamp":1773025502483}

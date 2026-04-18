@@ -329,6 +329,7 @@ function mapCodexThread(row: CodexThreadRow, machineId: string, stats?: CodexRol
     tokens,
     cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
     toolBreakdown: stats?.toolBreakdown ?? {},
+    tokenProvenance: "sdk-codex-rollout",
   };
 }
 

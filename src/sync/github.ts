@@ -21,7 +21,9 @@ export async function sync(): Promise<SyncResult> {
   const repoDir = path.join(os.tmpdir(), "tokmon-sync", config.github.repo.replaceAll("/", "-"));
   await fs.rm(repoDir, { recursive: true, force: true });
   await fs.mkdir(path.dirname(repoDir), { recursive: true });
-  await execGit(["clone", "--depth=1", "--branch", config.github.branch, `https://github.com/${config.github.repo}.git`, repoDir]);
+  await timed(`git clone ${config.github.repo}#${config.github.branch}`, () =>
+    execGit(["clone", "--depth=1", "--branch", config.github.branch, `https://github.com/${config.github.repo}.git`, repoDir]),
+  );
 
   const repoMachinesDir = path.join(repoDir, "machines");
   const localRemoteDir = getRemoteMachinesDirectory();
@@ -51,13 +53,15 @@ export async function sync(): Promise<SyncResult> {
     await execGit(["-C", repoDir, "commit", "-m", `sync: ${machineId} @ ${new Date().toISOString()}`]);
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
-        await execGit(["-C", repoDir, "push", "origin", config.github.branch]);
+        await timed(`git push (attempt ${attempt + 1})`, () => execGit(["-C", repoDir, "push", "origin", config.github.branch]));
         break;
       } catch (error) {
         if (attempt === 2) {
           throw error;
         }
-        await execGit(["-C", repoDir, "pull", "--rebase", "origin", config.github.branch]);
+        await timed(`git pull --rebase (attempt ${attempt + 1})`, () =>
+          execGit(["-C", repoDir, "pull", "--rebase", "origin", config.github.branch]),
+        );
       }
     }
   }
@@ -84,4 +88,19 @@ export async function syncInit(): Promise<void> {
 async function execGit(args: string[]): Promise<string> {
   const { stdout } = await execFileAsync("git", args, { maxBuffer: 10 * 1024 * 1024 });
   return stdout;
+}
+
+async function timed<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  const start = Date.now();
+  process.stdout.write(`    ↳ ${label}…`);
+  try {
+    const result = await fn();
+    const ms = Date.now() - start;
+    process.stdout.write(` (${ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`})\n`);
+    return result;
+  } catch (error) {
+    const ms = Date.now() - start;
+    process.stdout.write(` FAILED after ${ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`}\n`);
+    throw error;
+  }
 }

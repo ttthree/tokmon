@@ -1,0 +1,8 @@
+{"id":"260305-strong-cove","engine":"claude","tokenUsage":{"inputTokens":0,"outputTokens":922,"totalTokens":922,"contextTokens":0,"costUsd":0.8244570000000001,"cacheReadTokens":0,"cacheCreationTokens":0,"contextWindow":200000},"messageCount":10,"userMessageCount":1,"model":"claude-opus-4.6-1m","createdAt":1772694941597,"sdkCwd":"/Users/testuser/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","workingDirectory":"~/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","name":"session-5"}
+{"type":"user","timestamp":1772694941587}
+{"type":"tool","timestamp":1772694947028}
+{"type":"assistant","timestamp":1772694947595}
+{}
+{"type":"tool","timestamp":1772694962921}
+{"type":"assistant","timestamp":1772694963741}
+{"type":"assistant","timestamp":1772694979283}

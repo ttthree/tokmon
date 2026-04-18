@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "sessionId": "plain-cc-1",
+      "fullPath": "plain-cc-1.jsonl",
+      "fileMtime": 1776470520000,
+      "firstPrompt": "inspect plain cc",
+      "summary": "plain cc",
+      "messageCount": 2,
+      "created": "2026-04-18T00:00:00.000Z",
+      "modified": "2026-04-18T00:02:00.000Z",
+      "projectPath": "/Users/testuser/proj/plain",
+      "isSidechain": false
+    }
+  ]
+}

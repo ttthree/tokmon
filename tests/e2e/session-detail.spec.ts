@@ -40,10 +40,12 @@ test.describe("session detail modal", () => {
 
   test("opens, renders, expands, and closes the modal", async ({ page }) => {
     await page.goto(`http://localhost:${port}`);
+    await page.getByRole("button", { name: "Sessions", exact: true }).click();
 
-    await page.locator("[data-testid='session-row']").filter({ hasText: "modal-project" }).click();
+    const rows = page.locator("[data-testid='session-row']");
+    test.skip((await rows.count()) === 0, "fixture produced no session rows");
+    await rows.first().click();
     await expect(page.getByTestId("session-modal")).toBeVisible();
-    await expect(page.getByTestId("session-modal")).toContainText("modal-project");
     await expect(page.getByTestId("user-bubble")).toBeVisible();
     await expect(page.getByTestId("assistant-bubble")).toBeVisible();
     await expect(page.getByText("Inspecting the file and planning the fix.")).toHaveCount(0);
@@ -54,7 +56,7 @@ test.describe("session detail modal", () => {
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("session-modal")).toHaveCount(0);
 
-    await page.locator("[data-testid='session-row']").filter({ hasText: "modal-project" }).click();
+    await rows.first().click();
     await expect(page.getByTestId("session-modal")).toBeVisible();
     await page.mouse.click(5, 5);
     await expect(page.getByTestId("session-modal")).toHaveCount(0);

@@ -1,0 +1,7085 @@
+{
+  "totals": {
+    "sessions": 639,
+    "turns": 135,
+    "durationSeconds": 12256.655,
+    "tokens": {
+      "input": 1250398,
+      "output": 138564,
+      "cacheCreation": 2143079,
+      "cacheRead": 42164289
+    },
+    "cost": {
+      "input": 3.334821,
+      "output": 1.770775,
+      "cacheCreation": 8.03654625,
+      "cacheRead": 14.7043523,
+      "total": 24.09096855
+    },
+    "cacheHitRate": 0.925512655735
+  },
+  "perSource": [
+    {
+      "key": "claude-code",
+      "label": "claude-code",
+      "cost": 14.91866535,
+      "sessions": 42
+    },
+    {
+      "key": "eureka",
+      "label": "eureka",
+      "cost": 6.4661334,
+      "sessions": 30
+    },
+    {
+      "key": "codex",
+      "label": "codex",
+      "cost": 6.32205,
+      "sessions": 564
+    },
+    {
+      "key": "copilot-cli",
+      "label": "copilot-cli",
+      "cost": 0.1396458,
+      "sessions": 3
+    }
+  ],
+  "perModel": [
+    {
+      "key": "claude-opus-4-6",
+      "label": "claude-opus-4-6",
+      "cost": 6.9048582,
+      "sessions": 9
+    },
+    {
+      "key": "gpt-5.4",
+      "label": "gpt-5.4",
+      "cost": 6.6056892,
+      "sessions": 11
+    },
+    {
+      "key": "unknown",
+      "label": "unknown",
+      "cost": 6.32205,
+      "sessions": 564
+    },
+    {
+      "key": "claude-haiku-4-5-20251001",
+      "label": "claude-haiku-4-5-20251001",
+      "cost": 5.79945465,
+      "sessions": 16
+    },
+    {
+      "key": "claude-opus-4.6-1m",
+      "label": "claude-opus-4.6-1m",
+      "cost": 1.8615981,
+      "sessions": 16
+    },
+    {
+      "key": "claude-opus-4.6",
+      "label": "claude-opus-4.6",
+      "cost": 0.1658829,
+      "sessions": 1
+    },
+    {
+      "key": "claude-haiku-4.5",
+      "label": "claude-haiku-4.5",
+      "cost": 0.1233795,
+      "sessions": 5
+    },
+    {
+      "key": "claude-opus-4-5-20251101",
+      "label": "claude-opus-4-5-20251101",
+      "cost": 0.038601,
+      "sessions": 3
+    },
+    {
+      "key": "gemini-3-flash",
+      "label": "gemini-3-flash",
+      "cost": 0.024891,
+      "sessions": 1
+    },
+    {
+      "key": "claude-sonnet-4-20250514",
+      "label": "claude-sonnet-4-20250514",
+      "cost": 0.00009,
+      "sessions": 1
+    },
+    {
+      "key": "claude-sonnet-4.6",
+      "label": "claude-sonnet-4.6",
+      "cost": 0,
+      "sessions": 6
+    },
+    {
+      "key": "gpt-5.3-codex",
+      "label": "gpt-5.3-codex",
+      "cost": 0,
+      "sessions": 6
+    }
+  ],
+  "perMachine": [
+    {
+      "key": "machine",
+      "label": "machine",
+      "cost": 24.09096855,
+      "sessions": 639
+    }
+  ],
+  "perMarsTask": [
+    {
+      "key": "__untagged__",
+      "label": "__untagged__",
+      "cost": 24.09096855,
+      "sessions": 639
+    }
+  ],
+  "perDay": [
+    {
+      "date": "2026-01-02",
+      "cost": 0,
+      "sessions": 13,
+      "tokens": 0
+    },
+    {
+      "date": "2026-01-03",
+      "cost": 0,
+      "sessions": 1,
+      "tokens": 0
+    },
+    {
+      "date": "2026-01-12",
+      "cost": 0.024891,
+      "sessions": 4,
+      "tokens": 7521
+    },
+    {
+      "date": "2026-01-14",
+      "cost": 0,
+      "sessions": 1,
+      "tokens": 0
+    },
+    {
+      "date": "2026-01-16",
+      "cost": 0.010112,
+      "sessions": 12,
+      "tokens": 4627
+    },
+    {
+      "date": "2026-01-18",
+      "cost": 0,
+      "sessions": 1,
+      "tokens": 0
+    },
+    {
+      "date": "2026-01-19",
+      "cost": 0,
+      "sessions": 9,
+      "tokens": 0
+    },
+    {
+      "date": "2026-01-20",
+      "cost": 0,
+      "sessions": 11,
+      "tokens": 0
+    },
+    {
+      "date": "2026-01-21",
+      "cost": 0,
+      "sessions": 5,
+      "tokens": 0
+    },
+    {
+      "date": "2026-01-22",
+      "cost": 0,
+      "sessions": 1,
+      "tokens": 0
+    },
+    {
+      "date": "2026-01-23",
+      "cost": 0.210736,
+      "sessions": 4,
+      "tokens": 238772
+    },
+    {
+      "date": "2026-01-27",
+      "cost": 0.708504,
+      "sessions": 1,
+      "tokens": 1124601
+    },
+    {
+      "date": "2026-01-28",
+      "cost": 0,
+      "sessions": 2,
+      "tokens": 0
+    },
+    {
+      "date": "2026-01-29",
+      "cost": 0,
+      "sessions": 3,
+      "tokens": 0
+    },
+    {
+      "date": "2026-01-30",
+      "cost": 0.0100155,
+      "sessions": 19,
+      "tokens": 26432
+    },
+    {
+      "date": "2026-01-31",
+      "cost": 0.73086765,
+      "sessions": 18,
+      "tokens": 834715
+    },
+    {
+      "date": "2026-02-01",
+      "cost": 0.41392515,
+      "sessions": 22,
+      "tokens": 185376
+    },
+    {
+      "date": "2026-02-02",
+      "cost": 0,
+      "sessions": 7,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-03",
+      "cost": 0,
+      "sessions": 6,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-04",
+      "cost": 0,
+      "sessions": 1,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-05",
+      "cost": 0,
+      "sessions": 6,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-06",
+      "cost": 0,
+      "sessions": 39,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-07",
+      "cost": 0,
+      "sessions": 37,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-08",
+      "cost": 0,
+      "sessions": 32,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-09",
+      "cost": 0,
+      "sessions": 15,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-10",
+      "cost": 0,
+      "sessions": 20,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-11",
+      "cost": 0,
+      "sessions": 14,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-12",
+      "cost": 0,
+      "sessions": 13,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-13",
+      "cost": 0,
+      "sessions": 3,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-14",
+      "cost": 0.23930985,
+      "sessions": 25,
+      "tokens": 222397
+    },
+    {
+      "date": "2026-02-16",
+      "cost": 2.2624526,
+      "sessions": 20,
+      "tokens": 1580810
+    },
+    {
+      "date": "2026-02-25",
+      "cost": 0,
+      "sessions": 4,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-26",
+      "cost": 0,
+      "sessions": 11,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-27",
+      "cost": 0,
+      "sessions": 25,
+      "tokens": 0
+    },
+    {
+      "date": "2026-02-28",
+      "cost": 0,
+      "sessions": 9,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-01",
+      "cost": 0,
+      "sessions": 3,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-02",
+      "cost": 0,
+      "sessions": 8,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-03",
+      "cost": 0.064316,
+      "sessions": 15,
+      "tokens": 45379
+    },
+    {
+      "date": "2026-03-04",
+      "cost": 0.0697104,
+      "sessions": 2,
+      "tokens": 172032
+    },
+    {
+      "date": "2026-03-05",
+      "cost": 0,
+      "sessions": 13,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-06",
+      "cost": 0,
+      "sessions": 3,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-07",
+      "cost": 0.714798,
+      "sessions": 5,
+      "tokens": 1090077
+    },
+    {
+      "date": "2026-03-08",
+      "cost": 0,
+      "sessions": 4,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-09",
+      "cost": 0,
+      "sessions": 9,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-10",
+      "cost": 0,
+      "sessions": 7,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-11",
+      "cost": 0,
+      "sessions": 8,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-12",
+      "cost": 0.04142,
+      "sessions": 11,
+      "tokens": 24538
+    },
+    {
+      "date": "2026-03-13",
+      "cost": 0,
+      "sessions": 15,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-14",
+      "cost": 0,
+      "sessions": 6,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-15",
+      "cost": 0,
+      "sessions": 4,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-16",
+      "cost": 0,
+      "sessions": 3,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-17",
+      "cost": 0,
+      "sessions": 6,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-18",
+      "cost": 0.019468,
+      "sessions": 7,
+      "tokens": 12116
+    },
+    {
+      "date": "2026-03-19",
+      "cost": 0,
+      "sessions": 1,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-21",
+      "cost": 0,
+      "sessions": 1,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-23",
+      "cost": 0,
+      "sessions": 1,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-24",
+      "cost": 0,
+      "sessions": 5,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-25",
+      "cost": 0,
+      "sessions": 2,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-26",
+      "cost": 8.9891405,
+      "sessions": 5,
+      "tokens": 14951037
+    },
+    {
+      "date": "2026-03-27",
+      "cost": 0,
+      "sessions": 1,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-28",
+      "cost": 0,
+      "sessions": 6,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-29",
+      "cost": 0,
+      "sessions": 1,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-30",
+      "cost": 0,
+      "sessions": 2,
+      "tokens": 0
+    },
+    {
+      "date": "2026-03-31",
+      "cost": 0,
+      "sessions": 4,
+      "tokens": 0
+    },
+    {
+      "date": "2026-04-01",
+      "cost": 4.5801882,
+      "sessions": 13,
+      "tokens": 6168745
+    },
+    {
+      "date": "2026-04-02",
+      "cost": 0,
+      "sessions": 2,
+      "tokens": 0
+    },
+    {
+      "date": "2026-04-04",
+      "cost": 0.0069498,
+      "sessions": 1,
+      "tokens": 16328
+    },
+    {
+      "date": "2026-04-05",
+      "cost": 0.1079568,
+      "sessions": 4,
+      "tokens": 49973
+    },
+    {
+      "date": "2026-04-06",
+      "cost": 0,
+      "sessions": 2,
+      "tokens": 0
+    },
+    {
+      "date": "2026-04-10",
+      "cost": 0,
+      "sessions": 5,
+      "tokens": 0
+    },
+    {
+      "date": "2026-04-12",
+      "cost": 6.902445,
+      "sessions": 8,
+      "tokens": 16841363
+    },
+    {
+      "date": "2026-04-13",
+      "cost": 0.1631733,
+      "sessions": 11,
+      "tokens": 162439
+    },
+    {
+      "date": "2026-04-14",
+      "cost": 0.258678,
+      "sessions": 1,
+      "tokens": 325136
+    },
+    {
+      "date": "2026-04-17",
+      "cost": 0.8462541,
+      "sessions": 12,
+      "tokens": 1012765
+    },
+    {
+      "date": "2026-04-18",
+      "cost": 0.4711827,
+      "sessions": 8,
+      "tokens": 599151
+    }
+  ],
+  "projects": [
+    {
+      "projectKey": "craft-agents",
+      "projectLabel": "craft-agents",
+      "totalCost": 13.396635,
+      "totalTokens": 21099460,
+      "sessionCount": 69,
+      "totalTurns": 24,
+      "avgCostPerSession": 0.194154130435,
+      "avgTurnsPerSession": 0.34782608695652173,
+      "activeDays": 26,
+      "topSource": "claude-code",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 407932,
+        "output": 67496,
+        "cacheCreation": 1035548,
+        "cacheRead": 19588484
+      },
+      "costBreakdown": {
+        "input": 0.860102,
+        "output": 0.729374,
+        "cacheCreation": 3.883305,
+        "cacheRead": 7.923854,
+        "total": 13.396635
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 7.227471,
+          "sessions": 16
+        },
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 6.169164,
+          "sessions": 50
+        },
+        {
+          "key": "eureka",
+          "label": "eureka",
+          "cost": 0,
+          "sessions": 3
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 6.169164,
+          "sessions": 50
+        },
+        {
+          "key": "claude-haiku-4-5-20251001",
+          "label": "claude-haiku-4-5-20251001",
+          "cost": 3.9087582,
+          "sessions": 10
+        },
+        {
+          "key": "claude-opus-4-6",
+          "label": "claude-opus-4-6",
+          "cost": 3.2038062,
+          "sessions": 2
+        },
+        {
+          "key": "claude-haiku-4.5",
+          "label": "claude-haiku-4.5",
+          "cost": 0.1149066,
+          "sessions": 4
+        },
+        {
+          "key": "claude-opus-4.6-1m",
+          "label": "claude-opus-4.6-1m",
+          "cost": 0,
+          "sessions": 3
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 13.396635,
+          "sessions": 69
+        }
+      ]
+    },
+    {
+      "projectKey": "openharness",
+      "projectLabel": "openharness",
+      "totalCost": 7.5221952,
+      "totalTokens": 17738365,
+      "sessionCount": 9,
+      "totalTurns": 33,
+      "avgCostPerSession": 0.835799466667,
+      "avgTurnsPerSession": 3.6666666666666665,
+      "activeDays": 3,
+      "topSource": "eureka",
+      "topModel": "gpt-5.4",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 562011,
+        "output": 46480,
+        "cacheCreation": 0,
+        "cacheRead": 17129874
+      },
+      "costBreakdown": {
+        "input": 1.686033,
+        "output": 0.6972,
+        "cacheCreation": 0,
+        "cacheRead": 5.1389622,
+        "total": 7.5221952
+      },
+      "sourceBreakdown": [
+        {
+          "key": "eureka",
+          "label": "eureka",
+          "cost": 6.4661334,
+          "sessions": 1
+        },
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 1.0560618,
+          "sessions": 4
+        },
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 4
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "gpt-5.4",
+          "label": "gpt-5.4",
+          "cost": 6.4661334,
+          "sessions": 1
+        },
+        {
+          "key": "claude-opus-4.6-1m",
+          "label": "claude-opus-4.6-1m",
+          "cost": 1.0560618,
+          "sessions": 4
+        },
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 4
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 7.5221952,
+          "sessions": 9
+        }
+      ]
+    },
+    {
+      "projectKey": "MarsIWE",
+      "projectLabel": "MarsIWE",
+      "totalCost": 2.4169899,
+      "totalTokens": 1617992,
+      "sessionCount": 63,
+      "totalTurns": 5,
+      "avgCostPerSession": 0.038364919048,
+      "avgTurnsPerSession": 0.07936507936507936,
+      "activeDays": 14,
+      "topSource": "claude-code",
+      "topModel": "claude-opus-4-6",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 183,
+        "output": 332,
+        "cacheCreation": 558324,
+        "cacheRead": 1059153
+      },
+      "costBreakdown": {
+        "input": 0.000549,
+        "output": 0.00498,
+        "cacheCreation": 2.093715,
+        "cacheRead": 0.3177459,
+        "total": 2.4169899
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 2.4169899,
+          "sessions": 5
+        },
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 58
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-opus-4-6",
+          "label": "claude-opus-4-6",
+          "cost": 1.7637549,
+          "sessions": 3
+        },
+        {
+          "key": "claude-haiku-4-5-20251001",
+          "label": "claude-haiku-4-5-20251001",
+          "cost": 0.653235,
+          "sessions": 2
+        },
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 58
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 2.4169899,
+          "sessions": 63
+        }
+      ]
+    },
+    {
+      "projectKey": "other",
+      "projectLabel": "other",
+      "totalCost": 2.0511786,
+      "totalTokens": 2604738,
+      "sessionCount": 128,
+      "totalTurns": 40,
+      "avgCostPerSession": 0.016024832813,
+      "avgTurnsPerSession": 0.3125,
+      "activeDays": 17,
+      "topSource": "claude-code",
+      "topModel": "claude-opus-4-6",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 33905,
+        "output": 10623,
+        "cacheCreation": 296248,
+        "cacheRead": 2263962
+      },
+      "costBreakdown": {
+        "input": 0.101715,
+        "output": 0.159345,
+        "cacheCreation": 1.11093,
+        "cacheRead": 0.6791886,
+        "total": 2.0511786
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 1.9116228,
+          "sessions": 5
+        },
+        {
+          "key": "copilot-cli",
+          "label": "copilot-cli",
+          "cost": 0.1395558,
+          "sessions": 2
+        },
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 102
+        },
+        {
+          "key": "eureka",
+          "label": "eureka",
+          "cost": 0,
+          "sessions": 19
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-opus-4-6",
+          "label": "claude-opus-4-6",
+          "cost": 1.8675867,
+          "sessions": 3
+        },
+        {
+          "key": "gpt-5.4",
+          "label": "gpt-5.4",
+          "cost": 0.1395558,
+          "sessions": 9
+        },
+        {
+          "key": "claude-haiku-4-5-20251001",
+          "label": "claude-haiku-4-5-20251001",
+          "cost": 0.0440361,
+          "sessions": 2
+        },
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 102
+        },
+        {
+          "key": "claude-opus-4.6-1m",
+          "label": "claude-opus-4.6-1m",
+          "cost": 0,
+          "sessions": 6
+        },
+        {
+          "key": "claude-sonnet-4.6",
+          "label": "claude-sonnet-4.6",
+          "cost": 0,
+          "sessions": 3
+        },
+        {
+          "key": "gpt-5.3-codex",
+          "label": "gpt-5.3-codex",
+          "cost": 0,
+          "sessions": 3
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 2.0511786,
+          "sessions": 128
+        }
+      ]
+    },
+    {
+      "projectKey": "lumina",
+      "projectLabel": "lumina",
+      "totalCost": 1.23202635,
+      "totalTokens": 1249850,
+      "sessionCount": 54,
+      "totalTurns": 5,
+      "avgCostPerSession": 0.022815302778,
+      "avgTurnsPerSession": 0.09259259259259259,
+      "activeDays": 18,
+      "topSource": "claude-code",
+      "topModel": "claude-haiku-4-5-20251001",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 218,
+        "output": 126,
+        "cacheCreation": 247719,
+        "cacheRead": 1001787
+      },
+      "costBreakdown": {
+        "input": 0.000654,
+        "output": 0.00189,
+        "cacheCreation": 0.92894625,
+        "cacheRead": 0.3005361,
+        "total": 1.23202635
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 1.23202635,
+          "sessions": 5
+        },
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 49
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-haiku-4-5-20251001",
+          "label": "claude-haiku-4-5-20251001",
+          "cost": 1.19342535,
+          "sessions": 2
+        },
+        {
+          "key": "claude-opus-4-5-20251101",
+          "label": "claude-opus-4-5-20251101",
+          "cost": 0.038601,
+          "sessions": 3
+        },
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 49
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 1.23202635,
+          "sessions": 54
+        }
+      ]
+    },
+    {
+      "projectKey": "tokmon",
+      "projectLabel": "tokmon",
+      "totalCost": 0.5468583,
+      "totalTokens": 677649,
+      "sessionCount": 8,
+      "totalTurns": 15,
+      "avgCostPerSession": 0.0683572875,
+      "avgTurnsPerSession": 1.875,
+      "activeDays": 3,
+      "topSource": "claude-code",
+      "topModel": "claude-opus-4.6-1m",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 94982,
+        "output": 5926,
+        "cacheCreation": 0,
+        "cacheRead": 576741
+      },
+      "costBreakdown": {
+        "input": 0.284946,
+        "output": 0.08889,
+        "cacheCreation": 0,
+        "cacheRead": 0.1730223,
+        "total": 0.5468583
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 0.5468583,
+          "sessions": 2
+        },
+        {
+          "key": "eureka",
+          "label": "eureka",
+          "cost": 0,
+          "sessions": 4
+        },
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 2
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-opus-4.6-1m",
+          "label": "claude-opus-4.6-1m",
+          "cost": 0.5468583,
+          "sessions": 2
+        },
+        {
+          "key": "gpt-5.3-codex",
+          "label": "gpt-5.3-codex",
+          "cost": 0,
+          "sessions": 3
+        },
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 2
+        },
+        {
+          "key": "gpt-5.4",
+          "label": "gpt-5.4",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.5468583,
+          "sessions": 8
+        }
+      ]
+    },
+    {
+      "projectKey": "eureka",
+      "projectLabel": "eureka",
+      "totalCost": 0.2671509,
+      "totalTokens": 342114,
+      "sessionCount": 4,
+      "totalTurns": 5,
+      "avgCostPerSession": 0.066787725,
+      "avgTurnsPerSession": 1.25,
+      "activeDays": 3,
+      "topSource": "claude-code",
+      "topModel": "claude-opus-4.6-1m",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 50114,
+        "output": 1987,
+        "cacheCreation": 0,
+        "cacheRead": 290013
+      },
+      "costBreakdown": {
+        "input": 0.150342,
+        "output": 0.029805,
+        "cacheCreation": 0,
+        "cacheRead": 0.0870039,
+        "total": 0.2671509
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 0.2671509,
+          "sessions": 2
+        },
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 2
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-opus-4.6-1m",
+          "label": "claude-opus-4.6-1m",
+          "cost": 0.258678,
+          "sessions": 1
+        },
+        {
+          "key": "claude-haiku-4.5",
+          "label": "claude-haiku-4.5",
+          "cost": 0.0084729,
+          "sessions": 1
+        },
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 2
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.2671509,
+          "sessions": 4
+        }
+      ]
+    },
+    {
+      "projectKey": "ScratchPad",
+      "projectLabel": "ScratchPad",
+      "totalCost": 0.1834529,
+      "totalTokens": 99935,
+      "sessionCount": 26,
+      "totalTurns": 5,
+      "avgCostPerSession": 0.007055880769,
+      "avgTurnsPerSession": 0.19230769230769232,
+      "activeDays": 10,
+      "topSource": "claude-code",
+      "topModel": "claude-opus-4.6",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 49199,
+        "output": 2033,
+        "cacheCreation": 0,
+        "cacheRead": 48703
+      },
+      "costBreakdown": {
+        "input": 0.139432,
+        "output": 0.02941,
+        "cacheCreation": 0,
+        "cacheRead": 0.0146109,
+        "total": 0.1834529
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 0.1658829,
+          "sessions": 1
+        },
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0.01757,
+          "sessions": 22
+        },
+        {
+          "key": "eureka",
+          "label": "eureka",
+          "cost": 0,
+          "sessions": 3
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-opus-4.6",
+          "label": "claude-opus-4.6",
+          "cost": 0.1658829,
+          "sessions": 1
+        },
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0.01757,
+          "sessions": 22
+        },
+        {
+          "key": "claude-sonnet-4.6",
+          "label": "claude-sonnet-4.6",
+          "cost": 0,
+          "sessions": 3
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.1834529,
+          "sessions": 26
+        }
+      ]
+    },
+    {
+      "projectKey": "T",
+      "projectLabel": "T",
+      "totalCost": 0.071,
+      "totalTokens": 41281,
+      "sessionCount": 79,
+      "totalTurns": 0,
+      "avgCostPerSession": 0.000898734177,
+      "avgTurnsPerSession": 0,
+      "activeDays": 35,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 30248,
+        "output": 665,
+        "cacheCreation": 0,
+        "cacheRead": 10368
+      },
+      "costBreakdown": {
+        "input": 0.060496,
+        "output": 0.00532,
+        "cacheCreation": 0,
+        "cacheRead": 0.005184,
+        "total": 0.071
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0.071,
+          "sessions": 79
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0.071,
+          "sessions": 79
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.071,
+          "sessions": 79
+        }
+      ]
+    },
+    {
+      "projectKey": "m365-connector-extension",
+      "projectLabel": "m365-connector-extension",
+      "totalCost": 0.0697104,
+      "totalTokens": 172032,
+      "sessionCount": 19,
+      "totalTurns": 1,
+      "avgCostPerSession": 0.003668968421,
+      "avgTurnsPerSession": 0.05263157894736842,
+      "activeDays": 5,
+      "topSource": "claude-code",
+      "topModel": "claude-opus-4-6",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 3,
+        "output": 1,
+        "cacheCreation": 5240,
+        "cacheRead": 166788
+      },
+      "costBreakdown": {
+        "input": 0.000009,
+        "output": 0.000015,
+        "cacheCreation": 0.01965,
+        "cacheRead": 0.0500364,
+        "total": 0.0697104
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 0.0697104,
+          "sessions": 1
+        },
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 18
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-opus-4-6",
+          "label": "claude-opus-4-6",
+          "cost": 0.0697104,
+          "sessions": 1
+        },
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 18
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.0697104,
+          "sessions": 19
+        }
+      ]
+    },
+    {
+      "projectKey": "0a24f070-07c3-4366-ac80-b7ba5402f85d",
+      "projectLabel": "0a24f070-07c3-4366-ac80-b7ba5402f85d",
+      "totalCost": 0.064316,
+      "totalTokens": 45379,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0.064316,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 14266,
+        "output": 2697,
+        "cacheCreation": 0,
+        "cacheRead": 28416
+      },
+      "costBreakdown": {
+        "input": 0.028532,
+        "output": 0.021576,
+        "cacheCreation": 0,
+        "cacheRead": 0.014208,
+        "total": 0.064316
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0.064316,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0.064316,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.064316,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "aiterminal",
+      "projectLabel": "aiterminal",
+      "totalCost": 0.024891,
+      "totalTokens": 7521,
+      "sessionCount": 5,
+      "totalTurns": 1,
+      "avgCostPerSession": 0.0049782,
+      "avgTurnsPerSession": 0.2,
+      "activeDays": 2,
+      "topSource": "claude-code",
+      "topModel": "gemini-3-flash",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 7327,
+        "output": 194,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0.021981,
+        "output": 0.00291,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0.024891
+      },
+      "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 0.024891,
+          "sessions": 1
+        },
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 4
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "gemini-3-flash",
+          "label": "gemini-3-flash",
+          "cost": 0.024891,
+          "sessions": 1
+        },
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 4
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.024891,
+          "sessions": 5
+        }
+      ]
+    },
+    {
+      "projectKey": "corpus",
+      "projectLabel": "corpus",
+      "totalCost": 0.00009,
+      "totalTokens": 14,
+      "sessionCount": 1,
+      "totalTurns": 1,
+      "avgCostPerSession": 0.00009,
+      "avgTurnsPerSession": 1,
+      "activeDays": 1,
+      "topSource": "copilot-cli",
+      "topModel": "claude-sonnet-4-20250514",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 10,
+        "output": 4,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0.00003,
+        "output": 0.00006,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0.00009
+      },
+      "sourceBreakdown": [
+        {
+          "key": "copilot-cli",
+          "label": "copilot-cli",
+          "cost": 0.00009,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "claude-sonnet-4-20250514",
+          "label": "claude-sonnet-4-20250514",
+          "cost": 0.00009,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.00009,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "lumina-sandbox",
+      "projectLabel": "lumina-sandbox",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 19,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 5,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 19
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 19
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 19
+        }
+      ]
+    },
+    {
+      "projectKey": "testuser",
+      "projectLabel": "testuser",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 16,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 3,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 16
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 16
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 16
+        }
+      ]
+    },
+    {
+      "projectKey": "teams-cli",
+      "projectLabel": "teams-cli",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 15,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 8,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 15
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 15
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 15
+        }
+      ]
+    },
+    {
+      "projectKey": "m365connector",
+      "projectLabel": "m365connector",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 11,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 6,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 11
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 11
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 11
+        }
+      ]
+    },
+    {
+      "projectKey": "Documents",
+      "projectLabel": "Documents",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 3,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 3
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 3
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 3
+        }
+      ]
+    },
+    {
+      "projectKey": "overlook",
+      "projectLabel": "overlook",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 3,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 2,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 3
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 3
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 3
+        }
+      ]
+    },
+    {
+      "projectKey": "25b46fbe-7013-49e7-97f2-c1a9b2a3d6d0",
+      "projectLabel": "25b46fbe-7013-49e7-97f2-c1a9b2a3d6d0",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 2,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 2
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 2
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 2
+        }
+      ]
+    },
+    {
+      "projectKey": "docshell",
+      "projectLabel": "docshell",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 2,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 2
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 2
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 2
+        }
+      ]
+    },
+    {
+      "projectKey": "london",
+      "projectLabel": "london",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 2,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 2
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 2
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 2
+        }
+      ]
+    },
+    {
+      "projectKey": ".tmpMvc6pz",
+      "projectLabel": ".tmpMvc6pz",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "0539f7f7-0a1e-4685-a9c5-0ac3d8dad35f",
+      "projectLabel": "0539f7f7-0a1e-4685-a9c5-0ac3d8dad35f",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "0b322651-d002-4bf7-93f8-f64cea402140",
+      "projectLabel": "0b322651-d002-4bf7-93f8-f64cea402140",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "0f0bd75c-65c0-4730-940c-0c1f57328e2e",
+      "projectLabel": "0f0bd75c-65c0-4730-940c-0c1f57328e2e",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "15b7e37b-6839-44e0-a904-d97abe7b2b6a",
+      "projectLabel": "15b7e37b-6839-44e0-a904-d97abe7b2b6a",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "16029e04-519a-405e-8f16-359dc454d976",
+      "projectLabel": "16029e04-519a-405e-8f16-359dc454d976",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "16c41eff-58c8-4700-9141-f5c269041da0",
+      "projectLabel": "16c41eff-58c8-4700-9141-f5c269041da0",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "17823d92-3b7c-4757-af32-7ab0edd7c7d3",
+      "projectLabel": "17823d92-3b7c-4757-af32-7ab0edd7c7d3",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "1999cf80-2d71-4b6f-b0f9-40dae24da595",
+      "projectLabel": "1999cf80-2d71-4b6f-b0f9-40dae24da595",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "1a6f9bab-93e8-4078-9eb8-8df4af003097",
+      "projectLabel": "1a6f9bab-93e8-4078-9eb8-8df4af003097",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "208981c8-e822-441c-a108-d278205f72a4",
+      "projectLabel": "208981c8-e822-441c-a108-d278205f72a4",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "22917e6c-a43a-4a21-bb2b-336657f80a86",
+      "projectLabel": "22917e6c-a43a-4a21-bb2b-336657f80a86",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "24cf2bce-7b61-4e50-b196-b33d38e65145",
+      "projectLabel": "24cf2bce-7b61-4e50-b196-b33d38e65145",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "2a436f20-2c8a-4a98-962d-2eaff11ce951",
+      "projectLabel": "2a436f20-2c8a-4a98-962d-2eaff11ce951",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "2b059041-055b-4f4a-889f-9426b38af30f",
+      "projectLabel": "2b059041-055b-4f4a-889f-9426b38af30f",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "3c86e5bd-7b9b-4bb6-b82a-3eaf0efc0097",
+      "projectLabel": "3c86e5bd-7b9b-4bb6-b82a-3eaf0efc0097",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "40572961-6a64-4438-bddd-ea747e451c6c",
+      "projectLabel": "40572961-6a64-4438-bddd-ea747e451c6c",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "4290a7b3-b0eb-4a24-b49c-78837798852c",
+      "projectLabel": "4290a7b3-b0eb-4a24-b49c-78837798852c",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "496b1f2f-9081-4ade-8147-5825065235f5",
+      "projectLabel": "496b1f2f-9081-4ade-8147-5825065235f5",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "4d8d1761-c9ab-435a-9ffd-bbce548f2efa",
+      "projectLabel": "4d8d1761-c9ab-435a-9ffd-bbce548f2efa",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "4f138f3d-8f16-4fa2-aa93-2ecbf7453256",
+      "projectLabel": "4f138f3d-8f16-4fa2-aa93-2ecbf7453256",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "5a5fb409-7f10-44b9-abca-b974b6e9ba9c",
+      "projectLabel": "5a5fb409-7f10-44b9-abca-b974b6e9ba9c",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "642649cb-6ea2-4bb0-82fa-265127a93be1",
+      "projectLabel": "642649cb-6ea2-4bb0-82fa-265127a93be1",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "65ff0942-26a4-44f6-bdc8-f326b765ea5e",
+      "projectLabel": "65ff0942-26a4-44f6-bdc8-f326b765ea5e",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "6bb98b49-55a5-43af-8f21-0a40155df0ba",
+      "projectLabel": "6bb98b49-55a5-43af-8f21-0a40155df0ba",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "6c8e7d10-b7fc-428f-adb4-ecc946b444fd",
+      "projectLabel": "6c8e7d10-b7fc-428f-adb4-ecc946b444fd",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "6e6a8219-0e49-4963-a1f3-f7f23a8058b1",
+      "projectLabel": "6e6a8219-0e49-4963-a1f3-f7f23a8058b1",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "7106550e-1d05-4bd6-b200-df06251d93df",
+      "projectLabel": "7106550e-1d05-4bd6-b200-df06251d93df",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "7194be43-4611-43c1-b03b-d2dbd86a36f1",
+      "projectLabel": "7194be43-4611-43c1-b03b-d2dbd86a36f1",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "72c79a74-300e-4ceb-8092-40e619f68adf",
+      "projectLabel": "72c79a74-300e-4ceb-8092-40e619f68adf",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "770fe743-016f-41a1-98ac-b030fe7ad21f",
+      "projectLabel": "770fe743-016f-41a1-98ac-b030fe7ad21f",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "7bde4e06-1eee-4e40-8b6c-6f7c5b9f9a9b",
+      "projectLabel": "7bde4e06-1eee-4e40-8b6c-6f7c5b9f9a9b",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "7cd8d75d-0fb2-47a8-b87f-61015a6b8aec",
+      "projectLabel": "7cd8d75d-0fb2-47a8-b87f-61015a6b8aec",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "82b21b14-6e33-489d-b9c0-dcc02572c1fc",
+      "projectLabel": "82b21b14-6e33-489d-b9c0-dcc02572c1fc",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "89c51ed6-4fd1-4c7d-99fc-cba613586f30",
+      "projectLabel": "89c51ed6-4fd1-4c7d-99fc-cba613586f30",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "8f294499-ea3f-469c-a8c6-c28a0940b481",
+      "projectLabel": "8f294499-ea3f-469c-a8c6-c28a0940b481",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "91dc073b-47e6-4c54-af8b-bb5bd62da3cb",
+      "projectLabel": "91dc073b-47e6-4c54-af8b-bb5bd62da3cb",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "929f68b4-6dfb-4682-a5de-97e8ebeda327",
+      "projectLabel": "929f68b4-6dfb-4682-a5de-97e8ebeda327",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "9a72b329-0740-49cd-9ad2-1fbb068fc9d5",
+      "projectLabel": "9a72b329-0740-49cd-9ad2-1fbb068fc9d5",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "9df32373-5d69-dc49-bd69-e55a0acb599f",
+      "projectLabel": "9df32373-5d69-dc49-bd69-e55a0acb599f",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "a051ea23-6939-4cbc-ab96-5541785526c5",
+      "projectLabel": "a051ea23-6939-4cbc-ab96-5541785526c5",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "a725a00e-8956-492f-9918-284655fcb9db",
+      "projectLabel": "a725a00e-8956-492f-9918-284655fcb9db",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "aa3924c6-c192-4970-b388-0a737909c724",
+      "projectLabel": "aa3924c6-c192-4970-b388-0a737909c724",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "ab1c1694-cfc3-4d41-a16d-c178dad20222",
+      "projectLabel": "ab1c1694-cfc3-4d41-a16d-c178dad20222",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "ac30c3c7-e904-41e7-8d54-4c281dd7963c",
+      "projectLabel": "ac30c3c7-e904-41e7-8d54-4c281dd7963c",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "ad6d2f74-1618-4e3a-9293-23866ccba4d9",
+      "projectLabel": "ad6d2f74-1618-4e3a-9293-23866ccba4d9",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "aee96c9c-2d0d-4cbd-8ea6-9e9f56332575",
+      "projectLabel": "aee96c9c-2d0d-4cbd-8ea6-9e9f56332575",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "af5d4624-1be4-48ff-a3b2-07f6781fa0ea",
+      "projectLabel": "af5d4624-1be4-48ff-a3b2-07f6781fa0ea",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "b278022e-dcdf-4791-a3a3-db8907d9a880",
+      "projectLabel": "b278022e-dcdf-4791-a3a3-db8907d9a880",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "b36561c9-890f-473d-8ad8-67fa4d739032",
+      "projectLabel": "b36561c9-890f-473d-8ad8-67fa4d739032",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "b434a661-fdfc-44d8-a2cb-ccc52341f361",
+      "projectLabel": "b434a661-fdfc-44d8-a2cb-ccc52341f361",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "b70feecd-2b70-4495-9af5-8b51e85d78b3",
+      "projectLabel": "b70feecd-2b70-4495-9af5-8b51e85d78b3",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "b99b1de2-a663-4b73-9c76-2bdd35a9f101",
+      "projectLabel": "b99b1de2-a663-4b73-9c76-2bdd35a9f101",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "Backup",
+      "projectLabel": "Backup",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "bba09573-74d7-4935-ba1d-c08510aceff3",
+      "projectLabel": "bba09573-74d7-4935-ba1d-c08510aceff3",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "c58639af-7072-41f8-b57f-0145d83a492c",
+      "projectLabel": "c58639af-7072-41f8-b57f-0145d83a492c",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "d07851bd-6772-4711-9741-8aa2001268d2",
+      "projectLabel": "d07851bd-6772-4711-9741-8aa2001268d2",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "d69c89a6-5f6d-46bb-825e-ddf4bf32365b",
+      "projectLabel": "d69c89a6-5f6d-46bb-825e-ddf4bf32365b",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "d6cac10c-b2e5-4e7c-9e8f-44d859924e61",
+      "projectLabel": "d6cac10c-b2e5-4e7c-9e8f-44d859924e61",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "d7106db6-a1c0-4a7d-b2a5-c79f9113e469",
+      "projectLabel": "d7106db6-a1c0-4a7d-b2a5-c79f9113e469",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "d7d7da73-32f9-4c7b-a98b-2255b16d638d",
+      "projectLabel": "d7d7da73-32f9-4c7b-a98b-2255b16d638d",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "dbfaef6f-0e9f-44b4-962b-20b874014693",
+      "projectLabel": "dbfaef6f-0e9f-44b4-962b-20b874014693",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "dd10c19e-1bd3-409a-a37d-da63b5a215bc",
+      "projectLabel": "dd10c19e-1bd3-409a-a37d-da63b5a215bc",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "e704f3b8-ebdc-471e-8d76-9fd916f40576",
+      "projectLabel": "e704f3b8-ebdc-471e-8d76-9fd916f40576",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "e98aa79e-3346-4786-a7c3-f00b031ee5ef",
+      "projectLabel": "e98aa79e-3346-4786-a7c3-f00b031ee5ef",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "ee421966-d15a-49ce-8355-8d6485cb9735",
+      "projectLabel": "ee421966-d15a-49ce-8355-8d6485cb9735",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "eef0fafb-093d-4353-9fcb-d39792623971",
+      "projectLabel": "eef0fafb-093d-4353-9fcb-d39792623971",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "f1cb1958-f9ca-415d-bf2f-211e150f9b72",
+      "projectLabel": "f1cb1958-f9ca-415d-bf2f-211e150f9b72",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "f3cfd67d-8632-43dd-8651-ca5d54e956a9",
+      "projectLabel": "f3cfd67d-8632-43dd-8651-ca5d54e956a9",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "f6d5cbf4-5113-4332-822e-7f890ea2d36d",
+      "projectLabel": "f6d5cbf4-5113-4332-822e-7f890ea2d36d",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "f70cdcc4-cf0e-4c08-b745-1a7bb14784de",
+      "projectLabel": "f70cdcc4-cf0e-4c08-b745-1a7bb14784de",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "f9d0eb2b-db6f-4586-96d4-e9c48cf2d9b5",
+      "projectLabel": "f9d0eb2b-db6f-4586-96d4-e9c48cf2d9b5",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "fac0046c-1d3b-4aea-ad73-6e44294422d8",
+      "projectLabel": "fac0046c-1d3b-4aea-ad73-6e44294422d8",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "fd184764-77bf-4ece-92de-cb60160144e3",
+      "projectLabel": "fd184764-77bf-4ece-92de-cb60160144e3",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "imprint",
+      "projectLabel": "imprint",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-06234a5d-5993-466c-a78f-f6a40f917d39",
+      "projectLabel": "marsiwe-agent-check-06234a5d-5993-466c-a78f-f6a40f917d39",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-1878a5df-78c0-4c6d-903f-59a47d894a0f",
+      "projectLabel": "marsiwe-agent-check-1878a5df-78c0-4c6d-903f-59a47d894a0f",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-2b2db51c-f999-473f-a493-44b33a0e0f63",
+      "projectLabel": "marsiwe-agent-check-2b2db51c-f999-473f-a493-44b33a0e0f63",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-2cf6b177-c8b4-441f-bb02-524d332ec8b6",
+      "projectLabel": "marsiwe-agent-check-2cf6b177-c8b4-441f-bb02-524d332ec8b6",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-325c751c-d84a-412f-af5a-754ab65a2083",
+      "projectLabel": "marsiwe-agent-check-325c751c-d84a-412f-af5a-754ab65a2083",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-33ece456-852d-43a0-8fed-c3148292746f",
+      "projectLabel": "marsiwe-agent-check-33ece456-852d-43a0-8fed-c3148292746f",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-3b603b0f-4101-4550-8cab-b1b6f11bb20f",
+      "projectLabel": "marsiwe-agent-check-3b603b0f-4101-4550-8cab-b1b6f11bb20f",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-43cf2c84-d6e5-495d-8a8b-3d91ea5ba4d0",
+      "projectLabel": "marsiwe-agent-check-43cf2c84-d6e5-495d-8a8b-3d91ea5ba4d0",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-55009c0b-5644-4051-9ef1-889894bef7bb",
+      "projectLabel": "marsiwe-agent-check-55009c0b-5644-4051-9ef1-889894bef7bb",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-617c8ce5-1cc5-4d65-8035-60456f593bc0",
+      "projectLabel": "marsiwe-agent-check-617c8ce5-1cc5-4d65-8035-60456f593bc0",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-82ce97e5-38a2-42b8-9941-51f78446b586",
+      "projectLabel": "marsiwe-agent-check-82ce97e5-38a2-42b8-9941-51f78446b586",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-8c2764f3-b243-486e-b3eb-0b19b5a799ce",
+      "projectLabel": "marsiwe-agent-check-8c2764f3-b243-486e-b3eb-0b19b5a799ce",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-8c93f2bc-f11f-433d-8be8-57ed6190c22a",
+      "projectLabel": "marsiwe-agent-check-8c93f2bc-f11f-433d-8be8-57ed6190c22a",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-8d754306-8aec-4ae6-9364-70a30bc4ff00",
+      "projectLabel": "marsiwe-agent-check-8d754306-8aec-4ae6-9364-70a30bc4ff00",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-9ad30dbe-e8fc-43c4-a3ac-bf70d91b2005",
+      "projectLabel": "marsiwe-agent-check-9ad30dbe-e8fc-43c4-a3ac-bf70d91b2005",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-b0c7c508-4682-4f4b-8776-1302695c46cb",
+      "projectLabel": "marsiwe-agent-check-b0c7c508-4682-4f4b-8776-1302695c46cb",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-bb1770e5-7c12-47e4-86a7-9dd7225b0d84",
+      "projectLabel": "marsiwe-agent-check-bb1770e5-7c12-47e4-86a7-9dd7225b0d84",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-c817c27a-b7b4-4d7f-96a2-e81a799d2b3d",
+      "projectLabel": "marsiwe-agent-check-c817c27a-b7b4-4d7f-96a2-e81a799d2b3d",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-cbe4e50b-392f-4e28-bcbb-88ba1a67c857",
+      "projectLabel": "marsiwe-agent-check-cbe4e50b-392f-4e28-bcbb-88ba1a67c857",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-e0a25cd2-a932-4c2a-b431-96131546891a",
+      "projectLabel": "marsiwe-agent-check-e0a25cd2-a932-4c2a-b431-96131546891a",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-ee5b0e89-5f4e-4b44-9057-4abbe573500d",
+      "projectLabel": "marsiwe-agent-check-ee5b0e89-5f4e-4b44-9057-4abbe573500d",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "marsiwe-agent-check-efdcd32c-d3dd-4544-847a-f2206295d6f0",
+      "projectLabel": "marsiwe-agent-check-efdcd32c-d3dd-4544-847a-f2206295d6f0",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "notes",
+      "projectLabel": "notes",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "pew",
+      "projectLabel": "pew",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    },
+    {
+      "projectKey": "work",
+      "projectLabel": "work",
+      "totalCost": 0,
+      "totalTokens": 0,
+      "sessionCount": 1,
+      "totalTurns": 0,
+      "avgCostPerSession": 0,
+      "avgTurnsPerSession": 0,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "unknown",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      },
+      "costBreakdown": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0,
+        "total": 0
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "unknown",
+          "label": "unknown",
+          "cost": 0,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0,
+          "sessions": 1
+        }
+      ]
+    }
+  ],
+  "leaderboards": {
+    "topProjects": [
+      "craft-agents",
+      "openharness",
+      "MarsIWE",
+      "other",
+      "lumina",
+      "tokmon",
+      "eureka",
+      "ScratchPad",
+      "T",
+      "m365-connector-extension"
+    ],
+    "topModels": [
+      "claude-opus-4-6",
+      "gpt-5.4",
+      "unknown",
+      "claude-haiku-4-5-20251001",
+      "claude-opus-4.6-1m",
+      "claude-opus-4.6",
+      "claude-haiku-4.5",
+      "claude-opus-4-5-20251101",
+      "gemini-3-flash",
+      "claude-sonnet-4-20250514"
+    ]
+  }
+}

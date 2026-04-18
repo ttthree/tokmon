@@ -26,6 +26,15 @@ export interface CostBreakdown {
   total: number;
 }
 
+export type TokenProvenance =
+  | "sdk-shutdown"
+  | "sdk-events"
+  | "sdk-cc-jsonl"
+  | "sdk-codex-rollout"
+  | "telemetry"
+  | "telemetry-incomplete"
+  | "none";
+
 export interface Session {
   id: string;
   machineId: string;
@@ -48,6 +57,7 @@ export interface Session {
   toolBreakdown: Record<string, number>;
   /** Per-model token breakdown from individual API calls. Used for "Cost by Model" aggregation. */
   modelUsage?: Record<string, TokenBreakdown>;
+  tokenProvenance?: TokenProvenance;
   orchestrator?: OrchestratorInfo;
 }
 
@@ -59,6 +69,8 @@ export interface FileCursor {
   byteOffset: number;
   lastUpdatedAt?: string;
   processedAt: string;
+  /** For Eureka cursors only: the sdkSessionId to re-register into claimedCcSessionIds on cursor hit. */
+  claimedSdkSessionId?: string;
 }
 
 export interface CursorState {
@@ -232,7 +244,7 @@ export interface ParseResult {
 export interface ParserContext {
   machineId: string;
   existingCursor: CursorState;
-  sources: SourceEntry[];
+  sources?: SourceEntry[];
 }
 
 export interface Parser {

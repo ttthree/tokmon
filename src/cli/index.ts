@@ -3,6 +3,7 @@ import { Command } from "commander";
 
 import { collectCommand } from "./commands/collect.js";
 import { configAddProjectCommand, configExcludeFolderCommand, configSetCommand, configShowCommand } from "./commands/config.js";
+import { registerCorpusCommands } from "./commands/corpus/index.js";
 import { run } from "./commands/run.js";
 import { serveCommand } from "./commands/serve.js";
 import { isSyncConfigured, loadConfig } from "../core/config.js";
@@ -94,6 +95,8 @@ program
     const result = await sync();
     console.log(`Sync complete: pulled ${result.pulled} remote machine files, pushed=${result.pushed}`);
   });
+
+registerCorpusCommands(program);
 
 program.parseAsync(process.argv).catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);

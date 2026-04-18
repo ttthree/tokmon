@@ -2,8 +2,9 @@ import fs from "node:fs/promises";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createEurekaCodexFixture, createTestHome } from "../../helpers/fixtures.js";
-import { createEmptyCursorState } from "../../../src/core/cursor.js";
+import { createEurekaClaudeSdkFixture, createEurekaCodexFixture, createTestHome } from "../../helpers/fixtures.js";
+import { createEmptyCursorState, mergeCursorState } from "../../../src/core/cursor.js";
+import { claudeCodeParser } from "../../../src/parsers/claude-code.js";
 import { claimedCcSessionIds, eurekaParser } from "../../../src/parsers/eureka.js";
 
 let testHome = "";
@@ -80,5 +81,34 @@ describe("eureka parser", () => {
     process.env.TOKMON_HOME = testHome;
     await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
     expect(claimedCcSessionIds.has("stale-id")).toBe(false);
+  });
+
+  it("re-registers claimed SDK session id when cursor hits on incremental run", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+
+    const sdkSessionId = "claude-sdk-session-1";
+    await createEurekaClaudeSdkFixture(testHome, { sdkSessionId });
+
+    // Cold-start: parse populates claimedCcSessionIds and emits cursor updates
+    // including claimedSdkSessionId.
+    const first = await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
+    expect(claimedCcSessionIds.has(sdkSessionId)).toBe(true);
+    expect(first.sessions).toHaveLength(1);
+
+    const persistedCursor = mergeCursorState(createEmptyCursorState(), first.cursorUpdates);
+    const persistedEntries = Object.values(persistedCursor.files);
+    expect(persistedEntries.some((entry) => entry.claimedSdkSessionId === sdkSessionId)).toBe(true);
+
+    // Simulate fresh process: claimedCcSessionIds starts empty.
+    claimedCcSessionIds.clear();
+
+    // Incremental run: cursor hits (no file changes) but the fix re-registers
+    // claimedSdkSessionId so the CC parser still skips the SDK file.
+    await eurekaParser.parse({ machineId: "machine-1", existingCursor: persistedCursor });
+    expect(claimedCcSessionIds.has(sdkSessionId)).toBe(true);
+
+    const ccResult = await claudeCodeParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
+    expect(ccResult.sessions.some((s) => s.id === sdkSessionId)).toBe(false);
   });
 });

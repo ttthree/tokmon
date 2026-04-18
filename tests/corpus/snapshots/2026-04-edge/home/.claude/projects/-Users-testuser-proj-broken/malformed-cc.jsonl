@@ -1,0 +1,3 @@
+{"type":"user","sessionId":"malformed-cc","timestamp":"2026-04-18T00:20:00.000Z","cwd":"/Users/testuser/proj/broken","message":{"role":"user","content":[{"type":"text","text":"skip bad lines"}]}}
+{"type":"assistant","sessionId":"malformed-cc","timestamp":"2026-04-18T00:21:00.000Z","cwd":"/Users/testuser/proj/broken","message":{"role":"assistant","model":"claude-sonnet-4-20250514","content":[{"type":"text","text":"reply from claude-sonnet-4-20250514"}],"usage":{"input_tokens":40,"output_tokens":5,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+not-json

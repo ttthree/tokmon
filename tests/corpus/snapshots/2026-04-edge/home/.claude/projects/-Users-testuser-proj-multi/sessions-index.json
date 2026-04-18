@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "sessionId": "multi-model-cc",
+      "fullPath": "multi-model-cc.jsonl",
+      "fileMtime": 1776471240000,
+      "firstPrompt": "use mixed models",
+      "summary": "multi model",
+      "messageCount": 3,
+      "created": "2026-04-18T00:10:00.000Z",
+      "modified": "2026-04-18T00:14:00.000Z",
+      "projectPath": "/Users/testuser/proj/multi",
+      "isSidechain": false
+    }
+  ]
+}

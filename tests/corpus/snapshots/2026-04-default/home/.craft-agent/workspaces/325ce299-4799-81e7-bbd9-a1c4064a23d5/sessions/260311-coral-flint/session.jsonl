@@ -1,0 +1,4 @@
+{"id":"260311-coral-flint","engine":"claude","tokenUsage":{"inputTokens":27230,"outputTokens":200,"totalTokens":27430,"contextTokens":0,"costUsd":0.11324715,"cacheReadTokens":27018,"cacheCreationTokens":211,"contextWindow":200000},"messageCount":3,"userMessageCount":1,"model":"claude-sonnet-4.6","createdAt":1773223601230,"sdkCwd":"/Users/testuser/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","workingDirectory":"~/work/ScratchPad","name":"session-4"}
+{"type":"user","timestamp":1773223601187}
+{"type":"tool","timestamp":1773223607682}
+{"type":"assistant","timestamp":1773223613574}

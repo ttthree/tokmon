@@ -2,6 +2,7 @@ import { exec } from "node:child_process";
 
 import { isSyncConfigured, loadConfig } from "../../core/config.js";
 import type { AppConfig } from "../../core/types.js";
+import { aggregateData } from "../../core/aggregate.js";
 import { serve } from "../../server/index.js";
 import { sync } from "../../sync/github.js";
 import { collectCommand } from "./collect.js";
@@ -15,25 +16,53 @@ export interface RunOptions {
 
 let refreshRunning = false;
 
+function fmt(ms: number): string {
+  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
+}
+
+async function step<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  const start = Date.now();
+  console.log(`▶ ${label}…`);
+  try {
+    const result = await fn();
+    console.log(`✓ ${label} (${fmt(Date.now() - start)})`);
+    return result;
+  } catch (error) {
+    console.log(`✗ ${label} failed after ${fmt(Date.now() - start)}`);
+    throw error;
+  }
+}
+
 export async function run(options: RunOptions): Promise<void> {
-  const collectResult = await collectCommand({ reset: options.reset });
-  const elapsed = (collectResult.durationMs / 1000).toFixed(1);
-  console.log(`✓ Collected ${collectResult.sessionCount} sessions (${elapsed}s)`);
+  const overall = Date.now();
+
+  const collectResult = await step("Collect sessions", () => collectCommand({ reset: options.reset }));
+  console.log(`  → ${collectResult.sessionCount} sessions`);
 
   const config = await loadConfig();
   if (isSyncConfigured(config)) {
     try {
-      const result = await sync();
-      console.log(`✓ Synced with GitHub (pulled ${result.pulled}, pushed=${result.pushed})`);
+      const result = await step("Sync with GitHub", () => sync());
+      console.log(`  → pulled ${result.pulled}, pushed=${result.pushed}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.log(`⚠ GitHub sync failed: ${message}`);
     }
+  } else {
+    console.log("• GitHub sync: not configured (skipped)");
   }
 
-  const actualPort = await serve(options.port, { autoFallback: !options.explicitPort });
+  // Pre-warm aggregation BEFORE opening the port so the dashboard's first
+  // request never hits a cold aggregation (slow or fails).
+  const data = await step("Aggregate data (pre-warm)", () => aggregateData({}));
+  console.log(`  → ${data.sessions?.length ?? 0} sessions, ${data.machines?.length ?? 0} machines`);
+
+  const actualPort = await step(`Start web server on :${options.port}`, () =>
+    serve(options.port, { autoFallback: !options.explicitPort }),
+  );
   const url = `http://localhost:${actualPort}`;
   console.log(`● Dashboard → ${url}`);
+  console.log(`★ Startup complete in ${fmt(Date.now() - overall)}`);
 
   if (options.open) {
     openBrowser(url);

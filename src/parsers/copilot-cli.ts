@@ -340,6 +340,7 @@ function aggregateEvents(events: ParsedEvent[], machineId: string, isMarsRoot: b
       tokens: acc.tokens,
       cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
       toolBreakdown: {},
+      tokenProvenance: "telemetry",
     };
 
     const marsMeta = resolveCopilotMarsMeta(acc.matchKeys);

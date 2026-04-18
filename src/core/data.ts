@@ -32,13 +32,35 @@ export async function loadMachineData(machineId: string): Promise<MachineData> {
 }
 
 export async function saveMachineData(machineData: MachineData, name?: string): Promise<void> {
+  // Serialize concurrent writes per machineId so racing callers don't both try
+  // to rename the same .tmp (causes ENOENT for the loser).
+  const id = machineData.machineId;
+  const previous = saveMachineQueues.get(id) ?? Promise.resolve();
+  const next = previous.then(
+    () => doSaveMachineData(machineData, name),
+    () => doSaveMachineData(machineData, name),
+  );
+  saveMachineQueues.set(id, next);
+  try {
+    await next;
+  } finally {
+    if (saveMachineQueues.get(id) === next) {
+      saveMachineQueues.delete(id);
+    }
+  }
+}
+
+const saveMachineQueues = new Map<string, Promise<void>>();
+
+async function doSaveMachineData(machineData: MachineData, name?: string): Promise<void> {
   await ensureTokmonDirectories();
   machineData.lastUpdatedAt = new Date().toISOString();
   if (name !== undefined) {
     machineData.name = name;
   }
   const finalPath = getMachineDataPath(machineData.machineId);
-  const tmpPath = `${finalPath}.tmp`;
+  // Per-process unique tmp path to survive concurrent writers across processes.
+  const tmpPath = `${finalPath}.${process.pid}.${Date.now()}.tmp`;
   const payload = JSON.stringify(machineData, null, 2) + "\n";
   // Atomic write: write to tempfile then rename. POSIX rename is atomic on
   // the same filesystem, so Ctrl+C during the write can't leave the final

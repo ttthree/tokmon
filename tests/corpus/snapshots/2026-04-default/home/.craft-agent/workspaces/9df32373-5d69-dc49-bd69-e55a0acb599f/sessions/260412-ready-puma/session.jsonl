@@ -1,0 +1,9 @@
+{"id":"260412-ready-puma","engine":"codex","sdkSessionId":"019d7f4b-1c69-7f92-a709-8ce156d211e1","tokenUsage":{"inputTokens":1929544,"outputTokens":61351,"totalTokens":1990895,"contextTokens":0,"costUsd":0,"cacheReadTokens":905088,"cacheCreationTokens":0},"messageCount":194,"userMessageCount":16,"model":"gpt-5.4","createdAt":1775966514988,"sdkCwd":"~/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","workingDirectory":"~/work/openharness","name":"session-10"}
+{"type":"user","timestamp":1775957121348}
+{"type":"assistant","timestamp":1775957174016}
+{"type":"assistant","timestamp":1775957174048}
+{"type":"tool","timestamp":1775957174320}
+{"type":"assistant","timestamp":1775957178616}
+{"type":"assistant","timestamp":1775957178664}
+{}
+{"type":"assistant","timestamp":1775967487442}

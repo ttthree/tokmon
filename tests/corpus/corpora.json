@@ -1,0 +1,12 @@
+{
+  "corpora": [
+    {
+      "id": "2026-04-default",
+      "path": "tests/corpus/snapshots/2026-04-default"
+    },
+    {
+      "id": "2026-04-edge",
+      "path": "tests/corpus/snapshots/2026-04-edge"
+    }
+  ]
+}

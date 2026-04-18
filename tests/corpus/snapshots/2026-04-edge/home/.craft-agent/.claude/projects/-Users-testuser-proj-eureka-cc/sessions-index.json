@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "sessionId": "cc-sdk-normal",
+      "fullPath": "cc-sdk-normal.jsonl",
+      "fileMtime": 1776474180000,
+      "firstPrompt": "linked cc",
+      "summary": "linked cc",
+      "messageCount": 2,
+      "created": "2026-04-18T01:00:00.000Z",
+      "modified": "2026-04-18T01:03:00.000Z",
+      "projectPath": "/Users/testuser/proj/eureka-cc",
+      "isSidechain": false
+    }
+  ]
+}

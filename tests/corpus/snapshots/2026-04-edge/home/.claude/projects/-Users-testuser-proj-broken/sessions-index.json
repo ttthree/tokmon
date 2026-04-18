@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "sessionId": "malformed-cc",
+      "fullPath": "malformed-cc.jsonl",
+      "fileMtime": 1776471720000,
+      "firstPrompt": "skip bad lines",
+      "summary": "malformed",
+      "messageCount": 3,
+      "created": "2026-04-18T00:20:00.000Z",
+      "modified": "2026-04-18T00:22:00.000Z",
+      "projectPath": "/Users/testuser/proj/broken",
+      "isSidechain": false
+    }
+  ]
+}

@@ -2,11 +2,13 @@ import { mergeCursorState } from "../../core/cursor.js";
 import { updateSessions, loadMachineData, saveMachineData } from "../../core/data.js";
 import { getMachineId, getMachineName } from "../../core/machine.js";
 import { loadConfig } from "../../core/config.js";
-import { maybeRefreshPricing, calculateSessionCost } from "../../core/pricing.js";
-import { resolveProject } from "../../core/project.js";
+import { maybeRefreshPricing } from "../../core/pricing.js";
 import { parsers } from "../../parsers/index.js";
 import { marsRegistry } from "../../parsers/mars.js";
 import type { Session } from "../../core/types.js";
+import { enrichSession, enrichSessionsBatched } from "../../core/enrich.js";
+
+export { enrichSession, enrichSessionsBatched } from "../../core/enrich.js";
 
 export interface CollectOptions {
   reset?: boolean;
@@ -118,35 +120,4 @@ export async function collectCommand(options: CollectOptions = {}): Promise<Coll
   };
   emit({ phase: "complete", ...result });
   return result;
-}
-
-async function enrichSessionsBatched(
-  sessions: Session[],
-  machineId: string,
-  config: Awaited<ReturnType<typeof loadConfig>>,
-  onProgress: (done: number, total: number) => void,
-): Promise<Session[]> {
-  const results: Session[] = [];
-  const BATCH = 200;
-  for (let i = 0; i < sessions.length; i += BATCH) {
-    const batch = sessions.slice(i, i + BATCH);
-    const enriched = await Promise.all(batch.map((s) => enrichSession(s, machineId, config)));
-    results.push(...enriched);
-    if (i + BATCH < sessions.length) {
-      onProgress(results.length, sessions.length);
-    }
-  }
-  return results;
-}
-
-async function enrichSession(session: Session, machineId: string, config: Awaited<ReturnType<typeof loadConfig>>): Promise<Session> {
-  const resolvedProject = await resolveProject(session.projectPath, config);
-  const cost = await calculateSessionCost(new Date(session.createdAt), session.tokens, session.model, session.source);
-
-  return {
-    ...session,
-    machineId,
-    project: resolvedProject,
-    cost,
-  };
 }

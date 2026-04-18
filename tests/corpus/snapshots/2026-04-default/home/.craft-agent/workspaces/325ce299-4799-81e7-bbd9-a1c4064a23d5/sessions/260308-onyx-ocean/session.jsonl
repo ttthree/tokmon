@@ -1,0 +1,3 @@
+{"id":"260308-onyx-ocean","engine":"codex","tokenUsage":{"inputTokens":20155,"outputTokens":43,"totalTokens":20198,"contextTokens":0,"costUsd":3,"cacheReadTokens":0,"cacheCreationTokens":0},"messageCount":2,"userMessageCount":1,"model":"gpt-5.4","createdAt":1772944111795,"sdkCwd":"/Users/testuser/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","workingDirectory":"~/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory","name":"session-6"}
+{"type":"user","timestamp":1772944111789}
+{"type":"assistant","timestamp":1772944122912}

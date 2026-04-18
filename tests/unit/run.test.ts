@@ -8,7 +8,10 @@ const sync = vi.fn();
 const exec = vi.fn();
 
 vi.mock("../../src/cli/commands/collect.js", () => ({ collectCommand }));
-vi.mock("../../src/core/config.js", () => ({ loadConfig, isSyncConfigured }));
+vi.mock("../../src/core/config.js", async () => {
+  const actual = await vi.importActual<typeof import("../../src/core/config.js")>("../../src/core/config.js");
+  return { ...actual, loadConfig, isSyncConfigured };
+});
 vi.mock("../../src/server/index.js", () => ({ serve }));
 vi.mock("../../src/sync/github.js", () => ({ sync }));
 vi.mock("node:child_process", () => ({ exec }));
