@@ -39,7 +39,10 @@ export async function sync(): Promise<SyncResult> {
 
   const localMachineData = await loadMachineData(machineId);
   const redacted = redactForSync(localMachineData, config.privacy);
-  await fs.writeFile(path.join(repoMachinesDir, `${machineId}.json`), JSON.stringify(redacted, null, 2) + "\n", "utf8");
+  const repoMachinePath = path.join(repoMachinesDir, `${machineId}.json`);
+  const repoMachineTmp = `${repoMachinePath}.tmp`;
+  await fs.writeFile(repoMachineTmp, JSON.stringify(redacted, null, 2) + "\n", "utf8");
+  await fs.rename(repoMachineTmp, repoMachinePath);
 
   await execGit(["-C", repoDir, "add", `machines/${machineId}.json`]);
   const status = await execGit(["-C", repoDir, "status", "--porcelain"]);

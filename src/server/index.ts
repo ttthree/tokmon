@@ -22,6 +22,7 @@ import type { SessionMessages } from "../core/messages.js";
 import { resolveSourcePath } from "../core/source-resolver.js";
 import type { AppConfig, DataFilters, MachineConfig, Session, SourceEntry } from "../core/types.js";
 import { collectCommand, type CollectProgressEvent } from "../cli/commands/collect.js";
+import { compareVersions, fetchLatestVersion, getPackageVersion, PACKAGE_NAME } from "../core/version.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HOST = "127.0.0.1";
@@ -166,6 +167,30 @@ export function createApp(): express.Express {
       res.json({ id, hostname, name });
     } catch (error) {
       next(error);
+    }
+  });
+
+  app.get("/api/version", async (_req, res) => {
+    const current = getPackageVersion();
+    try {
+      const latest = await fetchLatestVersion();
+      const updateAvailable = compareVersions(latest, current) > 0;
+      res.json({
+        package: PACKAGE_NAME,
+        current,
+        latest,
+        updateAvailable,
+        checkedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.json({
+        package: PACKAGE_NAME,
+        current,
+        latest: null,
+        updateAvailable: false,
+        checkedAt: new Date().toISOString(),
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   });
 

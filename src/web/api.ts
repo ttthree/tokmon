@@ -35,6 +35,21 @@ export async function fetchMachineIdentity(): Promise<MachineIdentity> {
   return response.json() as Promise<MachineIdentity>;
 }
 
+export interface VersionInfo {
+  package: string;
+  current: string;
+  latest: string | null;
+  updateAvailable: boolean;
+  checkedAt: string;
+  error?: string;
+}
+
+export async function fetchVersionInfo(): Promise<VersionInfo> {
+  const response = await fetch("/api/version");
+  if (!response.ok) throw new Error(`Failed to load version info: ${response.status}`);
+  return response.json() as Promise<VersionInfo>;
+}
+
 export async function saveSettings(config: Partial<AppConfig>): Promise<AppConfig> {
   const response = await fetch("/api/settings", {
     method: "POST",

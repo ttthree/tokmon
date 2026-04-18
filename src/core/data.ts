@@ -37,7 +37,14 @@ export async function saveMachineData(machineData: MachineData, name?: string): 
   if (name !== undefined) {
     machineData.name = name;
   }
-  await fs.writeFile(getMachineDataPath(machineData.machineId), JSON.stringify(machineData, null, 2) + "\n", "utf8");
+  const finalPath = getMachineDataPath(machineData.machineId);
+  const tmpPath = `${finalPath}.tmp`;
+  const payload = JSON.stringify(machineData, null, 2) + "\n";
+  // Atomic write: write to tempfile then rename. POSIX rename is atomic on
+  // the same filesystem, so Ctrl+C during the write can't leave the final
+  // file truncated. Worst case: a stray .tmp is left behind.
+  await fs.writeFile(tmpPath, payload, "utf8");
+  await fs.rename(tmpPath, finalPath);
 }
 
 export function mergeSession(existing: Session | undefined, updated: Session): Session {

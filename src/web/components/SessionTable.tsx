@@ -6,12 +6,21 @@ interface SessionTableProps {
   sessions: Session[];
   onSelect?: (session: Session, trigger: HTMLElement) => void;
   pageSize?: number;
+  /**
+   * Machine id of the machine currently serving the dashboard. Rows whose
+   * session was collected elsewhere are rendered as non-interactive — the
+   * underlying log files aren't reachable from here, so opening the detail
+   * modal would only return an empty/error state.
+   */
+  localMachineId?: string | null;
+  /** machineId → friendly name; falls back to the raw id if absent. */
+  machineNames?: Map<string, string>;
 }
 
 type SortKey = "date" | "cost" | "duration";
 type SortDirection = "asc" | "desc";
 
-export function SessionTable({ sessions, onSelect, pageSize = 25 }: SessionTableProps) {
+export function SessionTable({ sessions, onSelect, pageSize = 25, localMachineId, machineNames }: SessionTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
   const [page, setPage] = useState(0);
@@ -77,6 +86,7 @@ export function SessionTable({ sessions, onSelect, pageSize = 25 }: SessionTable
           <thead style={{ background: "var(--bg-panel-muted)", color: "var(--text-muted)" }}>
             <tr>
               <SortableTh label="Date" active={sortKey === "date"} dir={sortDir} onClick={() => toggleSort("date")} align="left" />
+              <th className="px-4 py-2 text-left font-medium">Machine</th>
               <th className="px-4 py-2 text-left font-medium">Project</th>
               <th className="px-4 py-2 text-left font-medium">Engine</th>
               <th className="px-4 py-2 text-left font-medium">Model(s)</th>
@@ -86,31 +96,56 @@ export function SessionTable({ sessions, onSelect, pageSize = 25 }: SessionTable
             </tr>
           </thead>
           <tbody>
-            {visible.map((session) => (
-              <tr
-                key={`${session.machineId}:${session.source}:${session.id}`}
-                data-testid="session-row"
-                role="button"
-                tabIndex={0}
-                className="border-t transition focus:outline-none"
-                style={{ borderColor: "var(--border)" }}
-                onClick={(event) => onSelect?.(session, event.currentTarget)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
+            {visible.map((session) => {
+              const isRemote = localMachineId !== undefined && localMachineId !== null && session.machineId !== localMachineId;
+              return (
+                <tr
+                  key={`${session.machineId}:${session.source}:${session.id}`}
+                  data-testid="session-row"
+                  data-remote={isRemote ? "true" : undefined}
+                  role={isRemote ? undefined : "button"}
+                  tabIndex={isRemote ? -1 : 0}
+                  aria-disabled={isRemote || undefined}
+                  title={isRemote ? "Session collected on another machine — source files not available here" : undefined}
+                  className="border-t transition focus:outline-none"
+                  style={{
+                    borderColor: "var(--border)",
+                    cursor: isRemote ? "not-allowed" : "pointer",
+                    opacity: isRemote ? 0.55 : 1,
+                  }}
+                  onClick={(event) => {
+                    if (isRemote) return;
                     onSelect?.(session, event.currentTarget);
-                  }
-                }}
-              >
-                <td className="px-4 py-3" style={{ color: "var(--text-muted)" }}>{session.createdAt.slice(0, 10)}</td>
-                <td className="px-4 py-3 font-medium" style={{ color: "var(--text-primary)" }}>{session.project}</td>
-                <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{session.engine ?? session.source}</td>
-                <td className="px-4 py-3" style={{ color: "var(--text-muted)" }}>{formatModels(session)}</td>
-                <td className="px-4 py-3" style={{ color: "var(--text-muted)" }}>{session.summary ?? session.firstPrompt ?? "(no summary)"}</td>
-                <td className="px-4 py-3 text-right" style={{ color: "var(--text-primary)" }}>${session.cost.total.toFixed(2)}</td>
-                <td className="px-4 py-3 text-right" style={{ color: "var(--text-muted)" }}>{Math.round(session.durationSeconds / 60)}m</td>
-              </tr>
-            ))}
+                  }}
+                  onKeyDown={(event) => {
+                    if (isRemote) return;
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelect?.(session, event.currentTarget);
+                    }
+                  }}
+                >
+                  <td className="px-4 py-3" style={{ color: "var(--text-muted)" }}>{session.createdAt.slice(0, 10)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
+                    {machineNames?.get(session.machineId) ?? session.machineId}
+                    {isRemote ? (
+                      <span
+                        className="ml-2 rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide"
+                        style={{ background: "var(--bg-panel-muted)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                      >
+                        remote
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="px-4 py-3 font-medium" style={{ color: "var(--text-primary)" }}>{session.project}</td>
+                  <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--text-muted)" }}>{session.engine ?? session.source}</td>
+                  <td className="px-4 py-3" style={{ color: "var(--text-muted)" }}>{formatModels(session)}</td>
+                  <td className="px-4 py-3" style={{ color: "var(--text-muted)" }}>{session.summary ?? session.firstPrompt ?? "(no summary)"}</td>
+                  <td className="px-4 py-3 text-right" style={{ color: "var(--text-primary)" }}>${session.cost.total.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right" style={{ color: "var(--text-muted)" }}>{Math.round(session.durationSeconds / 60)}m</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

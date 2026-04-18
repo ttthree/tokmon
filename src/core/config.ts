@@ -139,7 +139,10 @@ export async function loadConfig(): Promise<AppConfig> {
 
 export async function saveConfig(config: AppConfig): Promise<void> {
   await ensureTokmonDirectories();
-  await fs.writeFile(getConfigPath(), JSON.stringify(config, null, 2) + "\n", "utf8");
+  const finalPath = getConfigPath();
+  const tmpPath = `${finalPath}.tmp`;
+  await fs.writeFile(tmpPath, JSON.stringify(config, null, 2) + "\n", "utf8");
+  await fs.rename(tmpPath, finalPath);
 }
 
 export async function setConfigValue(keyPath: string, value: unknown): Promise<AppConfig> {

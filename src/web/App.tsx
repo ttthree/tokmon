@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { CostBreakdown, DataResponse, ProjectSummary, Session, Source, TokenBreakdown } from "../core/types.js";
-import { fetchDashboardData, triggerCollect } from "./api.js";
+import { fetchDashboardData, fetchMachineIdentity, triggerCollect } from "./api.js";
 import { ActiveFiltersBar } from "./components/ActiveFiltersBar.js";
 import { BreakdownChart } from "./components/BreakdownChart.js";
 import { BurnClock } from "./components/BurnClock.js";
@@ -12,6 +12,7 @@ import { SessionTable } from "./components/SessionTable.js";
 import { SettingsTab } from "./components/SettingsTab.js";
 import { StatCard } from "./components/StatCard.js";
 import { ThemePicker } from "./components/ThemePicker.js";
+import { VersionBadge } from "./components/VersionBadge.js";
 import { TimeFilter } from "./components/TimeFilter.js";
 import { TokenChart } from "./components/TokenChart.js";
 import { formatCompact } from "./format.js";
@@ -47,6 +48,7 @@ export function App() {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [data, setData] = useState<DataResponse | null>(null);
+  const [localMachineId, setLocalMachineId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
   // Bumped only when data arrives from a background poll (not from
@@ -85,6 +87,23 @@ export function App() {
       setIsRefreshing(false);
     }
   }, [buildParams]);
+
+  // Identify the local machine so SessionTable can disable rows for sessions
+  // collected on remote machines (their source files aren't reachable here).
+  useEffect(() => {
+    let cancelled = false;
+    fetchMachineIdentity()
+      .then((identity) => {
+        if (!cancelled) setLocalMachineId(identity.id);
+      })
+      .catch(() => {
+        // Falling back to null keeps everything clickable — the API will
+        // still 404 cleanly if the user opens a remote session.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const params = buildParams();
@@ -194,6 +213,11 @@ export function App() {
 
   const visibleProjects = useMemo(() => getVisibleProjects(sourceProjects, projectSearch), [sourceProjects, projectSearch]);
 
+  const machineNames = useMemo(
+    () => new Map((data?.machines ?? []).map((m) => [m.machineId, m.name])),
+    [data?.machines],
+  );
+
   const chartData = useMemo(() => buildChartData(sourceSessions, range), [sourceSessions, range]);
   const projectChartData = useMemo(() => {
     if (!selectedProject) return [];
@@ -240,10 +264,11 @@ export function App() {
         >
           <div>
             <div
-              className="text-[10px] font-semibold uppercase tracking-[0.25em]"
+              className="flex items-center text-[10px] font-semibold uppercase tracking-[0.25em]"
               style={{ color: "var(--header-eyebrow)" }}
             >
-              TOKMON
+              <span>TOKMON</span>
+              <VersionBadge />
             </div>
             <h1 className="text-2xl font-semibold tracking-tight leading-tight">Token Monitor</h1>
           </div>
@@ -431,6 +456,8 @@ export function App() {
             </div>
             <SessionTable
               sessions={filteredSessions}
+              localMachineId={localMachineId}
+              machineNames={machineNames}
               onSelect={(session, trigger) => {
                 selectedSessionTriggerRef.current = trigger;
                 setSelectedSession(session);
