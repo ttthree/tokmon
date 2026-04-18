@@ -21,27 +21,39 @@ export default async function setup(): Promise<void> {
       await fs.readFile(path.join(corpusRoot, "manifest.json"), "utf8"),
     ) as { fileMtimes?: Record<string, number> };
     const fileMtimes = manifest.fileMtimes ?? {};
+    let stagedFiles = 0;
     if (process.platform !== "darwin") {
-      await stageMarsAppSupport(homeDir, fileMtimes);
+      stagedFiles = await stageMarsAppSupport(homeDir, fileMtimes);
     }
     // Restore mtimes for the original snapshot tree once per run.
     // withCorpusEnv would otherwise race across vitest workers on Windows;
     // utimes errors there are silently swallowed and many parsers
     // (e.g. claude-code) fall back to fileMtime, producing today's
     // timestamps instead of the corpus's recorded ones.
-    await restoreMtimes(corpusRoot, fileMtimes);
+    const restored = await restoreMtimes(corpusRoot, fileMtimes);
+    // eslint-disable-next-line no-console
+    console.log(
+      `[corpus globalSetup] ${corpus.id} platform=${process.platform} staged=${stagedFiles} mtimesRestored=${restored}/${Object.keys(fileMtimes).length}`,
+    );
   }
 }
 
 async function restoreMtimes(
   corpusRoot: string,
   fileMtimes: Record<string, number>,
-): Promise<void> {
+): Promise<number> {
+  let restored = 0;
   for (const [relPath, mtimeMs] of Object.entries(fileMtimes)) {
     const full = path.join(corpusRoot, relPath);
     const sec = mtimeMs / 1000;
-    await fs.utimes(full, sec, sec).catch(() => undefined);
+    try {
+      await fs.utimes(full, sec, sec);
+      restored++;
+    } catch {
+      // ignore: not all manifest entries map to platform-relevant files
+    }
   }
+  return restored;
 }
 
 const MAC_PREFIX = path.join("Library", "Application Support") + path.sep;
@@ -49,16 +61,16 @@ const MAC_PREFIX = path.join("Library", "Application Support") + path.sep;
 async function stageMarsAppSupport(
   homeDir: string,
   fileMtimes: Record<string, number>,
-): Promise<void> {
+): Promise<number> {
   const macRoot = path.join(homeDir, "Library", "Application Support");
   const macExists = await fs.stat(macRoot).then((s) => s.isDirectory(), () => false);
-  if (!macExists) return;
+  if (!macExists) return 0;
 
   const targetRoot = process.platform === "win32"
     ? path.join(homeDir, "AppData", "Roaming")
     : path.join(homeDir, ".config");
   const marker = path.join(targetRoot, ".tokmon-mars-staged");
-  if (await fs.stat(marker).then(() => true, () => false)) return;
+  if (await fs.stat(marker).then(() => true, () => false)) return -1;
 
   await fs.mkdir(targetRoot, { recursive: true });
   const apps = await fs.readdir(macRoot, { withFileTypes: true });
@@ -74,16 +86,23 @@ async function stageMarsAppSupport(
   // `home/Library/Application Support/` to its staged equivalent so
   // parsers that fall back to fileMtime (e.g. claude-code) get the
   // same timestamp on Windows/Linux as on macOS.
+  let stagedRestored = 0;
   for (const [relPath, mtimeMs] of Object.entries(fileMtimes)) {
-    // Manifest paths use forward slashes; normalize to platform sep.
     const platformRel = relPath.split("/").join(path.sep);
     const homeRelPrefix = "home" + path.sep + MAC_PREFIX;
     if (!platformRel.startsWith(homeRelPrefix)) continue;
     const tail = platformRel.slice(homeRelPrefix.length);
     const stagedAbs = path.join(targetRoot, tail);
     const sec = mtimeMs / 1000;
-    await fs.utimes(stagedAbs, sec, sec).catch(() => undefined);
+    try {
+      await fs.utimes(stagedAbs, sec, sec);
+      stagedRestored++;
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn(`[corpus globalSetup] utimes failed: ${stagedAbs}: ${(err as Error).message}`);
+    }
   }
 
   await fs.writeFile(marker, "", "utf8");
+  return stagedRestored;
 }
