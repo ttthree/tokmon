@@ -14,7 +14,7 @@
       "output": 1.770775,
       "cacheCreation": 8.03654625,
       "cacheRead": 14.7043523,
-      "total": 24.09096855
+      "total": 27.84649455
     },
     "cacheHitRate": 0.925512655735
   },
@@ -122,7 +122,7 @@
     {
       "key": "machine",
       "label": "machine",
-      "cost": 24.09096855,
+      "cost": 27.84649455,
       "sessions": 639
     }
   ],
@@ -130,7 +130,7 @@
     {
       "key": "__untagged__",
       "label": "__untagged__",
-      "cost": 24.09096855,
+      "cost": 27.84649455,
       "sessions": 639
     }
   ],
