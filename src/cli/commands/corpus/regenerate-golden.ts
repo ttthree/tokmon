@@ -66,11 +66,19 @@ async function restoreMtimes(root: string, fileMtimes: Record<string, number>): 
 // so goldens generated on /Users/jietong/work/tokmon match those exercised
 // on CI runners at /Users/runner/work/tokmon/tokmon (after username
 // sanitization both still differ in the nested-checkout segment).
+//
+// We strip three forms:
+//   1. process.cwd() — the actual checkout path on this host.
+//   2. sanitizeSensitiveText(process.cwd()) — same after username redaction.
+//   3. /Users/testuser/work/<repo-basename> — the canonical pre-sanitized
+//      form baked into fixture JSONL files (independent of host nesting).
 function sanitizeCwd(input: string): string {
   if (!input) return input;
   const cwd = process.cwd();
   if (!cwd) return input;
-  for (const candidate of [cwd, sanitizeSensitiveText(cwd)]) {
+  const repoName = path.basename(cwd);
+  const candidates = [cwd, sanitizeSensitiveText(cwd), `/Users/testuser/work/${repoName}`];
+  for (const candidate of candidates) {
     if (!candidate) continue;
     const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     input = input.replace(new RegExp(escaped, "g"), "/repo");
