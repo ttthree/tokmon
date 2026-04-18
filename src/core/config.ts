@@ -127,7 +127,8 @@ export async function loadConfig(): Promise<AppConfig> {
   if (!(await pathExists(configPath))) {
     config = structuredClone(DEFAULT_CONFIG);
   } else {
-    const raw = JSON.parse(await fs.readFile(configPath, "utf8")) as Partial<AppConfig>;
+    const text = (await fs.readFile(configPath, "utf8")).trim();
+    const raw = (text ? JSON.parse(text) : {}) as Partial<AppConfig>;
     config = mergeConfig(DEFAULT_CONFIG, raw);
   }
 
