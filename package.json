@@ -5,6 +5,14 @@
   "type": "module",
   "license": "MIT",
   "author": "ttthree",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ttthree/tokmon.git"
+  },
+  "homepage": "https://github.com/ttthree/tokmon#readme",
+  "bugs": {
+    "url": "https://github.com/ttthree/tokmon/issues"
+  },
   "keywords": [
     "claude-code",
     "codex",
