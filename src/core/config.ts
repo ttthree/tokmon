@@ -160,7 +160,23 @@ async function doSaveConfig(config: AppConfig): Promise<void> {
   // (e.g. multiple tokmon processes), they don't trample each other's .tmp.
   const tmpPath = `${finalPath}.${process.pid}.${Date.now()}.tmp`;
   await fs.writeFile(tmpPath, JSON.stringify(config, null, 2) + "\n", "utf8");
-  await fs.rename(tmpPath, finalPath);
+  // Windows: rename can fail with EPERM/EBUSY when another process has the
+  // destination open (e.g. several vitest workers reading the same config).
+  // Retry briefly before giving up; clean up the tmp file on final failure.
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      await fs.rename(tmpPath, finalPath);
+      return;
+    } catch (err) {
+      lastErr = err;
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== "EPERM" && code !== "EBUSY" && code !== "EACCES") break;
+      await new Promise((r) => setTimeout(r, 25 * (attempt + 1)));
+    }
+  }
+  await fs.rm(tmpPath, { force: true });
+  throw lastErr;
 }
 
 export async function setConfigValue(keyPath: string, value: unknown): Promise<AppConfig> {
