@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 import Database from "better-sqlite3";
@@ -7,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { resetSanitizeState, sanitizeCopilotLog, sanitizeJsonlLine, sanitizePath, sanitizeSensitiveText, sanitizeSqlite } from "../../../src/cli/commands/corpus/sanitize.js";
 
 let tempDir = "";
+const username = os.userInfo().username;
 
 afterEach(async () => {
   resetSanitizeState();
@@ -18,14 +20,14 @@ afterEach(async () => {
 
 describe("corpus sanitize", () => {
   it("sanitizePath rewrites username paths", () => {
-    const input = "/Users/jietong/work/project";
+    const input = `/Users/${username}/work/project`;
     expect(sanitizePath(input)).toContain("/Users/testuser/");
   });
 
   it("sanitizeSensitiveText rewrites username suffix variants", () => {
-    const input = "owner=jietong_microsoft reviewer=JIETONG-team";
+    const input = `owner=${username}_microsoft reviewer=${username.toUpperCase()}-team`;
     const out = sanitizeSensitiveText(input);
-    expect(out).not.toMatch(/jietong/i);
+    expect(out).not.toMatch(new RegExp(username, "i"));
     expect(out).toContain("testuser");
   });
 
@@ -47,7 +49,7 @@ describe("corpus sanitize", () => {
   });
 
   it("sanitizeJsonlLine eureka-header rewrites name and workingDirectory", () => {
-    const line = JSON.stringify({ id: "abc", name: "secret", workingDirectory: "/Users/jietong/work/x" });
+    const line = JSON.stringify({ id: "abc", name: "secret", workingDirectory: `/Users/${username}/work/x` });
     const out = JSON.parse(sanitizeJsonlLine(line, "eureka-header") ?? "{}");
     expect(out.name).toBe("session-1");
     expect(out.workingDirectory).toContain("/Users/testuser/");
@@ -72,7 +74,7 @@ describe("corpus sanitize", () => {
     const dst = path.join(tempDir, "out.sqlite");
     const db = new Database(src);
     db.exec("CREATE TABLE threads (id TEXT, cwd TEXT, title TEXT, created_at INTEGER, updated_at INTEGER, tokens_used INTEGER);");
-    db.prepare("INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?)").run("t1", "/Users/jietong/work", "hello", 1, 2, 3);
+    db.prepare("INSERT INTO threads VALUES (?, ?, ?, ?, ?, ?)").run("t1", `/Users/${username}/work`, "hello", 1, 2, 3);
     db.close();
 
     await sanitizeSqlite(src, dst, "codex");
@@ -92,13 +94,13 @@ describe("corpus sanitize", () => {
       "2026-04-18T01:00:01.000Z [INFO] [Telemetry] cli.telemetry:",
       JSON.stringify({ kind: "other_event", text: "drop me" }),
       "2026-04-18T01:00:02.000Z [INFO] [Telemetry] cli.model_call:",
-      JSON.stringify({ model: "gpt-4.1", prompt_tokens_count: 3, completion_tokens_count: 4, user: "jietong_microsoft" }),
+      JSON.stringify({ model: "gpt-4.1", prompt_tokens_count: 3, completion_tokens_count: 4, user: `${username}_microsoft` }),
       "",
     ].join("\n");
     const out = sanitizeCopilotLog(raw);
     expect(out).toContain('"kind":"assistant_usage"');
     expect(out).toContain("cli.model_call:");
     expect(out).not.toContain("other_event");
-    expect(out).not.toMatch(/jietong/i);
+    expect(out).not.toMatch(new RegExp(username, "i"));
   });
 });
