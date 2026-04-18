@@ -5,6 +5,7 @@ import { fetchDashboardData, fetchMachineIdentity, triggerCollect } from "./api.
 import { ActiveFiltersBar } from "./components/ActiveFiltersBar.js";
 import { BreakdownChart } from "./components/BreakdownChart.js";
 import { BurnClock } from "./components/BurnClock.js";
+import { IconDropdown } from "./components/IconDropdown.js";
 import { ProjectActivityTable } from "./components/ProjectActivityTable.js";
 import { ProjectDetailCard } from "./components/ProjectDetailCard.js";
 import { SessionDetailModal } from "./components/SessionDetailModal.js";
@@ -42,6 +43,7 @@ const AGENT_FILTER_LABELS: Record<Exclude<AgentFilter, "all">, string> = {
 export function App() {
   const [range, setRange] = useState<RangeFilter>("all");
   const [sourceFilter, setSourceFilter] = useState<AgentFilter>("all");
+  const [machineFilter, setMachineFilter] = useState<string | "all">("all");
   const [modelFilter, setModelFilter] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [projectSearch, setProjectSearch] = useState("");
@@ -132,21 +134,20 @@ export function App() {
     };
   }, [buildParams, refreshNow]);
 
-  useEffect(() => {
-    if (!data || selectedProject === null) {
-      return;
-    }
-
-    if (!data.projects.some((project) => project.projectKey === selectedProject)) {
-      setSelectedProject(null);
-    }
-  }, [data, selectedProject]);
-
   // Clear selected project and model filter when source filter changes
   useEffect(() => {
     setSelectedProject(null);
     setModelFilter(null);
   }, [sourceFilter]);
+
+  // Reset machine filter if the chosen machine disappears from data
+  useEffect(() => {
+    if (!data) return;
+    if (machineFilter === "all") return;
+    if (!data.machines.some((m) => m.machineId === machineFilter)) {
+      setMachineFilter("all");
+    }
+  }, [data, machineFilter]);
 
   // Clear model filter when selected project changes (charts repopulate)
   useEffect(() => {
@@ -166,30 +167,48 @@ export function App() {
     return ordered;
   }, [data]);
 
-  // Apply agent filter (source or Mars orchestrator) before all other computations
+  // Apply agent + machine filters before all other computations
   const sourceSessions = useMemo(() => {
     if (!data) return [];
-    if (sourceFilter === "all") return data.sessions;
-    if (sourceFilter === "mars") {
-      return data.sessions.filter((s) => s.orchestrator?.kind === "mars");
+    let result = data.sessions;
+    if (sourceFilter !== "all") {
+      if (sourceFilter === "mars") {
+        result = result.filter((s) => s.orchestrator?.kind === "mars");
+      } else {
+        result = result.filter((s) => s.source === sourceFilter);
+      }
     }
-    return data.sessions.filter((s) => s.source === sourceFilter);
-  }, [data, sourceFilter]);
+    if (machineFilter !== "all") {
+      result = result.filter((s) => s.machineId === machineFilter);
+    }
+    return result;
+  }, [data, sourceFilter, machineFilter]);
 
   // Recompute totals for filtered sessions
   const filteredTotals = useMemo((): DataResponse["totals"] | undefined => {
     if (!data) return undefined;
-    if (sourceFilter === "all") return data.totals;
+    if (sourceFilter === "all" && machineFilter === "all") return data.totals;
     return computeFilteredTotals(sourceSessions);
-  }, [data, sourceFilter, sourceSessions]);
+  }, [data, sourceFilter, machineFilter, sourceSessions]);
 
   // Recompute projects for filtered sessions
   const sourceProjects = useMemo(() => {
     if (!data) return [];
-    if (sourceFilter === "all") return data.projects;
+    if (sourceFilter === "all" && machineFilter === "all") return data.projects;
     const machineNames = new Map(data.machines.map((m) => [m.machineId, m.name]));
     return buildFilteredProjects(sourceSessions, machineNames);
-  }, [data, sourceFilter, sourceSessions]);
+  }, [data, sourceFilter, machineFilter, sourceSessions]);
+
+  // Validate selectedProject against the *filtered* project set so a project
+  // that disappears under the current agent/machine filters doesn't keep
+  // silently narrowing visibleSessions (the chip would also vanish, leaving
+  // the user with no way to clear the hidden filter).
+  useEffect(() => {
+    if (selectedProject === null) return;
+    if (!sourceProjects.some((project) => project.projectKey === selectedProject)) {
+      setSelectedProject(null);
+    }
+  }, [sourceProjects, selectedProject]);
 
   const visibleSessions = useMemo(() => {
     let result = sourceSessions;
@@ -239,6 +258,8 @@ export function App() {
   const selectedMachineData = useMemo(() => buildBreakdownChartData(selectedProjectSummary?.machineBreakdown), [selectedProjectSummary]);
   const selectedProjectLabel = selectedProjectSummary?.projectLabel ?? null;
   const agentSelectedLabel = sourceFilter === "all" ? null : AGENT_FILTER_LABELS[sourceFilter] ?? null;
+  const machineSelectedLabel =
+    machineFilter === "all" ? null : machineNames.get(machineFilter) ?? machineFilter;
 
   useEffect(() => {
     if (!selectedSession) {
@@ -262,29 +283,33 @@ export function App() {
           className="flex flex-col gap-3 rounded-3xl border px-6 py-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between"
           style={{ background: "var(--bg-panel)", borderColor: "var(--border)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}
         >
-          <div>
+          <div className="flex items-center gap-3">
             <div
-              className="flex items-center text-[10px] font-semibold uppercase tracking-[0.25em]"
+              className="flex items-center text-[11px] font-semibold uppercase tracking-[0.25em]"
               style={{ color: "var(--header-eyebrow)" }}
             >
               <span>TOKMON</span>
               <VersionBadge />
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight leading-tight">Token Monitor</h1>
+            <span aria-hidden className="hidden sm:block h-5 w-px" style={{ background: "var(--border)" }} />
+            <TabBar value={tab} onChange={setTab} />
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <SourceFilter sources={availableSources} value={sourceFilter} onChange={setSourceFilter} />
+            <MachineFilter
+              machines={data?.machines ?? []}
+              value={machineFilter}
+              onChange={setMachineFilter}
+              localMachineId={localMachineId}
+            />
             <TimeFilter value={range} onChange={setRange} />
+            <span aria-hidden className="hidden sm:block h-5 w-px mx-1" style={{ background: "var(--border)" }} />
+            <RefreshButton isRefreshing={isRefreshing} onClick={() => void refreshNow()} />
             <ThemePicker />
           </div>
         </header>
 
         {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-
-        <div className="flex items-center justify-between gap-3">
-          <TabBar value={tab} onChange={setTab} />
-          <RefreshButton isRefreshing={isRefreshing} onClick={() => void refreshNow()} />
-        </div>
 
         {tab === "overview" ? (
           <>
@@ -480,6 +505,8 @@ export function App() {
         onClearRange={() => setRange("all")}
         sourceLabel={agentSelectedLabel}
         onClearSource={() => setSourceFilter("all")}
+        machineLabel={machineSelectedLabel}
+        onClearMachine={() => setMachineFilter("all")}
         projectLabel={selectedProjectSummary?.projectLabel ?? null}
         onClearProject={() => setSelectedProject(null)}
         modelLabel={modelFilter}
@@ -491,6 +518,7 @@ export function App() {
         onClearAll={() => {
           setRange("all");
           setSourceFilter("all");
+          setMachineFilter("all");
           setSelectedProject(null);
           setModelFilter(null);
           setSearch("");
@@ -716,8 +744,8 @@ function TabBar({ value, onChange }: { value: Tab; onChange: (v: Tab) => void })
   ];
   return (
     <div
-      className="inline-flex self-start rounded-lg border p-1"
-      style={{ background: "var(--bg-panel)", borderColor: "var(--border)", boxShadow: "var(--shadow-card)" }}
+      className="inline-flex h-8 self-start rounded-md border p-0.5"
+      style={{ background: "var(--bg-panel)", borderColor: "var(--border)" }}
     >
       {tabs.map((t) => {
         const active = value === t.id;
@@ -725,7 +753,7 @@ function TabBar({ value, onChange }: { value: Tab; onChange: (v: Tab) => void })
           <button
             key={t.id}
             type="button"
-            className="rounded-md px-4 py-1.5 text-sm font-medium transition"
+            className="rounded-[5px] px-3 text-xs font-medium leading-none transition flex items-center"
             style={{
               background: active ? "var(--accent)" : "transparent",
               color: active ? "var(--accent-fg)" : "var(--text-secondary)",
@@ -748,12 +776,11 @@ function RefreshButton({ isRefreshing, onClick }: { isRefreshing: boolean; onCli
       disabled={isRefreshing}
       aria-label={isRefreshing ? "Refreshing" : "Refresh now"}
       title={isRefreshing ? "Refreshing…" : "Refresh now"}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md border outline-none transition disabled:cursor-not-allowed disabled:opacity-60"
       style={{
         background: "var(--bg-panel)",
         borderColor: "var(--border)",
-        color: "var(--text-secondary)",
-        boxShadow: "var(--shadow-card)",
+        color: "var(--text-primary)",
       }}
     >
       <svg
@@ -789,49 +816,101 @@ function SourceFilter({
   onChange: (v: AgentFilter) => void;
 }) {
   if (sources.length === 0) return null;
-  // When only a single agent source is detected, render a read-only chip so users
-  // know which agent the data came from (instead of hiding the filter entirely).
-  if (sources.length === 1) {
-    const only = sources[0];
-    return (
-      <div
-        className="inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-medium"
-        style={{
-          background: "var(--bg-panel)",
-          borderColor: "var(--border)",
-          boxShadow: "var(--shadow-card)",
-          color: "var(--text-secondary)",
-        }}
-        title="Only one agent detected"
-      >
-        {only !== "all" ? AGENT_FILTER_LABELS[only] ?? only : only}
-      </div>
-    );
-  }
-  const options: AgentFilter[] = ["all", ...sources];
+  // Single-agent environments: still render the icon dropdown so the row
+  // height stays consistent, but with only the one option.
+  const options = (["all", ...sources] as AgentFilter[]).map((option) => ({
+    value: option,
+    label: option === "all" ? "All agents" : AGENT_FILTER_LABELS[option] ?? option,
+  }));
   return (
-    <div
-      className="inline-flex rounded-lg border p-1"
-      style={{ background: "var(--bg-panel)", borderColor: "var(--border)", boxShadow: "var(--shadow-card)" }}
+    <IconDropdown
+      ariaLabel="Agent"
+      menuTitle="Agent"
+      icon={<AgentIcon />}
+      value={value}
+      options={options}
+      onChange={onChange}
+    />
+  );
+}
+
+function MachineFilter({
+  machines,
+  value,
+  onChange,
+  localMachineId,
+}: {
+  machines: Array<{ machineId: string; name: string }>;
+  value: string | "all";
+  onChange: (v: string | "all") => void;
+  localMachineId: string | null;
+}) {
+  if (machines.length <= 1) return null;
+  const options: Array<{ value: string; label: string; description?: string }> = [
+    { value: "all", label: "All machines" },
+    ...machines
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((m) => ({
+        value: m.machineId,
+        label: m.name,
+        description: m.machineId === localMachineId ? "this machine" : undefined,
+      })),
+  ];
+  return (
+    <IconDropdown
+      ariaLabel="Machine"
+      menuTitle="Machine"
+      icon={<MachineIcon />}
+      value={value}
+      options={options}
+      onChange={onChange}
+    />
+  );
+}
+
+function AgentIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
     >
-      {options.map((option) => {
-        const active = value === option;
-        return (
-          <button
-            key={option}
-            type="button"
-            className="rounded-md px-3 py-1.5 text-sm font-medium transition"
-            style={{
-              background: active ? "var(--accent)" : "transparent",
-              color: active ? "var(--accent-fg)" : "var(--text-secondary)",
-            }}
-            onClick={() => onChange(option)}
-          >
-            {option === "all" ? "All Agents" : AGENT_FILTER_LABELS[option] ?? option}
-          </button>
-        );
-      })}
-    </div>
+      <rect x="4" y="7" width="16" height="12" rx="2" />
+      <path d="M12 3v4" />
+      <circle cx="12" cy="2" r="1" />
+      <circle cx="9" cy="13" r="1" fill="currentColor" />
+      <circle cx="15" cy="13" r="1" fill="currentColor" />
+      <path d="M9 17h6" />
+    </svg>
+  );
+}
+
+function MachineIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="4" width="18" height="12" rx="2" />
+      <path d="M8 20h8" />
+      <path d="M12 16v4" />
+    </svg>
   );
 }
 

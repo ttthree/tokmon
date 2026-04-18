@@ -35,6 +35,8 @@
     "build": "tsc -p tsconfig.build.json && vite build && chmod +x dist/cli/index.js",
     "build:web": "vite build",
     "dev": "tsx src/cli/index.ts",
+    "dev:web": "vite",
+    "dev:all": "tsx scripts/dev-all.ts",
     "corpus:sample": "tsx src/cli/index.ts corpus sample --out tests/corpus/snapshots/2026-04-default",
     "corpus:build-edge": "tsx tests/corpus/build-edge/build-edge.ts --out tests/corpus/snapshots/2026-04-edge",
     "corpus:regenerate-golden": "tsx tests/corpus/regenerate-golden.ts --corpus tests/corpus/snapshots/2026-04-default",
