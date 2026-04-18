@@ -4,6 +4,35 @@ All notable changes to `@ttthree/tokmon` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] – 2026-04-18
+
+### Added
+- **Machine filter** in the dashboard header (renders only when ≥2
+  machines exist), threaded through session / totals / project filters.
+- New shared `IconDropdown` portal-popover component used by the header
+  filters and (now) the theme picker.
+- `npm run dev:web` (Vite) and `npm run dev:all` (concurrent API + Vite)
+  scripts for HMR'd development of the dashboard.
+- Automated release workflow: merging a version-bump PR to `main`
+  publishes to npm (with provenance), tags `v<version>`, and creates a
+  matching GitHub Release.
+
+### Changed
+- Header collapses into a single `h-8` row: agent / machine / time
+  selectors, tabs, and refresh share one bar; the standalone "Token
+  Monitor" title is removed (the `TOKMON v0.x.y` eyebrow stays).
+- `ThemePicker` migrated onto `IconDropdown`, removing ~140 lines of
+  duplicated portal/menu code.
+
+### Fixed
+- `selectedProject` now resets against the *filtered* project set, so a
+  project that disappears under the current agent/machine combination
+  cannot silently keep narrowing the visible session list.
+
+### Removed
+- Stray `@ttthree/tokmon` self-dependency that pinned the package to a
+  `pkg.pr.new` preview URL.
+
 ## [0.1.8] – 2026-04-18
 
 ### Fixed
