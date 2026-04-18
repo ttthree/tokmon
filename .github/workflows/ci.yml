@@ -2,19 +2,50 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 jobs:
+  # Fast feedback on PRs: unit + corpus + build, on macOS (matches dev env).
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS is the primary supported platform — must stay green.
+          - os: macos-latest
+            node: "20"
+          - os: macos-latest
+            node: "22"
+          # Windows is informational while we make tests cross-platform.
+          - os: windows-latest
+            node: "20"
+            experimental: true
+    continue-on-error: ${{ matrix.experimental == true }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:unit
+      - run: npm run test:corpus
+
+  # Heavy e2e (Playwright) only on main pushes — not on every PR.
+  e2e:
+    if: github.event_name == 'push'
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
       - run: npm ci
       - run: npm run build
-      - run: npm run test:unit
-      - run: npm run test:corpus
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
