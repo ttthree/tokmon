@@ -7,6 +7,7 @@ import { registerCorpusCommands } from "./commands/corpus/index.js";
 import { run } from "./commands/run.js";
 import { serveCommand } from "./commands/serve.js";
 import { isSyncConfigured, loadConfig } from "../core/config.js";
+import { getPackageVersion } from "../core/version.js";
 import { sync, syncInit } from "../sync/github.js";
 
 interface RunCliOptions {
@@ -17,7 +18,7 @@ interface RunCliOptions {
 
 const program = new Command();
 
-program.name("tokmon").description("Token usage monitor for AI coding agents").version("0.1.4");
+program.name("tokmon").description("Token usage monitor for AI coding agents").version(getPackageVersion());
 
 program
   .option("--port <port>", "Dashboard port", Number, 3000)
