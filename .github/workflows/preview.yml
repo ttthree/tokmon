@@ -1,0 +1,40 @@
+name: Preview Release (pkg.pr.new)
+
+# Builds the package on every PR (and on pushes to main) and publishes
+# a preview to https://pkg.pr.new so the PR can be installed with:
+#
+#   npm i https://pkg.pr.new/@ttthree/tokmon@<commit-sha>
+#
+# A bot comment is added to each PR with the install command.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # pkg.pr.new needs full history to compute the commit SHA link
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish preview to pkg.pr.new
+        run: npx pkg-pr-new publish
