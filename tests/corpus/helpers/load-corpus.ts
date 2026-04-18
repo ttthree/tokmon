@@ -48,7 +48,6 @@ export async function withCorpusEnv<T>(corpus: LoadedCorpus, fn: () => Promise<T
   const prevHome = process.env.TOKMON_HOME;
   process.env.TOKMON_HOME = corpus.homeDir;
   await restoreMtimes(corpus.root, corpus.manifest.fileMtimes ?? {});
-  await stageMarsAppSupport(corpus.homeDir);
   try {
     return await fn();
   } finally {
@@ -56,40 +55,6 @@ export async function withCorpusEnv<T>(corpus: LoadedCorpus, fn: () => Promise<T
     else process.env.TOKMON_HOME = prevHome;
     release();
   }
-}
-
-// Snapshots are captured on macOS and store the Mars data dir under
-// `Library/Application Support/com.marsiwe.app{,.dev}`. Production code
-// looks under `%APPDATA%\com.marsiwe.app` on Windows and
-// `$XDG_CONFIG_HOME/com.marsiwe.app` on Linux. To keep the snapshots
-// platform-agnostic without rewriting them, mirror the macOS subtree to
-// the platform-appropriate location at test time.
-//
-// Idempotent: a marker file records that staging is complete so repeated
-// `withCorpusEnv` calls don't re-copy thousands of files.
-async function stageMarsAppSupport(homeDir: string): Promise<void> {
-  if (process.platform === "darwin") return;
-  const macRoot = path.join(homeDir, "Library", "Application Support");
-  const macExists = await fs.stat(macRoot).then((s) => s.isDirectory(), () => false);
-  if (!macExists) return;
-
-  const targetRoot = process.platform === "win32"
-    ? path.join(homeDir, "AppData", "Roaming")
-    : path.join(homeDir, ".config");
-  const marker = path.join(targetRoot, ".tokmon-mars-staged");
-  if (await fs.stat(marker).then(() => true, () => false)) return;
-
-  await fs.mkdir(targetRoot, { recursive: true });
-
-  const apps = await fs.readdir(macRoot, { withFileTypes: true });
-  for (const entry of apps) {
-    if (!entry.isDirectory()) continue;
-    const src = path.join(macRoot, entry.name);
-    const dst = path.join(targetRoot, entry.name);
-    // fs.cp recursive is more reliable on Windows than a manual readdir+copy.
-    await fs.cp(src, dst, { recursive: true, force: true });
-  }
-  await fs.writeFile(marker, "", "utf8");
 }
 
 async function restoreMtimes(root: string, mtimes: Record<string, number>): Promise<void> {
