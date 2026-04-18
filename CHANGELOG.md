@@ -4,6 +4,24 @@ All notable changes to `@ttthree/tokmon` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] – 2026-04-18
+
+### Fixed
+- **Eureka SDK token loss for dotted `sdkCwd`** — `encodeClaudeProjectPath()`
+  now also replaces `.` with `-` (mirroring Claude Code's on-disk
+  encoding). Previously, sessions whose `sdkCwd` contained a dotted
+  segment (e.g. `.craft-agent/...`) silently logged 0 tokens / \$0 on
+  incremental collects because the constructed CC jsonl path didn't
+  exist on disk.
+- Corpus golden generator (`parseAllPure`) now dedupes by
+  `${source}:${id}` to mirror `collect()`'s keyed map. Without this,
+  workspaces reachable from two overlapping eureka source paths (legacy
+  `.craft-agent/workspaces` and new `.eureka/workspaces`) were
+  double-counted in the goldens but not at runtime.
+- `mars-e2e` test timeout bumped from 20s to 60s, and `fs.rm` cleanup
+  now uses `maxRetries: 5, retryDelay: 100` to tolerate Windows
+  file-handle locking.
+
 ## [0.2.0] – 2026-04-18
 
 ### Added

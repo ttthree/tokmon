@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { getClaudeDirectory } from "../../src/core/config.js";
-import { resolveSourcePath } from "../../src/core/source-resolver.js";
+import { encodeClaudeProjectPath, resolveSourcePath } from "../../src/core/source-resolver.js";
 import type { Session } from "../../src/core/types.js";
 import { createTestHome } from "../helpers/fixtures.js";
 
@@ -38,6 +38,38 @@ describe("source resolver", () => {
 
   it("returns null when the project path is empty", async () => {
     expect(await resolveSourcePath(createSession({ source: "claude-code", projectPath: "" }))).toBeNull();
+  });
+});
+
+describe("encodeClaudeProjectPath", () => {
+  // Claude Code's on-disk project directory replaces every '/', '\\', ':' AND
+  // '.' with '-'. Forgetting '.' was the cause of a regression where Eureka
+  // sessions whose sdkCwd contained dotted segments (e.g. ".craft-agent") had
+  // their CC jsonl path mis-encoded, causing token totals to silently drop to
+  // zero on the next incremental collect.
+  it("replaces dots so dotted segments match the on-disk encoding", () => {
+    expect(encodeClaudeProjectPath("/Users/jietong/.craft-agent/workspaces/abc/workdirectory"))
+      .toBe("-Users-jietong--craft-agent-workspaces-abc-workdirectory");
+  });
+
+  it("encodes plain POSIX paths", () => {
+    expect(encodeClaudeProjectPath("/Users/test/work/sample-project"))
+      .toBe("-Users-test-work-sample-project");
+  });
+
+  it("encodes Windows drive-letter paths", () => {
+    expect(encodeClaudeProjectPath("C:\\Users\\test\\work\\sample"))
+      .toBe("C--Users-test-work-sample");
+  });
+
+  it("encodes Windows paths whose segments contain dots", () => {
+    expect(encodeClaudeProjectPath("C:\\Users\\test\\.craft-agent\\workdirectory"))
+      .toBe("C--Users-test--craft-agent-workdirectory");
+  });
+
+  it("returns null for empty input", () => {
+    expect(encodeClaudeProjectPath("")).toBeNull();
+    expect(encodeClaudeProjectPath("   ")).toBeNull();
   });
 });
 

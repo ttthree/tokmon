@@ -415,8 +415,10 @@ interface SdkTokenResult {
 async function readCcSessionTokens(sdkSessionId: string, sdkCwd?: string): Promise<SdkTokenResult | null> {
   if (!sdkCwd) return null;
   // Use the same encoding as Claude Code's on-disk projects directory so this
-  // works on Windows (backslashes, drive-letter colons) too.
-  const encodedCwd = encodeClaudeProjectPath(sdkCwd) ?? sdkCwd.replace(/[/.]/g, "-");
+  // works on Windows (backslashes, drive-letter colons) too. The function is
+  // total for non-empty input — no fallback needed.
+  const encodedCwd = encodeClaudeProjectPath(sdkCwd);
+  if (!encodedCwd) return null;
   const ccDir = path.join(getCraftAgentClaudeDirectory(), "projects", encodedCwd);
   const mainFile = path.join(ccDir, `${sdkSessionId}.jsonl`);
 

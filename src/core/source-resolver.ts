@@ -100,9 +100,12 @@ export function encodeClaudeProjectPath(projectPath: string): string | null {
     return null;
   }
 
-  // Mirror Claude Code's on-disk encoding: backslashes and forward slashes
-  // become '-', and Windows drive-letter colons (e.g. "C:") also become '-'
-  // because ':' is not a legal Windows filename character.
+  // Mirror Claude Code's on-disk encoding: every path separator ('/' or '\'),
+  // drive-letter colons AND dots get replaced with '-'. The dot replacement
+  // matters for paths like "/Users/foo/.craft-agent/..." which CC stores as
+  // "-Users-foo--craft-agent-..." (note the double dash). Forgetting to
+  // replace '.' caused token totals for Eureka sessions whose sdkCwd contained
+  // dotted segments to silently drop to zero on incremental collects.
   const normalized = projectPath.trim().replace(/\\/g, "/");
-  return normalized.replace(/\//g, "-").replace(/:/g, "-");
+  return normalized.replace(/\//g, "-").replace(/:/g, "-").replace(/\./g, "-");
 }
