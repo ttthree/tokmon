@@ -10,8 +10,6 @@ import path from "node:path";
 // Doing the copy here (rather than inside `withCorpusEnv`) avoids races
 // between vitest workers and keeps the per-test hook fast.
 export default async function setup(): Promise<void> {
-  if (process.platform === "darwin") return;
-
   const registryPath = path.resolve("tests/corpus/corpora.json");
   const raw = JSON.parse(await fs.readFile(registryPath, "utf8")) as {
     corpora: Array<{ id: string; path: string }>;
@@ -23,7 +21,9 @@ export default async function setup(): Promise<void> {
       await fs.readFile(path.join(corpusRoot, "manifest.json"), "utf8"),
     ) as { fileMtimes?: Record<string, number> };
     const fileMtimes = manifest.fileMtimes ?? {};
-    await stageMarsAppSupport(homeDir, fileMtimes);
+    if (process.platform !== "darwin") {
+      await stageMarsAppSupport(homeDir, fileMtimes);
+    }
     // Restore mtimes for the original snapshot tree once per run.
     // withCorpusEnv would otherwise race across vitest workers on Windows;
     // utimes errors there are silently swallowed and many parsers
