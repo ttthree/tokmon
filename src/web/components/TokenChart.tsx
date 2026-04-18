@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Area, Bar, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, Bar, ComposedChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { formatCompact } from "../format.js";
 import { useTheme } from "../theme/ThemeProvider.js";
@@ -11,16 +11,44 @@ interface TokenChartPoint {
   cacheCreation: number;
   cacheRead: number;
   cost: number;
+  // Optional per-source cost breakdown for stacked bars
+  costBySource?: Record<string, number>;
 }
 
 type ChartMode = "both" | "tokens" | "cost";
 
-export function TokenChart({ data, title = "Token & Cost Trend" }: { data: TokenChartPoint[]; title?: string }) {
+export function TokenChart({
+  data,
+  title = "Token & Cost Trend",
+  sources,
+  sourceLabels,
+}: {
+  data: TokenChartPoint[];
+  title?: string;
+  /** When provided & non-empty, renders one stacked Bar per source instead of a single Cost bar. */
+  sources?: string[];
+  /** Optional human-readable labels for sources (e.g. claude-code → "Claude Code"). */
+  sourceLabels?: Record<string, string>;
+}) {
   const { theme } = useTheme();
   const { colors } = theme;
   const [mode, setMode] = useState<ChartMode>("both");
   const showTokens = mode !== "cost";
   const showCost = mode !== "tokens";
+  const stacked = Array.isArray(sources) && sources.length > 0;
+
+  // Flatten costBySource into top-level keys so Recharts can read them as dataKeys.
+  const chartData = stacked
+    ? data.map((point) => {
+        const { costBySource, ...rest } = point;
+        const flat: Record<string, number | string> = { ...rest };
+        for (const src of sources!) {
+          flat[`cost__${src}`] = costBySource?.[src] ?? 0;
+        }
+        return flat;
+      })
+    : data;
+
   return (
     <div
       data-testid="token-chart"
@@ -59,7 +87,7 @@ export function TokenChart({ data, title = "Token & Cost Trend" }: { data: Token
       </div>
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data}>
+          <ComposedChart data={chartData}>
             <XAxis dataKey="label" stroke={colors.chartAxis} fontSize={12} />
             {showTokens ? (
               <YAxis yAxisId="tokens" stroke={colors.chartAxis} tickFormatter={formatCompact} fontSize={12} />
@@ -75,7 +103,7 @@ export function TokenChart({ data, title = "Token & Cost Trend" }: { data: Token
             ) : null}
             <Tooltip
               formatter={(value: number, name: string) => {
-                if (name === "Cost") return [`$${value.toFixed(2)}`, "Cost"];
+                if (name === "Cost" || name.startsWith("Cost · ")) return [`$${value.toFixed(2)}`, name];
                 return [formatCompact(value), name];
               }}
               contentStyle={{
@@ -84,6 +112,11 @@ export function TokenChart({ data, title = "Token & Cost Trend" }: { data: Token
                 background: theme.cssVars["--bg-panel"],
                 color: theme.cssVars["--text-primary"],
               }}
+            />
+            <Legend
+              wrapperStyle={{ fontSize: 12, color: theme.cssVars["--text-secondary"] }}
+              iconType="circle"
+              iconSize={8}
             />
             {showTokens ? (
               <Area yAxisId="tokens" type="monotone" dataKey="cacheRead" name="Cache Read" stackId="1" fill={colors.tokenCacheRead} stroke={colors.tokenCacheRead} fillOpacity={0.5} />
@@ -97,7 +130,26 @@ export function TokenChart({ data, title = "Token & Cost Trend" }: { data: Token
             {showTokens ? (
               <Area yAxisId="tokens" type="monotone" dataKey="output" name="Output" stackId="1" fill={colors.tokenOutput} stroke={colors.tokenOutput} fillOpacity={0.8} />
             ) : null}
-            {showCost ? (
+            {showCost && stacked
+              ? sources!.map((src, idx) => {
+                  const palette = colors.chartPalette;
+                  const fill = palette[idx % palette.length];
+                  const isLast = idx === sources!.length - 1;
+                  const label = sourceLabels?.[src] ?? src;
+                  return (
+                    <Bar
+                      key={src}
+                      yAxisId="cost"
+                      dataKey={`cost__${src}`}
+                      name={`Cost · ${label}`}
+                      stackId="cost"
+                      fill={fill}
+                      radius={isLast ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                    />
+                  );
+                })
+              : null}
+            {showCost && !stacked ? (
               <Bar yAxisId="cost" dataKey="cost" name="Cost" fill={colors.tokenCost} radius={[4, 4, 0, 0]} />
             ) : null}
           </ComposedChart>

@@ -16,15 +16,22 @@ export function VersionBadge() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchVersionInfo()
-      .then((v) => {
-        if (!cancelled) setInfo(v);
-      })
-      .catch(() => {
-        // network errors are not fatal — just hide the latest portion
-      });
+    const check = () => {
+      fetchVersionInfo()
+        .then((v) => {
+          if (!cancelled) setInfo(v);
+        })
+        .catch(() => {
+          // network errors are not fatal — just hide the latest portion
+        });
+    };
+    check();
+    // Re-check every 5 minutes so long-running dashboards eventually pick up
+    // a new release without requiring a manual refresh.
+    const interval = setInterval(check, 5 * 60 * 1000);
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 

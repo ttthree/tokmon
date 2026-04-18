@@ -220,7 +220,7 @@ export function App() {
 
   const chartData = useMemo(() => buildChartData(sourceSessions, range), [sourceSessions, range]);
   const projectChartData = useMemo(() => {
-    if (!selectedProject) return [];
+    if (!selectedProject) return { points: [], sources: [] };
     return buildChartData(
       sourceSessions.filter((s) => s.project === selectedProject),
       range,
@@ -323,7 +323,11 @@ export function App() {
             </section>
 
             <section>
-              <TokenChart data={chartData} />
+              <TokenChart
+                data={chartData.points}
+                sources={sourceFilter === "all" ? chartData.sources : undefined}
+                sourceLabels={SOURCE_LABELS}
+              />
             </section>
 
             <section className="grid gap-4 xl:grid-cols-[320px_1fr] items-stretch">
@@ -361,7 +365,9 @@ export function App() {
             {selectedProjectSummary ? (
               <section>
                 <TokenChart
-                  data={projectChartData}
+                  data={projectChartData.points}
+                  sources={sourceFilter === "all" ? projectChartData.sources : undefined}
+                  sourceLabels={SOURCE_LABELS}
                   title={`Token & Cost Trend — ${selectedProjectSummary.projectLabel}`}
                 />
               </section>
@@ -505,27 +511,34 @@ function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter) 
   const formatter = isMonthly
     ? (value: string) => value.slice(0, 7)
     : (value: string) => value.slice(5, 10);
-  const grouped = new Map<string, { input: number; output: number; cacheCreation: number; cacheRead: number; cost: number }>();
+  const grouped = new Map<string, { input: number; output: number; cacheCreation: number; cacheRead: number; cost: number; costBySource: Record<string, number> }>();
+  // Track which sources actually appear so the chart only renders bars for them.
+  const sourcesSeen = new Set<string>();
   // Track full ISO date so we can compute span for filling gaps
   const seenIso: string[] = [];
   for (const session of sessions) {
     const iso = session.createdAt.slice(0, 10); // YYYY-MM-DD
     seenIso.push(iso);
     const label = formatter(session.createdAt);
-    const bucket = grouped.get(label) ?? { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0 };
+    const bucket = grouped.get(label) ?? { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0, costBySource: {} };
     bucket.input += session.tokens.input;
     bucket.output += session.tokens.output;
     bucket.cacheCreation += session.tokens.cacheCreation;
     bucket.cacheRead += session.tokens.cacheRead;
     bucket.cost += session.cost.total;
+    const src = session.source;
+    bucket.costBySource[src] = (bucket.costBySource[src] ?? 0) + session.cost.total;
+    sourcesSeen.add(src);
     grouped.set(label, bucket);
   }
 
   // Build the full label list so chart x-axis includes every day/month in the
   // selected range — even if there are no sessions on a given day.
   const labels = buildContinuousLabels(range, seenIso, isMonthly);
-  const empty = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0 };
-  return labels.map((label) => ({ label, ...(grouped.get(label) ?? empty) }));
+  const empty = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0, costBySource: {} as Record<string, number> };
+  const points = labels.map((label) => ({ label, ...(grouped.get(label) ?? empty) }));
+  const sources = [...sourcesSeen].sort();
+  return { points, sources };
 }
 
 function buildContinuousLabels(range: RangeFilter, seenIso: string[], isMonthly: boolean): string[] {
