@@ -17,12 +17,21 @@ export default async function setup(): Promise<void> {
     corpora: Array<{ id: string; path: string }>;
   };
   for (const corpus of raw.corpora) {
-    const homeDir = path.join(path.resolve(corpus.path), "home");
-    await stageMarsAppSupport(homeDir);
+    const corpusRoot = path.resolve(corpus.path);
+    const homeDir = path.join(corpusRoot, "home");
+    const manifest = JSON.parse(
+      await fs.readFile(path.join(corpusRoot, "manifest.json"), "utf8"),
+    ) as { fileMtimes?: Record<string, number> };
+    await stageMarsAppSupport(homeDir, manifest.fileMtimes ?? {});
   }
 }
 
-async function stageMarsAppSupport(homeDir: string): Promise<void> {
+const MAC_PREFIX = path.join("Library", "Application Support") + path.sep;
+
+async function stageMarsAppSupport(
+  homeDir: string,
+  fileMtimes: Record<string, number>,
+): Promise<void> {
   const macRoot = path.join(homeDir, "Library", "Application Support");
   const macExists = await fs.stat(macRoot).then((s) => s.isDirectory(), () => false);
   if (!macExists) return;
@@ -41,5 +50,22 @@ async function stageMarsAppSupport(homeDir: string): Promise<void> {
     const dst = path.join(targetRoot, entry.name);
     await fs.cp(src, dst, { recursive: true, force: true });
   }
+
+  // Restore mtimes on the staged copies. The manifest only references
+  // the macOS-shaped paths; translate any entry under
+  // `home/Library/Application Support/` to its staged equivalent so
+  // parsers that fall back to fileMtime (e.g. claude-code) get the
+  // same timestamp on Windows/Linux as on macOS.
+  for (const [relPath, mtimeMs] of Object.entries(fileMtimes)) {
+    // Manifest paths use forward slashes; normalize to platform sep.
+    const platformRel = relPath.split("/").join(path.sep);
+    const homeRelPrefix = "home" + path.sep + MAC_PREFIX;
+    if (!platformRel.startsWith(homeRelPrefix)) continue;
+    const tail = platformRel.slice(homeRelPrefix.length);
+    const stagedAbs = path.join(targetRoot, tail);
+    const sec = mtimeMs / 1000;
+    await fs.utimes(stagedAbs, sec, sec).catch(() => undefined);
+  }
+
   await fs.writeFile(marker, "", "utf8");
 }
