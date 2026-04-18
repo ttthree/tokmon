@@ -22,7 +22,25 @@ export default async function setup(): Promise<void> {
     const manifest = JSON.parse(
       await fs.readFile(path.join(corpusRoot, "manifest.json"), "utf8"),
     ) as { fileMtimes?: Record<string, number> };
-    await stageMarsAppSupport(homeDir, manifest.fileMtimes ?? {});
+    const fileMtimes = manifest.fileMtimes ?? {};
+    await stageMarsAppSupport(homeDir, fileMtimes);
+    // Restore mtimes for the original snapshot tree once per run.
+    // withCorpusEnv would otherwise race across vitest workers on Windows;
+    // utimes errors there are silently swallowed and many parsers
+    // (e.g. claude-code) fall back to fileMtime, producing today's
+    // timestamps instead of the corpus's recorded ones.
+    await restoreMtimes(corpusRoot, fileMtimes);
+  }
+}
+
+async function restoreMtimes(
+  corpusRoot: string,
+  fileMtimes: Record<string, number>,
+): Promise<void> {
+  for (const [relPath, mtimeMs] of Object.entries(fileMtimes)) {
+    const full = path.join(corpusRoot, relPath);
+    const sec = mtimeMs / 1000;
+    await fs.utimes(full, sec, sec).catch(() => undefined);
   }
 }
 

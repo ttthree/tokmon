@@ -47,20 +47,14 @@ export async function withCorpusEnv<T>(corpus: LoadedCorpus, fn: () => Promise<T
   await prior;
   const prevHome = process.env.TOKMON_HOME;
   process.env.TOKMON_HOME = corpus.homeDir;
-  await restoreMtimes(corpus.root, corpus.manifest.fileMtimes ?? {});
+  // Mtimes are restored once per run by tests/corpus/global-setup.ts to
+  // avoid concurrent fs.utimes calls across vitest workers (which race
+  // on Windows).
   try {
     return await fn();
   } finally {
     if (prevHome === undefined) delete process.env.TOKMON_HOME;
     else process.env.TOKMON_HOME = prevHome;
     release();
-  }
-}
-
-async function restoreMtimes(root: string, mtimes: Record<string, number>): Promise<void> {
-  for (const [relPath, mtimeMs] of Object.entries(mtimes)) {
-    const full = path.join(root, relPath);
-    const sec = mtimeMs / 1000;
-    await fs.utimes(full, sec, sec).catch(() => undefined);
   }
 }
