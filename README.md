@@ -1,5 +1,10 @@
 # tokmon
 
+[![npm version](https://img.shields.io/npm/v/@ttthree/tokmon.svg)](https://www.npmjs.com/package/@ttthree/tokmon)
+[![npm downloads](https://img.shields.io/npm/dm/@ttthree/tokmon.svg)](https://www.npmjs.com/package/@ttthree/tokmon)
+[![license](https://img.shields.io/npm/l/@ttthree/tokmon.svg)](./LICENSE)
+[![node](https://img.shields.io/node/v/@ttthree/tokmon.svg)](https://nodejs.org/)
+
 Token usage monitor for AI coding agents — track costs, review sessions, optimize workflows.
 
 Supports **Claude Code**, **Codex**, **Copilot CLI**, **Eureka**, and **Mars** orchestrator sessions. Aggregates across machines, breaks down by project / model / agent / machine, and exposes it all in a clean web dashboard.
