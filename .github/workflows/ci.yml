@@ -19,11 +19,10 @@ jobs:
             node: "20"
           - os: macos-latest
             node: "22"
-          # Windows is informational while we make tests cross-platform.
+          # Windows is now a required matrix entry — corpus tests are
+          # cross-platform after the staging + path normalization fixes.
           - os: windows-latest
             node: "20"
-            experimental: true
-    continue-on-error: ${{ matrix.experimental == true }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

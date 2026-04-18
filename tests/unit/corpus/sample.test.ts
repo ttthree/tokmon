@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { discoverMarsTasks, selectDiscovered, truncateJsonl } from "../../../src/cli/commands/corpus/sample.js";
 import { createTestHome } from "../../helpers/fixtures.js";
-import { createMarsDbFixture } from "../../helpers/mars-fixtures.js";
+import { createMarsDbFixture, marsAppDirForTest } from "../../helpers/mars-fixtures.js";
 
 let testHome = "";
 
@@ -42,7 +42,7 @@ describe("corpus sample helpers", () => {
         { idHex: "33333333333333333333333333333333", taskIdHex: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", agentType: "codex", agentSessionId: "s3" },
       ],
     });
-    const appDir = path.join(testHome, "Library", "Application Support", "com.marsiwe.app");
+    const appDir = marsAppDirForTest(testHome, "com.marsiwe.app");
     const groups = await discoverMarsTasks([{ path: appDir }]);
     const task1 = groups.find((g) => g.taskId === "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     expect(task1?.agentSessionIds.sort()).toEqual(["s1", "s2"]);

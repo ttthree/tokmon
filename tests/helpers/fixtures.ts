@@ -27,7 +27,9 @@ export async function createTestHome(): Promise<string> {
   const testHome = await fs.mkdtemp(path.join(os.tmpdir(), "tokmon-test-"));
   await fs.mkdir(path.join(testHome, ".tokmon", "pricing"), { recursive: true });
   await fs.writeFile(
-    path.join(testHome, ".tokmon", "pricing", "2026-01-01T00:00:00.000Z.json"),
+    // Windows disallows ':' in filenames; mirror the safe scheme used by
+    // src/core/pricing.ts which replaces ':' with '-'.
+    path.join(testHome, ".tokmon", "pricing", "2026-01-01T00-00-00.000Z.json"),
     JSON.stringify(defaultPricingSnapshot(), null, 2),
     "utf8",
   );

@@ -100,6 +100,9 @@ export function encodeClaudeProjectPath(projectPath: string): string | null {
     return null;
   }
 
+  // Mirror Claude Code's on-disk encoding: backslashes and forward slashes
+  // become '-', and Windows drive-letter colons (e.g. "C:") also become '-'
+  // because ':' is not a legal Windows filename character.
   const normalized = projectPath.trim().replace(/\\/g, "/");
-  return normalized.replace(/\//g, "-");
+  return normalized.replace(/\//g, "-").replace(/:/g, "-");
 }

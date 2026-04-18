@@ -1,0 +1,89 @@
+{
+  "github": {
+    "repo": "",
+    "branch": "main"
+  },
+  "privacy": {
+    "sync": {
+      "includeSummary": false,
+      "includeFirstPrompt": false,
+      "includeProjectPath": false,
+      "includeProjectName": true,
+      "includeOrchestratorMetadata": true
+    }
+  },
+  "projects": {},
+  "excludeFolders": [
+    "/",
+    "/tmp",
+    "/private/var",
+    ".worktrees",
+    ".craft-agent",
+    "workdirectory"
+  ],
+  "pricing": {
+    "autoUpdate": true,
+    "updateIntervalHours": 24
+  },
+  "sources": [
+    {
+      "id": "claude-code:/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.claude",
+      "type": "claude-code",
+      "path": "/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.claude",
+      "enabled": true,
+      "autoDetected": true
+    },
+    {
+      "id": "claude-code:/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.craft-agent/.claude",
+      "type": "claude-code",
+      "path": "/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.craft-agent/.claude",
+      "enabled": true,
+      "autoDetected": true
+    },
+    {
+      "id": "codex:/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.codex",
+      "type": "codex",
+      "path": "/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.codex",
+      "enabled": true,
+      "autoDetected": true
+    },
+    {
+      "id": "copilot-cli:/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.copilot",
+      "type": "copilot-cli",
+      "path": "/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.copilot",
+      "enabled": true,
+      "autoDetected": true
+    },
+    {
+      "id": "eureka:/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces",
+      "type": "eureka",
+      "path": "/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces",
+      "enabled": true,
+      "autoDetected": true,
+      "label": "Eureka workspaces (legacy)"
+    },
+    {
+      "id": "eureka:/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.eureka/workspaces",
+      "type": "eureka",
+      "path": "/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/.eureka/workspaces",
+      "enabled": true,
+      "autoDetected": true,
+      "label": "Eureka workspaces"
+    },
+    {
+      "id": "mars:/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/Library/Application Support/com.marsiwe.app",
+      "type": "mars",
+      "path": "/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/Library/Application Support/com.marsiwe.app",
+      "enabled": true,
+      "autoDetected": true
+    },
+    {
+      "id": "mars:/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/Library/Application Support/com.marsiwe.app.dev",
+      "type": "mars",
+      "path": "/Users/jietong/work/tokmon/tests/corpus/snapshots/2026-04-default/home/Library/Application Support/com.marsiwe.app.dev",
+      "enabled": true,
+      "autoDetected": true
+    }
+  ],
+  "machine": {}
+}

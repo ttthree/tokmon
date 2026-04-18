@@ -76,8 +76,14 @@ function sanitizeCwd(input: string): string {
   if (!input) return input;
   const cwd = process.cwd();
   if (!cwd) return input;
-  const repoName = path.basename(cwd);
-  const candidates = [cwd, sanitizeSensitiveText(cwd), `/Users/testuser/work/${repoName}`];
+  // Windows paths arrive with mixed separators because TOKMON_HOME is built
+  // with `path.join` (backslashes) but `~`-expanded JSONL paths keep their
+  // forward slashes. Normalize the whole string to POSIX so it compares
+  // equal to goldens captured on macOS/Linux.
+  input = input.replace(/\\/g, "/");
+  const cwdPosix = cwd.replace(/\\/g, "/");
+  const repoName = path.basename(cwdPosix);
+  const candidates = [cwdPosix, sanitizeSensitiveText(cwdPosix), `/Users/testuser/work/${repoName}`];
   for (const candidate of candidates) {
     if (!candidate) continue;
     const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

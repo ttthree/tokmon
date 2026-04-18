@@ -171,7 +171,7 @@ async function synthesizeEntryFromFile(sessionPath: string, stat: Awaited<Return
     firstPrompt: meta.firstPrompt,
     created: new Date(Number(stat.birthtimeMs)).toISOString(),
     modified: new Date(Number(stat.mtimeMs)).toISOString(),
-    projectPath: projectPath.startsWith("/") ? projectPath : "/" + projectPath,
+    projectPath: ensureAbsolute(projectPath),
   };
 }
 
@@ -331,6 +331,15 @@ function decodeEncodedProjectPath(projectDirName: string): string {
   return projectDirName.startsWith("-")
     ? projectDirName.slice(1).replace(/-/g, "/")
     : projectDirName;
+}
+
+// Ensure the path is absolute. Already-absolute POSIX paths (`/foo`) and
+// Windows drive-prefixed paths (`C:\Users\...` or `C:/Users/...`) are returned
+// as-is; otherwise a leading `/` is added so synthesized paths look canonical.
+function ensureAbsolute(projectPath: string): string {
+  if (projectPath.startsWith("/")) return projectPath;
+  if (/^[A-Za-z]:[\\/]/.test(projectPath)) return projectPath;
+  return "/" + projectPath;
 }
 
 function getHomeCraftAgentWorkspacesDir(): string {
