@@ -34,7 +34,7 @@ type AgentFilter = Source | "mars" | "all";
 type Tab = "overview" | "projects" | "sessions" | "logs" | "settings";
 
 const LOGS_STORAGE_KEY = "tokmon:change-log:v1";
-const LOGS_MAX_ENTRIES = 200;
+const LOGS_MAX_ENTRIES = 500;
 
 interface LogSnapshot {
   sessions: number;
