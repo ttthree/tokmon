@@ -48,12 +48,56 @@ export async function withCorpusEnv<T>(corpus: LoadedCorpus, fn: () => Promise<T
   const prevHome = process.env.TOKMON_HOME;
   process.env.TOKMON_HOME = corpus.homeDir;
   await restoreMtimes(corpus.root, corpus.manifest.fileMtimes ?? {});
+  await stageMarsAppSupport(corpus.homeDir);
   try {
     return await fn();
   } finally {
     if (prevHome === undefined) delete process.env.TOKMON_HOME;
     else process.env.TOKMON_HOME = prevHome;
     release();
+  }
+}
+
+// Snapshots are captured on macOS and store the Mars data dir under
+// `Library/Application Support/com.marsiwe.app{,.dev}`. Production code
+// looks under `%APPDATA%\com.marsiwe.app` on Windows and
+// `$XDG_CONFIG_HOME/com.marsiwe.app` on Linux. To keep the snapshots
+// platform-agnostic without rewriting them, mirror the macOS subtree to
+// the platform-appropriate location at test time.
+async function stageMarsAppSupport(homeDir: string): Promise<void> {
+  if (process.platform === "darwin") return;
+  const macRoot = path.join(homeDir, "Library", "Application Support");
+  const macExists = await fs.stat(macRoot).then((s) => s.isDirectory(), () => false);
+  if (!macExists) return;
+
+  const targetRoot = process.platform === "win32"
+    ? path.join(homeDir, "AppData", "Roaming")
+    : path.join(homeDir, ".config");
+  await fs.mkdir(targetRoot, { recursive: true });
+
+  const apps = await fs.readdir(macRoot, { withFileTypes: true });
+  for (const entry of apps) {
+    if (!entry.isDirectory()) continue;
+    const src = path.join(macRoot, entry.name);
+    const dst = path.join(targetRoot, entry.name);
+    if (await fs.stat(dst).then(() => true, () => false)) {
+      await fs.rm(dst, { recursive: true, force: true });
+    }
+    await copyDir(src, dst);
+  }
+}
+
+async function copyDir(src: string, dst: string): Promise<void> {
+  await fs.mkdir(dst, { recursive: true });
+  const entries = await fs.readdir(src, { withFileTypes: true });
+  for (const entry of entries) {
+    const s = path.join(src, entry.name);
+    const d = path.join(dst, entry.name);
+    if (entry.isDirectory()) {
+      await copyDir(s, d);
+    } else if (entry.isFile()) {
+      await fs.copyFile(s, d);
+    }
   }
 }
 
