@@ -39,6 +39,10 @@ interface MarsDbFixtureInput {
 // Mirror src/core/config.ts:getMarsAppSupportDirectories() so the fixture
 // writes the Mars DB to the platform-correct location under the test home.
 function marsAppDir(homeDir: string, appId: string): string {
+  return marsAppDirForTest(homeDir, appId);
+}
+
+export function marsAppDirForTest(homeDir: string, appId: string): string {
   if (process.platform === "darwin") {
     return path.join(homeDir, "Library", "Application Support", appId);
   }

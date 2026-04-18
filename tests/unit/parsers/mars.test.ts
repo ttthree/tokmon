@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { createEmptyCursorState } from "../../../src/core/cursor.js";
 import { marsParser, marsRegistry } from "../../../src/parsers/mars.js";
-import { createMarsAgentConfigRoots, createMarsDbFixture } from "../../helpers/mars-fixtures.js";
+import { createMarsAgentConfigRoots, createMarsDbFixture, marsAppDirForTest } from "../../helpers/mars-fixtures.js";
 import { createTestHome } from "../../helpers/fixtures.js";
 
 let testHome = "";
@@ -96,7 +96,7 @@ describe("mars parser", () => {
     await marsParser.parse({ machineId: "m1", existingCursor: createEmptyCursorState() });
     expect(marsRegistry.byAgentSessionId.claudeCode.has("first")).toBe(true);
 
-    await fs.rm(path.join(testHome, "Library", "Application Support", "com.marsiwe.app", "marsiwe.db"), { force: true });
+    await fs.rm(path.join(marsAppDirForTest(testHome, "com.marsiwe.app"), "marsiwe.db"), { force: true });
     await createMarsDbFixture({
       homeDir: testHome,
       sessions: [{ idHex: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", agentType: "claude-code", agentSessionId: "second" }],

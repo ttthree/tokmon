@@ -4,6 +4,7 @@ import path from "node:path";
 import { getCraftAgentClaudeDirectory, getHomeDirectory } from "../core/config.js";
 import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
+import { encodeClaudeProjectPath } from "../core/source-resolver.js";
 import { streamJsonl } from "./util/jsonl-stream.js";
 import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown, TokenProvenance } from "../core/types.js";
 
@@ -413,7 +414,9 @@ interface SdkTokenResult {
  */
 async function readCcSessionTokens(sdkSessionId: string, sdkCwd?: string): Promise<SdkTokenResult | null> {
   if (!sdkCwd) return null;
-  const encodedCwd = sdkCwd.replace(/[/.]/g, "-");
+  // Use the same encoding as Claude Code's on-disk projects directory so this
+  // works on Windows (backslashes, drive-letter colons) too.
+  const encodedCwd = encodeClaudeProjectPath(sdkCwd) ?? sdkCwd.replace(/[/.]/g, "-");
   const ccDir = path.join(getCraftAgentClaudeDirectory(), "projects", encodedCwd);
   const mainFile = path.join(ccDir, `${sdkSessionId}.jsonl`);
 
