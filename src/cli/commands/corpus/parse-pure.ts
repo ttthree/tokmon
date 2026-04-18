@@ -25,5 +25,14 @@ export async function parseAllPure(options: ParseAllPureOptions = {}): Promise<S
     sessions.push(...enriched);
   }
 
-  return sessions;
+  // Dedupe by `${source}:${id}` to mirror how `collect` writes into the keyed
+  // `machineData.sessions` map. Without this, sessions surfaced by two
+  // overlapping source paths (e.g. legacy `.craft-agent/workspaces` and new
+  // `.eureka/workspaces` both containing the same workspace) get counted twice
+  // in the golden but only once at runtime — making e2e totals drift.
+  const deduped = new Map<string, Session>();
+  for (const session of sessions) {
+    deduped.set(`${session.source}:${session.id}`, session);
+  }
+  return [...deduped.values()];
 }

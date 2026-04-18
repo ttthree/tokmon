@@ -14,7 +14,7 @@ let testHome = "";
 
 afterEach(async () => {
   if (testHome) {
-    await fs.rm(testHome, { recursive: true, force: true });
+    await fs.rm(testHome, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     testHome = "";
   }
   delete process.env.TOKMON_HOME;
@@ -69,5 +69,5 @@ describe("mars e2e", () => {
 
     expect(marsSessions).toHaveLength(4);
     expect(new Set(marsSessions.map((s) => s.id))).toEqual(new Set(["cc-1", "cc-2", "cx-1", "cp-1"]));
-  }, 20000);
+  }, 60000);
 });

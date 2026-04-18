@@ -1,18 +1,18 @@
 {
   "summary": {
-    "totalSessions": 639,
+    "totalSessions": 616,
     "perSource": {
-      "claude-code": 42,
+      "claude-code": 37,
       "codex": 564,
       "copilot-cli": 3,
-      "eureka": 30
+      "eureka": 12
     },
     "perEngine": {
-      "Claude Code": 42,
+      "Claude Code": 37,
       "Codex": 564,
       "Copilot CLI": 3,
-      "Eureka + CC": 15,
-      "Eureka + Codex": 15
+      "Eureka + CC": 5,
+      "Eureka + Codex": 7
     },
     "marsSessionCount": 0
   },
@@ -29,73 +29,7 @@
       "resolved": false
     },
     {
-      "eurekaSessionId": "260213-sleek-rainbow",
-      "engine": "Eureka + Codex",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260213-sleek-rainbow",
-      "engine": "Eureka + Codex",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
       "eurekaSessionId": "260305-strong-cove",
-      "engine": "Eureka + CC",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260305-strong-cove",
-      "engine": "Eureka + CC",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260305-strong-cove",
-      "engine": "Eureka + CC",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260307-calm-lion",
-      "engine": "Eureka + CC",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260307-calm-lion",
       "engine": "Eureka + CC",
       "tokens": {
         "input": 0,
@@ -139,73 +73,7 @@
       "resolved": false
     },
     {
-      "eurekaSessionId": "260308-onyx-ocean",
-      "engine": "Eureka + Codex",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260308-onyx-ocean",
-      "engine": "Eureka + Codex",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
       "eurekaSessionId": "260309-high-palm",
-      "engine": "Eureka + Codex",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260309-high-palm",
-      "engine": "Eureka + Codex",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260309-high-palm",
-      "engine": "Eureka + Codex",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260310-awake-pebble",
-      "engine": "Eureka + Codex",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260310-awake-pebble",
       "engine": "Eureka + Codex",
       "tokens": {
         "input": 0,
@@ -238,73 +106,7 @@
       "resolved": false
     },
     {
-      "eurekaSessionId": "260310-young-salmon",
-      "engine": "Eureka + CC",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260310-young-salmon",
-      "engine": "Eureka + CC",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
       "eurekaSessionId": "260311-coral-flint",
-      "engine": "Eureka + CC",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260311-coral-flint",
-      "engine": "Eureka + CC",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260311-coral-flint",
-      "engine": "Eureka + CC",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260317-focal-ruby",
-      "engine": "Eureka + CC",
-      "tokens": {
-        "input": 0,
-        "output": 0,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      },
-      "resolved": false
-    },
-    {
-      "eurekaSessionId": "260317-focal-ruby",
       "engine": "Eureka + CC",
       "tokens": {
         "input": 0,
