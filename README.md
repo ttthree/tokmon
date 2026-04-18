@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@ttthree/tokmon.svg)](https://www.npmjs.com/package/@ttthree/tokmon)
 [![npm downloads](https://img.shields.io/npm/dm/@ttthree/tokmon.svg)](https://www.npmjs.com/package/@ttthree/tokmon)
+[![CI](https://github.com/ttthree/tokmon/actions/workflows/ci.yml/badge.svg)](https://github.com/ttthree/tokmon/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/@ttthree/tokmon.svg)](./LICENSE)
 [![node](https://img.shields.io/node/v/@ttthree/tokmon.svg)](https://nodejs.org/)
 

@@ -62,15 +62,40 @@ async function restoreMtimes(root: string, fileMtimes: Record<string, number>): 
   }
 }
 
+// Replace the absolute repo-root prefix in any string with a stable token,
+// so goldens generated on /Users/jietong/work/tokmon match those exercised
+// on CI runners at /Users/runner/work/tokmon/tokmon (after username
+// sanitization both still differ in the nested-checkout segment).
+//
+// We strip three forms:
+//   1. process.cwd() — the actual checkout path on this host.
+//   2. sanitizeSensitiveText(process.cwd()) — same after username redaction.
+//   3. /Users/testuser/work/<repo-basename> — the canonical pre-sanitized
+//      form baked into fixture JSONL files (independent of host nesting).
+function sanitizeCwd(input: string): string {
+  if (!input) return input;
+  const cwd = process.cwd();
+  if (!cwd) return input;
+  const repoName = path.basename(cwd);
+  const candidates = [cwd, sanitizeSensitiveText(cwd), `/Users/testuser/work/${repoName}`];
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    input = input.replace(new RegExp(escaped, "g"), "/repo");
+  }
+  return input;
+}
+
 function deepNormalize(value: unknown, epochMs: number): unknown {
   if (typeof value === "string") {
-    return sanitizeSensitiveText(value);
+    return sanitizeCwd(sanitizeSensitiveText(value));
   }
   if (Array.isArray(value)) return value.map((v) => deepNormalize(v, epochMs));
   if (!value || typeof value !== "object") return value;
   const obj = value as Record<string, unknown>;
   const out: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(obj)) {
+    if (val === undefined) continue;
     if (key === "machineId") {
       out[key] = "machine";
       continue;
