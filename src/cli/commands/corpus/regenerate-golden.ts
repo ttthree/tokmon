@@ -62,9 +62,25 @@ async function restoreMtimes(root: string, fileMtimes: Record<string, number>): 
   }
 }
 
+// Replace the absolute repo-root prefix in any string with a stable token,
+// so goldens generated on /Users/jietong/work/tokmon match those exercised
+// on CI runners at /Users/runner/work/tokmon/tokmon (after username
+// sanitization both still differ in the nested-checkout segment).
+function sanitizeCwd(input: string): string {
+  if (!input) return input;
+  const cwd = process.cwd();
+  if (!cwd) return input;
+  for (const candidate of [cwd, sanitizeSensitiveText(cwd)]) {
+    if (!candidate) continue;
+    const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    input = input.replace(new RegExp(escaped, "g"), "/repo");
+  }
+  return input;
+}
+
 function deepNormalize(value: unknown, epochMs: number): unknown {
   if (typeof value === "string") {
-    return sanitizeSensitiveText(value);
+    return sanitizeCwd(sanitizeSensitiveText(value));
   }
   if (Array.isArray(value)) return value.map((v) => deepNormalize(v, epochMs));
   if (!value || typeof value !== "object") return value;
