@@ -88,14 +88,20 @@ export function getMarsAppSupportDirectories(): string[] {
     ];
   }
   if (process.platform === "win32") {
-    const appData = process.env.APPDATA ?? path.join(home, "AppData", "Roaming");
+    // Honor TOKMON_HOME (tests) over the real %APPDATA% so fixtures isolate
+    // the Mars data dir under the test home.
+    const appData = process.env.TOKMON_HOME
+      ? path.join(home, "AppData", "Roaming")
+      : process.env.APPDATA ?? path.join(home, "AppData", "Roaming");
     return [
       path.join(appData, "com.marsiwe.app"),
       path.join(appData, "com.marsiwe.app.dev"),
     ];
   }
   // Linux / other: XDG
-  const xdg = process.env.XDG_CONFIG_HOME ?? path.join(home, ".config");
+  const xdg = process.env.TOKMON_HOME
+    ? path.join(home, ".config")
+    : process.env.XDG_CONFIG_HOME ?? path.join(home, ".config");
   return [
     path.join(xdg, "com.marsiwe.app"),
     path.join(xdg, "com.marsiwe.app.dev"),

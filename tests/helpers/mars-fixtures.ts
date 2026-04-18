@@ -36,9 +36,21 @@ interface MarsDbFixtureInput {
   sessions?: MarsSessionRow[];
 }
 
+// Mirror src/core/config.ts:getMarsAppSupportDirectories() so the fixture
+// writes the Mars DB to the platform-correct location under the test home.
+function marsAppDir(homeDir: string, appId: string): string {
+  if (process.platform === "darwin") {
+    return path.join(homeDir, "Library", "Application Support", appId);
+  }
+  if (process.platform === "win32") {
+    return path.join(homeDir, "AppData", "Roaming", appId);
+  }
+  return path.join(homeDir, ".config", appId);
+}
+
 export async function createMarsDbFixture(input: MarsDbFixtureInput): Promise<string> {
   const appId = input.appId ?? "com.marsiwe.app";
-  const appDir = path.join(input.homeDir, "Library", "Application Support", appId);
+  const appDir = marsAppDir(input.homeDir, appId);
   await fs.mkdir(appDir, { recursive: true });
   const dbPath = path.join(appDir, "marsiwe.db");
   const db = new Database(dbPath);
@@ -113,7 +125,7 @@ export async function createMarsDbFixture(input: MarsDbFixtureInput): Promise<st
 }
 
 export async function createMarsAgentConfigRoots(homeDir: string, appId: "com.marsiwe.app" | "com.marsiwe.app.dev" = "com.marsiwe.app"): Promise<{ claude: string; codex: string; copilot: string }> {
-  const base = path.join(homeDir, "Library", "Application Support", appId, "agent-configs");
+  const base = path.join(marsAppDir(homeDir, appId), "agent-configs");
   const claude = path.join(base, "claude");
   const codex = path.join(base, "codex");
   const copilot = path.join(base, "copilot");
