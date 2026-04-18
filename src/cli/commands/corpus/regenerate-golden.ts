@@ -71,6 +71,7 @@ function deepNormalize(value: unknown, epochMs: number): unknown {
   const obj = value as Record<string, unknown>;
   const out: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(obj)) {
+    if (val === undefined) continue;
     if (key === "machineId") {
       out[key] = "machine";
       continue;
