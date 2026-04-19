@@ -194,6 +194,9 @@ export function App() {
     let cancelled = false;
 
     // Initial render: just read whatever's cached, no collect, no animation.
+    // Reset the snapshot baseline so that a range change doesn't produce a
+    // spurious negative delta in the Logs tab.
+    lastSnapshotRef.current = null;
     fetchDashboardData(params)
       .then((response) => {
         if (cancelled) return;
