@@ -115,4 +115,33 @@ describe("eureka parser", () => {
     const ccResult = await claudeCodeParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
     expect(ccResult.sessions.some((s) => s.id === sdkSessionId)).toBe(false);
   });
+
+  it("re-parses when previous run produced incomplete tokens (CC SDK file appeared late)", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+
+    const sdkSessionId = "claude-sdk-session-late";
+    // First parse: no SDK file yet → tokens 0, provenance "telemetry-incomplete".
+    await createEurekaClaudeSdkFixture(testHome, { sdkSessionId, includeSdkFile: false });
+
+    const first = await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
+    expect(first.sessions).toHaveLength(1);
+    expect(first.sessions[0].tokenProvenance).toBe("telemetry-incomplete");
+    expect(first.sessions[0].tokens).toEqual({ input: 0, output: 0, cacheCreation: 0, cacheRead: 0 });
+
+    const persistedCursor = mergeCursorState(createEmptyCursorState(), first.cursorUpdates);
+    const cursorEntry = Object.values(persistedCursor.files).find((e) => e.claimedSdkSessionId === sdkSessionId);
+    expect(cursorEntry?.lastProvenance).toBe("telemetry-incomplete");
+    expect(cursorEntry?.claimedSdkCwd).toBeTruthy();
+
+    // SDK file shows up after the fact (without changing telemetry/session.jsonl).
+    await createEurekaClaudeSdkFixture(testHome, { sdkSessionId });
+
+    // Second parse: cursor would normally hit, but lastProvenance="telemetry-incomplete" forces a retry.
+    claimedCcSessionIds.clear();
+    const second = await eurekaParser.parse({ machineId: "machine-1", existingCursor: persistedCursor });
+    expect(second.sessions).toHaveLength(1);
+    expect(second.sessions[0].tokenProvenance).toBe("sdk-cc-jsonl");
+    expect(second.sessions[0].tokens.input).toBeGreaterThan(0);
+  });
 });

@@ -142,11 +142,18 @@ export const eurekaParser: Parser = {
 
         if (!primaryStat?.isFile()) continue;
 
-        const sessionMtimeMs = await getEurekaSessionMtime(sessionPath);
-
-        // Check cursor for incremental processing
+        // Check cursor for incremental processing.
+        // Invalidate cursor if previous parse left tokens incomplete (CC .jsonl wasn't ready yet) so we retry.
         const cursor = context.existingCursor.files[primaryFile] ?? null;
-        if (cursor && cursor.inode === Number(primaryStat.ino) && cursor.size === primaryStat.size && cursor.mtimeMs === sessionMtimeMs) {
+        const sessionMtimeMs = await getEurekaSessionMtime(sessionPath, cursor?.claimedSdkSessionId, cursor?.claimedSdkCwd);
+        const cursorIsStale = cursor?.lastProvenance === "telemetry-incomplete" && Boolean(cursor?.claimedSdkSessionId);
+        if (
+          cursor &&
+          !cursorIsStale &&
+          cursor.inode === Number(primaryStat.ino) &&
+          cursor.size === primaryStat.size &&
+          cursor.mtimeMs === sessionMtimeMs
+        ) {
           // Re-register the SDK session claim so the CC parser still skips this file.
           // Without this, incremental runs leave claimedCcSessionIds empty and CC double-counts SDK sessions.
           if (cursor.claimedSdkSessionId) {
@@ -168,14 +175,20 @@ export const eurekaParser: Parser = {
 
         if (result) {
           sessions.push(result.session);
+          // Recompute mtime AFTER the parse — this captures the CC SDK .jsonl mtime that we
+          // may have just learned about (via the parsed sdkCwd), so we don't immediately
+          // re-parse on the next collect when the SDK file grew during this run.
+          const finalMtimeMs = await getEurekaSessionMtime(sessionPath, result.sdkSessionId, result.sdkCwd);
           cursorUpdates[primaryFile] = {
             path: primaryFile,
             inode: Number(primaryStat.ino),
             size: Number(primaryStat.size),
-            mtimeMs: sessionMtimeMs,
+            mtimeMs: finalMtimeMs,
             byteOffset: Number(primaryStat.size),
             processedAt: new Date().toISOString(),
             claimedSdkSessionId: result.sdkSessionId,
+            claimedSdkCwd: result.sdkCwd,
+            lastProvenance: result.session.tokenProvenance,
           };
         }
       }
@@ -193,7 +206,7 @@ async function parseEurekaSession(
   sessionJsonlPath: string | null,
   workspaceId: string,
   machineId: string,
-): Promise<{ session: Session; sdkSessionId?: string } | null> {
+): Promise<{ session: Session; sdkSessionId?: string; sdkCwd?: string } | null> {
   const meta: SessionMeta = {
     eventTimestampsMs: [],
     turns: new Set(),
@@ -405,7 +418,7 @@ async function parseEurekaSession(
     tokenProvenance: meta.tokenProvenance,
     orchestrator: { kind: "eureka" },
   };
-  return { session, sdkSessionId: meta.sdkSessionId };
+  return { session, sdkSessionId: meta.sdkSessionId, sdkCwd: meta.sdkCwd };
 }
 
 interface SdkTokenResult {
@@ -760,13 +773,21 @@ function telemetryProvenance(tokens: TokenBreakdown, provenance: TokenProvenance
   return hasAnyBreakdown(tokens) ? provenance : undefined;
 }
 
-async function getEurekaSessionMtime(sessionPath: string, sdkSessionId?: string): Promise<number> {
+async function getEurekaSessionMtime(sessionPath: string, sdkSessionId?: string, sdkCwd?: string): Promise<number> {
   const candidates = [
     path.join(sessionPath, "session.jsonl"),
     path.join(sessionPath, "llm-telemetry.jsonl"),
   ];
   if (sdkSessionId) {
     candidates.push(path.join(sessionPath, ".copilot-sdk", "session-state", sdkSessionId, "events.jsonl"));
+  }
+  // Include the CC SDK .jsonl so cursor invalidates when CC writes after our first parse.
+  // CC files live outside sessionPath in ~/.craft-agent/.claude/projects/<encoded-cwd>/<sdkSessionId>.jsonl.
+  if (sdkSessionId && sdkCwd) {
+    const encoded = encodeClaudeProjectPath(sdkCwd);
+    if (encoded) {
+      candidates.push(path.join(getCraftAgentClaudeDirectory(), "projects", encoded, `${sdkSessionId}.jsonl`));
+    }
   }
 
   let maxMtime = 0;
