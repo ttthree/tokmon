@@ -1,9 +1,11 @@
 import fs from "node:fs/promises";
+import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createEurekaClaudeSdkFixture, createEurekaCodexFixture, createTestHome } from "../../helpers/fixtures.js";
 import { createEmptyCursorState, mergeCursorState } from "../../../src/core/cursor.js";
+import { encodeClaudeProjectPath } from "../../../src/core/source-resolver.js";
 import { claudeCodeParser } from "../../../src/parsers/claude-code.js";
 import { claimedCcSessionIds, eurekaParser } from "../../../src/parsers/eureka.js";
 
@@ -16,6 +18,36 @@ afterEach(async () => {
   }
   delete process.env.TOKMON_HOME;
 });
+
+async function createLateClaudeSdkFile(testHome: string, workingDirectory: string, sdkSessionId: string): Promise<void> {
+  const encodedProjectPath = encodeClaudeProjectPath(workingDirectory);
+  const projectDir = path.join(testHome, ".craft-agent", ".claude", "projects", encodedProjectPath ?? "project");
+  await fs.mkdir(projectDir, { recursive: true });
+  await fs.writeFile(
+    path.join(projectDir, `${sdkSessionId}.jsonl`),
+    [
+      JSON.stringify({
+        type: "user",
+        sessionId: sdkSessionId,
+        timestamp: "2026-04-18T09:00:00.000Z",
+        message: { role: "user", content: [{ type: "text", text: "Inspect the repo" }] },
+      }),
+      JSON.stringify({
+        type: "assistant",
+        sessionId: sdkSessionId,
+        timestamp: "2026-04-18T09:00:05.000Z",
+        message: {
+          role: "assistant",
+          model: "claude-sonnet-4-20250514",
+          usage: { input_tokens: 120, output_tokens: 30, cache_creation_input_tokens: 10, cache_read_input_tokens: 5 },
+          content: [{ type: "text", text: "done" }],
+        },
+      }),
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+}
 
 describe("eureka parser", () => {
   it("attributes Codex token deltas by turn_context model", async () => {
@@ -121,8 +153,9 @@ describe("eureka parser", () => {
     process.env.TOKMON_HOME = testHome;
 
     const sdkSessionId = "claude-sdk-session-late";
+    const workingDirectory = path.join(testHome, "work", "lumina");
     // First parse: no SDK file yet → tokens 0, provenance "telemetry-incomplete".
-    await createEurekaClaudeSdkFixture(testHome, { sdkSessionId, includeSdkFile: false });
+    await createEurekaClaudeSdkFixture(testHome, { sdkSessionId, workingDirectory, includeSdkFile: false });
 
     const first = await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
     expect(first.sessions).toHaveLength(1);
@@ -135,7 +168,7 @@ describe("eureka parser", () => {
     expect(cursorEntry?.claimedSdkCwd).toBeTruthy();
 
     // SDK file shows up after the fact (without changing telemetry/session.jsonl).
-    await createEurekaClaudeSdkFixture(testHome, { sdkSessionId });
+    await createLateClaudeSdkFile(testHome, workingDirectory, sdkSessionId);
 
     // Second parse: cursor would normally hit, but lastProvenance="telemetry-incomplete" forces a retry.
     claimedCcSessionIds.clear();
@@ -143,5 +176,30 @@ describe("eureka parser", () => {
     expect(second.sessions).toHaveLength(1);
     expect(second.sessions[0].tokenProvenance).toBe("sdk-cc-jsonl");
     expect(second.sessions[0].tokens.input).toBeGreaterThan(0);
+  });
+
+  it("re-parses legacy cursors that predate sdk cwd and provenance fields", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+
+    const sdkSessionId = "claude-sdk-session-legacy";
+    const workingDirectory = path.join(testHome, "work", "lumina");
+    await createEurekaClaudeSdkFixture(testHome, { sdkSessionId, workingDirectory, includeSdkFile: false });
+
+    const first = await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
+    const persistedCursor = mergeCursorState(createEmptyCursorState(), first.cursorUpdates);
+    const cursorEntry = Object.values(persistedCursor.files).find((entry) => entry.claimedSdkSessionId === sdkSessionId);
+    expect(cursorEntry).toBeTruthy();
+
+    delete cursorEntry?.claimedSdkCwd;
+    delete cursorEntry?.lastProvenance;
+
+    await createLateClaudeSdkFile(testHome, workingDirectory, sdkSessionId);
+
+    claimedCcSessionIds.clear();
+    const second = await eurekaParser.parse({ machineId: "machine-1", existingCursor: persistedCursor });
+    expect(second.sessions).toHaveLength(1);
+    expect(second.sessions[0].tokenProvenance).toBe("sdk-cc-jsonl");
+    expect(second.sessions[0].tokens).toEqual({ input: 120, output: 30, cacheCreation: 10, cacheRead: 5 });
   });
 });

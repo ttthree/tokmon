@@ -146,7 +146,10 @@ export const eurekaParser: Parser = {
         // Invalidate cursor if previous parse left tokens incomplete (CC .jsonl wasn't ready yet) so we retry.
         const cursor = context.existingCursor.files[primaryFile] ?? null;
         const sessionMtimeMs = await getEurekaSessionMtime(sessionPath, cursor?.claimedSdkSessionId, cursor?.claimedSdkCwd);
-        const cursorIsStale = cursor?.lastProvenance === "telemetry-incomplete" && Boolean(cursor?.claimedSdkSessionId);
+        const legacyIncompleteSdkCursor = Boolean(cursor?.claimedSdkSessionId) && (!cursor?.lastProvenance || !cursor?.claimedSdkCwd);
+        const cursorIsStale =
+          Boolean(cursor?.claimedSdkSessionId) &&
+          (cursor?.lastProvenance === "telemetry-incomplete" || legacyIncompleteSdkCursor);
         if (
           cursor &&
           !cursorIsStale &&
