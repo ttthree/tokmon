@@ -72,13 +72,7 @@
       "totalTokens": 215
     }
   ],
-  "claimedCcSessionIds": [
-    "019dedgecodex000000000000000001",
-    "cc-sdk-normal",
-    "cc-sdk-orphan",
-    "cc-sdk-subagent"
-  ],
   "doubleCounting": {
-    "ccIdsBothStandaloneAndClaimed": []
+    "duplicateSessionKeys": []
   }
 }

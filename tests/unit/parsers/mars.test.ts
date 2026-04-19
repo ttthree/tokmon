@@ -4,8 +4,8 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createEmptyCursorState } from "../../../src/core/cursor.js";
-import { marsParser, marsRegistry } from "../../../src/parsers/mars.js";
-import { createMarsAgentConfigRoots, createMarsDbFixture, marsAppDirForTest } from "../../helpers/mars-fixtures.js";
+import { buildMarsRegistry } from "../../../src/parsers/mars.js";
+import { createMarsDbFixture, marsAppDirForTest } from "../../helpers/mars-fixtures.js";
 import { createTestHome } from "../../helpers/fixtures.js";
 
 let testHome = "";
@@ -18,30 +18,21 @@ afterEach(async () => {
   delete process.env.TOKMON_HOME;
 });
 
-describe("mars parser", () => {
-  it("returns empty registry when DB is missing", async () => {
+describe("buildMarsRegistry", () => {
+  it("returns an empty registry when the db is missing", async () => {
     testHome = await createTestHome();
     process.env.TOKMON_HOME = testHome;
 
-    const result = await marsParser.parse({ machineId: "m1", existingCursor: createEmptyCursorState() });
-    expect(result.sessions).toEqual([]);
-    expect(marsRegistry.byAgentSessionId.claudeCode.size).toBe(0);
+    const registry = await buildMarsRegistry({ machineId: "m1", existingCursor: createEmptyCursorState() });
+
+    expect(registry.byAgentSessionId.claudeCode.size).toBe(0);
+    expect(registry.byAgentSessionId.codex.size).toBe(0);
+    expect(registry.byAgentSessionId.copilotCli.size).toBe(0);
   });
 
-  it("handles empty DB file without throwing", async () => {
+  it("normalizes agent types, skips invalid rows, and supports orphan tasks", async () => {
     testHome = await createTestHome();
     process.env.TOKMON_HOME = testHome;
-    const appDir = path.join(testHome, "Library", "Application Support", "com.marsiwe.app");
-    await fs.mkdir(appDir, { recursive: true });
-    await fs.writeFile(path.join(appDir, "marsiwe.db"), "", "utf8");
-
-    await expect(marsParser.parse({ machineId: "m1", existingCursor: createEmptyCursorState() })).resolves.toEqual({ sessions: [], cursorUpdates: {} });
-  });
-
-  it("normalizes agent types, skips unknown/null session ids, and supports orphan tasks", async () => {
-    testHome = await createTestHome();
-    process.env.TOKMON_HOME = testHome;
-    await createMarsAgentConfigRoots(testHome);
     await createMarsDbFixture({
       homeDir: testHome,
       workspaces: [{ idHex: "11111111111111111111111111111111", name: "ws", path: "/tmp/ws" }],
@@ -55,20 +46,17 @@ describe("mars parser", () => {
       ],
     });
 
-    await marsParser.parse({ machineId: "m1", existingCursor: createEmptyCursorState() });
+    const registry = await buildMarsRegistry({ machineId: "m1", existingCursor: createEmptyCursorState() });
 
-    expect(marsRegistry.byAgentSessionId.claudeCode.has("cc-1")).toBe(true);
-    expect(marsRegistry.byAgentSessionId.codex.has("cx-1")).toBe(true);
-    expect(marsRegistry.byAgentSessionId.copilotCli.has("cp-1")).toBe(true);
-    expect(marsRegistry.byAgentSessionId.claudeCode.has("x-1")).toBe(false);
-    expect(marsRegistry.byAgentSessionId.claudeCode.get("cc-1")?.taskTitle).toBe("Task 1");
-    expect(marsRegistry.byAgentSessionId.copilotCli.get("cp-1")?.taskTitle).toBeUndefined();
-    expect(marsRegistry.claudeRoots).toHaveLength(1);
-    expect(marsRegistry.codexRoots).toHaveLength(1);
-    expect(marsRegistry.copilotRoots).toHaveLength(1);
+    expect(registry.byAgentSessionId.claudeCode.has("cc-1")).toBe(true);
+    expect(registry.byAgentSessionId.codex.has("cx-1")).toBe(true);
+    expect(registry.byAgentSessionId.copilotCli.has("cp-1")).toBe(true);
+    expect(registry.byAgentSessionId.claudeCode.has("x-1")).toBe(false);
+    expect(registry.byAgentSessionId.claudeCode.get("cc-1")?.taskTitle).toBe("Task 1");
+    expect(registry.byAgentSessionId.copilotCli.get("cp-1")?.taskTitle).toBeUndefined();
   });
 
-  it("merges stable and dev DB and keeps latest updated_at on duplicate agent_session_id", async () => {
+  it("merges stable and dev db rows by latest updatedAt", async () => {
     testHome = await createTestHome();
     process.env.TOKMON_HOME = testHome;
     await createMarsDbFixture({
@@ -82,28 +70,23 @@ describe("mars parser", () => {
       sessions: [{ idHex: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", agentType: "claude-code", agentSessionId: "dup", name: "new", updatedAt: "2026-02-01T00:00:00.000Z" }],
     });
 
-    await marsParser.parse({ machineId: "m1", existingCursor: createEmptyCursorState() });
-    expect(marsRegistry.byAgentSessionId.claudeCode.get("dup")?.sessionName).toBe("new");
+    const registry = await buildMarsRegistry({ machineId: "m1", existingCursor: createEmptyCursorState() });
+    expect(registry.byAgentSessionId.claudeCode.get("dup")?.sessionName).toBe("new");
   });
 
-  it("resets registry across runs", async () => {
+  it("handles empty db files without throwing", async () => {
     testHome = await createTestHome();
     process.env.TOKMON_HOME = testHome;
-    await createMarsDbFixture({
-      homeDir: testHome,
-      sessions: [{ idHex: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", agentType: "claude-code", agentSessionId: "first" }],
-    });
-    await marsParser.parse({ machineId: "m1", existingCursor: createEmptyCursorState() });
-    expect(marsRegistry.byAgentSessionId.claudeCode.has("first")).toBe(true);
+    const appDir = marsAppDirForTest(testHome, "com.marsiwe.app");
+    await fs.mkdir(appDir, { recursive: true });
+    await fs.writeFile(path.join(appDir, "marsiwe.db"), "", "utf8");
 
-    await fs.rm(path.join(marsAppDirForTest(testHome, "com.marsiwe.app"), "marsiwe.db"), { force: true });
-    await createMarsDbFixture({
-      homeDir: testHome,
-      sessions: [{ idHex: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", agentType: "claude-code", agentSessionId: "second" }],
+    await expect(buildMarsRegistry({ machineId: "m1", existingCursor: createEmptyCursorState() })).resolves.toEqual({
+      byAgentSessionId: {
+        claudeCode: new Map(),
+        codex: new Map(),
+        copilotCli: new Map(),
+      },
     });
-
-    await marsParser.parse({ machineId: "m1", existingCursor: createEmptyCursorState() });
-    expect(marsRegistry.byAgentSessionId.claudeCode.has("first")).toBe(false);
-    expect(marsRegistry.byAgentSessionId.claudeCode.has("second")).toBe(true);
   });
 });

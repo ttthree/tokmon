@@ -1,22 +1,22 @@
 {
   "totals": {
-    "sessions": 616,
-    "turns": 102,
-    "durationSeconds": 10691.655,
+    "sessions": 613,
+    "turns": 109,
+    "durationSeconds": 12256.655,
     "tokens": {
-      "input": 1245919,
-      "output": 122861,
-      "cacheCreation": 1617599,
-      "cacheRead": 37044309
+      "input": 1250398,
+      "output": 138564,
+      "cacheCreation": 2143079,
+      "cacheRead": 42164289
     },
     "cost": {
-      "input": 2.932473,
-      "output": 1.288396,
-      "cacheCreation": 6.06599625,
-      "cacheRead": 16.3486719,
-      "total": 26.63553715
+      "input": 2.94591,
+      "output": 1.523941,
+      "cacheCreation": 8.03654625,
+      "cacheRead": 17.8846659,
+      "total": 30.39106315
     },
-    "cacheHitRate": 0.928246707093
+    "cacheHitRate": 0.925512655735
   },
   "perSource": [
     {
@@ -28,8 +28,8 @@
     {
       "key": "claude-code",
       "label": "claude-code",
-      "cost": 11.16313935,
-      "sessions": 42
+      "cost": 14.91866535,
+      "sessions": 39
     },
     {
       "key": "copilot-cli",
@@ -39,6 +39,12 @@
     }
   ],
   "perModel": [
+    {
+      "key": "claude-opus-4-6",
+      "label": "claude-opus-4-6",
+      "cost": 9.762477,
+      "sessions": 6
+    },
     {
       "key": "gpt-5.4",
       "label": "gpt-5.4",
@@ -52,16 +58,10 @@
       "sessions": 564
     },
     {
-      "key": "claude-opus-4-6",
-      "label": "claude-opus-4-6",
-      "cost": 4.5881571,
-      "sessions": 7
-    },
-    {
       "key": "claude-haiku-4-5-20251001",
       "label": "claude-haiku-4-5-20251001",
-      "cost": 4.37064525,
-      "sessions": 14
+      "cost": 2.94183585,
+      "sessions": 12
     },
     {
       "key": "claude-opus-4.6-1m",
@@ -84,7 +84,7 @@
     {
       "key": "claude-opus-4-5-20251101",
       "label": "claude-opus-4-5-20251101",
-      "cost": 0.0285855,
+      "cost": 0.038601,
       "sessions": 2
     },
     {
@@ -116,16 +116,16 @@
     {
       "key": "machine",
       "label": "machine",
-      "cost": 26.63553715,
-      "sessions": 616
+      "cost": 30.39106315,
+      "sessions": 613
     }
   ],
   "perMarsTask": [
     {
       "key": "__untagged__",
       "label": "__untagged__",
-      "cost": 26.63553715,
-      "sessions": 616
+      "cost": 30.39106315,
+      "sessions": 613
     }
   ],
   "perDay": [
@@ -215,9 +215,9 @@
     },
     {
       "date": "2026-01-30",
-      "cost": 0,
-      "sessions": 18,
-      "tokens": 0
+      "cost": 0.020031,
+      "sessions": 19,
+      "tokens": 52864
     },
     {
       "date": "2026-01-31",
@@ -312,7 +312,7 @@
     {
       "date": "2026-02-16",
       "cost": 2.2624526,
-      "sessions": 20,
+      "sessions": 19,
       "tokens": 1580810
     },
     {
@@ -377,9 +377,9 @@
     },
     {
       "date": "2026-03-07",
-      "cost": 0,
-      "sessions": 2,
-      "tokens": 0
+      "cost": 1.429596,
+      "sessions": 3,
+      "tokens": 2180154
     },
     {
       "date": "2026-03-08",
@@ -479,9 +479,9 @@
     },
     {
       "date": "2026-03-26",
-      "cost": 5.958428,
-      "sessions": 2,
-      "tokens": 10401904
+      "cost": 12.019853,
+      "sessions": 3,
+      "tokens": 19500170
     },
     {
       "date": "2026-03-27",
@@ -515,9 +515,9 @@
     },
     {
       "date": "2026-04-01",
-      "cost": 4.5801882,
-      "sessions": 13,
-      "tokens": 6168745
+      "cost": 0.8246622,
+      "sessions": 8,
+      "tokens": 503103
     },
     {
       "date": "2026-04-02",
@@ -584,41 +584,41 @@
     {
       "projectKey": "craft-agents",
       "projectLabel": "craft-agents",
-      "totalCost": 10.3659225,
-      "totalTokens": 16550327,
-      "sessionCount": 64,
-      "totalTurns": 16,
-      "avgCostPerSession": 0.161967539062,
-      "avgTurnsPerSession": 0.25,
+      "totalCost": 13.396635,
+      "totalTokens": 21099460,
+      "sessionCount": 62,
+      "totalTurns": 20,
+      "avgCostPerSession": 0.216074758065,
+      "avgTurnsPerSession": 0.3225806451612903,
       "activeDays": 26,
-      "topSource": "codex",
+      "topSource": "claude-code",
       "topModel": "unknown",
       "topMachine": "machine",
       "tokenBreakdown": {
-        "input": 403493,
-        "output": 55457,
-        "cacheCreation": 607428,
-        "cacheRead": 15483949
+        "input": 407932,
+        "output": 67496,
+        "cacheCreation": 1035548,
+        "cacheRead": 19588484
       },
       "costBreakdown": {
-        "input": 0.846785,
-        "output": 0.548789,
-        "cacheCreation": 2.277855,
-        "cacheRead": 6.6924935,
-        "total": 10.3659225
+        "input": 0.860102,
+        "output": 0.729374,
+        "cacheCreation": 3.883305,
+        "cacheRead": 7.923854,
+        "total": 13.396635
       },
       "sourceBreakdown": [
+        {
+          "key": "claude-code",
+          "label": "claude-code",
+          "cost": 7.227471,
+          "sessions": 12
+        },
         {
           "key": "codex",
           "label": "codex",
           "cost": 6.169164,
           "sessions": 50
-        },
-        {
-          "key": "claude-code",
-          "label": "claude-code",
-          "cost": 4.1967585,
-          "sessions": 14
         }
       ],
       "modelBreakdown": [
@@ -629,16 +629,16 @@
           "sessions": 50
         },
         {
-          "key": "claude-haiku-4-5-20251001",
-          "label": "claude-haiku-4-5-20251001",
-          "cost": 2.4799488,
-          "sessions": 8
-        },
-        {
           "key": "claude-opus-4-6",
           "label": "claude-opus-4-6",
-          "cost": 1.6019031,
+          "cost": 6.061425,
           "sessions": 1
+        },
+        {
+          "key": "claude-haiku-4-5-20251001",
+          "label": "claude-haiku-4-5-20251001",
+          "cost": 1.0511394,
+          "sessions": 6
         },
         {
           "key": "claude-haiku-4.5",
@@ -657,8 +657,8 @@
         {
           "key": "machine",
           "label": "machine",
-          "cost": 10.3659225,
-          "sessions": 64
+          "cost": 13.396635,
+          "sessions": 62
         }
       ]
     },
@@ -736,10 +736,10 @@
       "projectLabel": "MarsIWE",
       "totalCost": 2.4169899,
       "totalTokens": 1617992,
-      "sessionCount": 63,
+      "sessionCount": 62,
       "totalTurns": 5,
-      "avgCostPerSession": 0.038364919048,
-      "avgTurnsPerSession": 0.07936507936507936,
+      "avgCostPerSession": 0.038983708065,
+      "avgTurnsPerSession": 0.08064516129032258,
       "activeDays": 14,
       "topSource": "claude-code",
       "topModel": "claude-opus-4-6",
@@ -762,7 +762,7 @@
           "key": "claude-code",
           "label": "claude-code",
           "cost": 2.4169899,
-          "sessions": 5
+          "sessions": 4
         },
         {
           "key": "codex",
@@ -776,7 +776,7 @@
           "key": "claude-opus-4-6",
           "label": "claude-opus-4-6",
           "cost": 1.7637549,
-          "sessions": 3
+          "sessions": 2
         },
         {
           "key": "claude-haiku-4-5-20251001",
@@ -796,41 +796,41 @@
           "key": "machine",
           "label": "machine",
           "cost": 2.4169899,
-          "sessions": 63
+          "sessions": 62
         }
       ]
     },
     {
       "projectKey": "other",
       "projectLabel": "other",
-      "totalCost": 1.3363806,
-      "totalTokens": 1514661,
+      "totalCost": 2.0511786,
+      "totalTokens": 2604738,
       "sessionCount": 115,
-      "totalTurns": 22,
-      "avgCostPerSession": 0.01162070087,
-      "avgTurnsPerSession": 0.19130434782608696,
+      "totalTurns": 24,
+      "avgCostPerSession": 0.017836335652,
+      "avgTurnsPerSession": 0.20869565217391303,
       "activeDays": 17,
       "topSource": "claude-code",
       "topModel": "claude-opus-4-6",
       "topMachine": "machine",
       "tokenBreakdown": {
-        "input": 33868,
-        "output": 6960,
-        "cacheCreation": 199486,
-        "cacheRead": 1274347
+        "input": 33905,
+        "output": 10623,
+        "cacheCreation": 296248,
+        "cacheRead": 2263962
       },
       "costBreakdown": {
-        "input": 0.101604,
-        "output": 0.1044,
-        "cacheCreation": 0.7480725,
-        "cacheRead": 0.3823041,
-        "total": 1.3363806
+        "input": 0.101715,
+        "output": 0.159345,
+        "cacheCreation": 1.11093,
+        "cacheRead": 0.6791886,
+        "total": 2.0511786
       },
       "sourceBreakdown": [
         {
           "key": "claude-code",
           "label": "claude-code",
-          "cost": 1.1968248,
+          "cost": 1.9116228,
           "sessions": 7
         },
         {
@@ -850,7 +850,7 @@
         {
           "key": "claude-opus-4-6",
           "label": "claude-opus-4-6",
-          "cost": 1.1527887,
+          "cost": 1.8675867,
           "sessions": 2
         },
         {
@@ -894,7 +894,7 @@
         {
           "key": "machine",
           "label": "machine",
-          "cost": 1.3363806,
+          "cost": 2.0511786,
           "sessions": 115
         }
       ]
@@ -902,34 +902,34 @@
     {
       "projectKey": "lumina",
       "projectLabel": "lumina",
-      "totalCost": 1.22201085,
-      "totalTokens": 1223418,
+      "totalCost": 1.23202635,
+      "totalTokens": 1249850,
       "sessionCount": 53,
-      "totalTurns": 4,
-      "avgCostPerSession": 0.023056808491,
-      "avgTurnsPerSession": 0.07547169811320754,
-      "activeDays": 18,
+      "totalTurns": 5,
+      "avgCostPerSession": 0.023245780189,
+      "avgTurnsPerSession": 0.09433962264150944,
+      "activeDays": 17,
       "topSource": "claude-code",
       "topModel": "claude-haiku-4-5-20251001",
       "topMachine": "machine",
       "tokenBreakdown": {
-        "input": 215,
-        "output": 125,
-        "cacheCreation": 247121,
-        "cacheRead": 975957
+        "input": 218,
+        "output": 126,
+        "cacheCreation": 247719,
+        "cacheRead": 1001787
       },
       "costBreakdown": {
-        "input": 0.000645,
-        "output": 0.001875,
-        "cacheCreation": 0.92670375,
-        "cacheRead": 0.2927871,
-        "total": 1.22201085
+        "input": 0.000654,
+        "output": 0.00189,
+        "cacheCreation": 0.92894625,
+        "cacheRead": 0.3005361,
+        "total": 1.23202635
       },
       "sourceBreakdown": [
         {
           "key": "claude-code",
           "label": "claude-code",
-          "cost": 1.22201085,
+          "cost": 1.23202635,
           "sessions": 4
         },
         {
@@ -949,7 +949,7 @@
         {
           "key": "claude-opus-4-5-20251101",
           "label": "claude-opus-4-5-20251101",
-          "cost": 0.0285855,
+          "cost": 0.038601,
           "sessions": 2
         },
         {
@@ -963,7 +963,7 @@
         {
           "key": "machine",
           "label": "machine",
-          "cost": 1.22201085,
+          "cost": 1.23202635,
           "sessions": 53
         }
       ]
@@ -7034,9 +7034,9 @@
       "m365-connector-extension"
     ],
     "topModels": [
+      "claude-opus-4-6",
       "gpt-5.4",
       "unknown",
-      "claude-opus-4-6",
       "claude-haiku-4-5-20251001",
       "claude-opus-4.6-1m",
       "claude-opus-4.6",

@@ -1,18 +1,10 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { claimedCcSessionIds } from "../../src/parsers/eureka.js";
 import { buildAttribution } from "../corpus/helpers/build-attribution.js";
 import type { Session } from "../../src/core/types.js";
 
-afterEach(() => {
-  claimedCcSessionIds.clear();
-});
-
 describe("buildAttribution", () => {
   it("builds attribution summary, linkage, and mars trees", () => {
-    claimedCcSessionIds.add("claimed-cc");
-    claimedCcSessionIds.add("orphan-sdk");
-
     const result = buildAttribution([
       makeSession({ id: "plain-cc", source: "claude-code", engine: "Claude Code" }),
       makeSession({ id: "eureka-1", source: "claude-code", engine: "Eureka + CC", orchestrator: { kind: "eureka" }, tokens: { input: 10, output: 4, cacheCreation: 0, cacheRead: 2 } }),
@@ -34,18 +26,15 @@ describe("buildAttribution", () => {
     expect(result.marsTrees).toEqual([
       { taskId: "task-1", taskTitle: "Task One", sessionIds: ["mars-1", "mars-2"], totalCost: 5, totalTokens: 200 },
     ]);
-    expect(result.claimedCcSessionIds).toEqual(["claimed-cc", "orphan-sdk"]);
   });
 
-  it("surfaces simulated double counting", () => {
-    claimedCcSessionIds.add("claimed-cc");
-
+  it("surfaces duplicate session keys", () => {
     const result = buildAttribution([
-      makeSession({ id: "claimed-cc", source: "claude-code", engine: "Claude Code" }),
-      makeSession({ id: "eureka-1", source: "claude-code", engine: "Eureka + CC", orchestrator: { kind: "eureka" } }),
+      makeSession({ id: "dup", source: "claude-code", engine: "Claude Code" }),
+      makeSession({ id: "dup", source: "claude-code", engine: "Eureka + CC", orchestrator: { kind: "eureka" } }),
     ]);
 
-    expect(result.doubleCounting.ccIdsBothStandaloneAndClaimed).toEqual(["claimed-cc"]);
+    expect(result.doubleCounting.duplicateSessionKeys).toEqual(["claude-code:dup"]);
   });
 });
 

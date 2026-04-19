@@ -7,12 +7,13 @@
     "projectPath": "/Users/testuser/proj/eureka-cc",
     "project": "eureka-cc",
     "summary": "eureka cc",
+    "firstPrompt": "linked cc",
     "model": "claude-sonnet-4-20250514",
     "createdAt": 3600,
     "modifiedAt": 3780,
-    "durationSeconds": 0,
-    "turns": 2,
-    "messageCount": 4,
+    "durationSeconds": 120,
+    "turns": 1,
+    "messageCount": 2,
     "toolCallCount": 0,
     "tokens": {
       "input": 120,
@@ -70,7 +71,7 @@
       "total": 0
     },
     "toolBreakdown": {},
-    "tokenProvenance": "telemetry-incomplete",
+    "tokenProvenance": "none",
     "orchestrator": {
       "kind": "eureka"
     }
@@ -83,10 +84,11 @@
     "projectPath": "/Users/testuser/proj/subagent",
     "project": "subagent",
     "summary": "eureka sub",
+    "firstPrompt": "subagent parent",
     "model": "claude-sonnet-4-20250514",
-    "createdAt": 5400,
+    "createdAt": 15,
     "modifiedAt": 5700,
-    "durationSeconds": 0,
+    "durationSeconds": 120,
     "turns": 2,
     "messageCount": 4,
     "toolCallCount": 0,

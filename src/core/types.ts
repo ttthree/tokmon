@@ -34,7 +34,6 @@ export type TokenProvenance =
   | "sdk-cc-jsonl"
   | "sdk-codex-rollout"
   | "telemetry"
-  | "telemetry-incomplete"
   | "none";
 
 export interface Session {
@@ -71,12 +70,6 @@ export interface FileCursor {
   byteOffset: number;
   lastUpdatedAt?: string;
   processedAt: string;
-  /** For Eureka cursors only: the sdkSessionId to re-register into claimedCcSessionIds on cursor hit. */
-  claimedSdkSessionId?: string;
-  /** For Eureka cursors only: the sdkCwd, used to locate the CC SDK .jsonl for cursor invalidation. */
-  claimedSdkCwd?: string;
-  /** For Eureka cursors only: the token provenance from the last parse. If "telemetry-incomplete" the cursor is treated as stale so the SDK file gets retried. */
-  lastProvenance?: TokenProvenance;
 }
 
 export interface CursorState {
@@ -254,8 +247,8 @@ export interface ParserContext {
 }
 
 export interface Parser {
-  source: SourceType;
-  parse(context: ParserContext): Promise<ParseResult>;
+  source: Source;
+  parse(context: ParserContext, extraRoots?: string[]): Promise<ParseResult>;
 }
 
 export interface ParsedSessionSeed {

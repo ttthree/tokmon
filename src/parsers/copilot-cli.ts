@@ -5,8 +5,6 @@ import Database from "better-sqlite3";
 
 import { getCopilotDirectory } from "../core/config.js";
 import { normalizeProjectPath } from "../core/project.js";
-import { marsRegistry } from "./mars.js";
-import { applyMarsMeta } from "./orchestrator.js";
 import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown } from "../core/types.js";
 
 export interface CopilotModelCall {
@@ -46,37 +44,36 @@ interface SessionAccumulator {
 
 export const copilotCliParser: Parser = {
   source: "copilot-cli",
-  async parse(context: ParserContext): Promise<ParseResult> {
+  async parse(context: ParserContext, extraRoots: string[] = []): Promise<ParseResult> {
     const enabledCopilot = (context.sources ?? [])
       .filter((s) => s.enabled && s.type === "copilot-cli")
       .map((s) => s.path);
     const roots = [
       ...(enabledCopilot.length > 0
-        ? enabledCopilot.map((dir) => ({ dir, isMars: false }))
-        : [{ dir: getCopilotDirectory(), isMars: false }]),
-      ...marsRegistry.copilotRoots.map((dir) => ({ dir, isMars: true })),
+        ? enabledCopilot
+        : [getCopilotDirectory()]),
+      ...extraRoots,
     ];
-    const logFiles: Array<{ path: string; isMars: boolean }> = [];
+    const logFiles: string[] = [];
     const cwdByFileRoot = new Map<string, Map<string, string>>();
     for (const root of roots) {
-      const logsDir = path.join(root.dir, "logs");
+      const logsDir = path.join(root, "logs");
       const files = await fs.readdir(logsDir, { withFileTypes: true }).catch(() => []);
       for (const entry of files) {
         if (!entry.isFile() || !/^process-.*\.log$/.test(entry.name)) continue;
-        logFiles.push({ path: path.join(logsDir, entry.name), isMars: root.isMars });
+        logFiles.push(path.join(logsDir, entry.name));
       }
       // Copilot CLI stores per-session cwd in `session-store.db` next to the
       // `logs/` directory. The raw telemetry events don't carry a reliable
       // projectPath, so prefer this lookup over inferring from JSON.
-      cwdByFileRoot.set(root.dir, loadSessionCwdMap(path.join(root.dir, "session-store.db")));
+      cwdByFileRoot.set(root, loadSessionCwdMap(path.join(root, "session-store.db")));
     }
-    logFiles.sort((a, b) => a.path.localeCompare(b.path));
+    logFiles.sort((a, b) => a.localeCompare(b));
 
     const sessionsByKey = new Map<string, Session>();
     const cursorUpdates: Record<string, FileCursor> = {};
 
-    for (const file of logFiles) {
-      const filePath = file.path;
+    for (const filePath of logFiles) {
       const stat = await fs.stat(filePath).catch(() => null);
       if (!stat?.isFile()) {
         continue;
@@ -87,7 +84,7 @@ export const copilotCliParser: Parser = {
         continue;
       }
 
-      const fileSessions = await parseCopilotLogFile(filePath, context.machineId, file.isMars);
+      const fileSessions = await parseCopilotLogFile(filePath, context.machineId);
       for (const session of fileSessions) {
         const key = `${session.source}:${session.id}`;
         const existing = sessionsByKey.get(key);
@@ -209,14 +206,14 @@ export function normalizeTokens(call: CopilotModelCall): { input: number; output
   };
 }
 
-async function parseCopilotLogFile(filePath: string, machineId: string, isMarsRoot: boolean): Promise<Session[]> {
+async function parseCopilotLogFile(filePath: string, machineId: string): Promise<Session[]> {
   const content = await fs.readFile(filePath, "utf8").catch(() => "");
   if (!content) {
     return [];
   }
   const fallbackTimestamp = (await fs.stat(filePath).catch(() => null))?.mtime.toISOString() ?? new Date().toISOString();
   const events = parseEvents(content, fallbackTimestamp);
-  return aggregateEvents(events, machineId, isMarsRoot);
+  return aggregateEvents(events, machineId);
 }
 
 function parseEvents(content: string, fallbackTimestamp: string): ParsedEvent[] {
@@ -258,7 +255,7 @@ function parseEvents(content: string, fallbackTimestamp: string): ParsedEvent[] 
   return events;
 }
 
-function aggregateEvents(events: ParsedEvent[], machineId: string, isMarsRoot: boolean): Session[] {
+function aggregateEvents(events: ParsedEvent[], machineId: string): Session[] {
   const grouped = new Map<string, SessionAccumulator>();
 
   // Each API call can be logged twice (once as `assistant_usage`, once as
@@ -322,8 +319,7 @@ function aggregateEvents(events: ParsedEvent[], machineId: string, isMarsRoot: b
     }
   }
 
-  return [...grouped.values()].map((acc) => {
-    let session: Session = {
+  return [...grouped.values()].map((acc) => ({
       id: acc.id,
       machineId,
       source: "copilot-cli",
@@ -341,31 +337,13 @@ function aggregateEvents(events: ParsedEvent[], machineId: string, isMarsRoot: b
       cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
       toolBreakdown: {},
       tokenProvenance: "telemetry",
-    };
-
-    const marsMeta = resolveCopilotMarsMeta(acc.matchKeys);
-    if (marsMeta) {
-      session = applyMarsMeta(session, marsMeta, "copilot-cli");
-    } else if (isMarsRoot) {
-      console.debug(`[mars] unmatched copilot session: ${acc.id} keys=${[...acc.matchKeys].join(",")}`);
-    }
-
-    return session;
-  });
+    }));
 }
 
 function getCopilotMatchKeys(call: CopilotModelCall): string[] {
   const keys = [call.session_id, call.interaction_id, call.copilot_pid, call.api_id]
     .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
   return [...new Set(keys)];
-}
-
-function resolveCopilotMarsMeta(keys: Set<string>) {
-  for (const key of keys) {
-    const matched = marsRegistry.byAgentSessionId.copilotCli.get(key);
-    if (matched) return matched;
-  }
-  return undefined;
 }
 
 function normalizeRecord(raw: Record<string, unknown>, line: string): CopilotModelCall | null {

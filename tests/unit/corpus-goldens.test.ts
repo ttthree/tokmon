@@ -15,6 +15,6 @@ describe("loadGoldens helper", () => {
 
     expect(goldens.attribution).toHaveProperty("summary");
     expect(goldens.attribution).toHaveProperty("eurekaLinkage");
-    expect(goldens.attribution).toHaveProperty("claimedCcSessionIds");
+    expect(goldens.attribution).toHaveProperty("doubleCounting");
   });
 });

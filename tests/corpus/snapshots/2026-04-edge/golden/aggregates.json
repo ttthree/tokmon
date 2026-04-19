@@ -1,8 +1,8 @@
 {
   "totals": {
     "sessions": 10,
-    "turns": 14,
-    "durationSeconds": 430,
+    "turns": 13,
+    "durationSeconds": 670,
     "tokens": {
       "input": 667,
       "output": 114,
@@ -101,9 +101,9 @@
       "totalCost": 0.000822,
       "totalTokens": 190,
       "sessionCount": 1,
-      "totalTurns": 2,
+      "totalTurns": 1,
       "avgCostPerSession": 0.000822,
-      "avgTurnsPerSession": 2,
+      "avgTurnsPerSession": 1,
       "activeDays": 1,
       "topSource": "claude-code",
       "topModel": "claude-sonnet-4-20250514",

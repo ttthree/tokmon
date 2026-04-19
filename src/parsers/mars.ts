@@ -5,7 +5,7 @@ import Database from "better-sqlite3";
 
 import { getMarsAppSupportDirectories } from "../core/config.js";
 import { logDiag } from "../core/diag-log.js";
-import type { ParseResult, Parser, ParserContext } from "../core/types.js";
+import type { ParserContext } from "../core/types.js";
 
 type MarsAgentType = "claude-code" | "codex" | "copilot-cli";
 
@@ -26,9 +26,6 @@ export interface MarsSessionMeta {
 }
 
 export interface MarsRegistry {
-  claudeRoots: string[];
-  codexRoots: string[];
-  copilotRoots: string[];
   byAgentSessionId: {
     claudeCode: Map<string, MarsSessionMeta>;
     codex: Map<string, MarsSessionMeta>;
@@ -36,116 +33,110 @@ export interface MarsRegistry {
   };
 }
 
-export let marsRegistry: MarsRegistry = createEmptyMarsRegistry();
-
-export function resetMarsRegistry(): void {
-  marsRegistry = createEmptyMarsRegistry();
-}
-
-export const marsParser: Parser = {
-  source: "mars",
-  async parse(context: ParserContext): Promise<ParseResult> {
-    resetMarsRegistry();
-    const enabledMars = (context.sources ?? []).filter((s) => s.enabled && s.type === "mars").map((s) => s.path);
-    const usedConfigured = enabledMars.length > 0;
-    const appSupportDirs = usedConfigured ? enabledMars : getMarsAppSupportDirectories();
-
-    void logDiag({
-      event: "mars.parse.start",
-      usedConfiguredSources: usedConfigured,
-      appSupportDirs,
-      appSupportDirCount: appSupportDirs.length,
-    });
-
-    for (const appDir of appSupportDirs) {
-      await maybeAddRoot(path.join(appDir, "agent-configs", "claude"), marsRegistry.claudeRoots);
-      await maybeAddRoot(path.join(appDir, "agent-configs", "codex"), marsRegistry.codexRoots);
-      await maybeAddRoot(path.join(appDir, "agent-configs", "copilot"), marsRegistry.copilotRoots);
-    }
-
-    let totalRowsLoaded = 0;
-    for (const appDir of appSupportDirs) {
-      const dbPath = path.join(appDir, "marsiwe.db");
-      const stat = await safeStat(dbPath);
-      if (!stat?.isFile()) {
-        void logDiag({ event: "mars.db.skip", dbPath, reason: "not-a-file", existed: stat !== null });
-        continue;
-      }
-      const loadResult = await loadMarsRows(dbPath);
-      void logDiag({
-        event: "mars.db.load",
-        dbPath,
-        sizeBytes: stat.size,
-        outcome: loadResult.outcome,
-        rowCount: loadResult.rows.length,
-        errorCode: loadResult.errorCode,
-        errorMessage: loadResult.errorMessage,
-      });
-      totalRowsLoaded += loadResult.rows.length;
-      let validRows = 0;
-      let droppedNoAgentSession = 0;
-      let droppedNoMarsId = 0;
-      let droppedUnknownAgentType = 0;
-      for (const row of loadResult.rows) {
-        const agentType = normalizeMarsAgentType(stringOrUndefined(row.agent_type_raw) ?? "");
-        const agentSessionId = typeof row.agent_session_id === "string" ? row.agent_session_id.trim() : "";
-        const marsSessionId = stringOrUndefined(row.mars_session_id);
-        if (!agentType) { droppedUnknownAgentType++; continue; }
-        if (!agentSessionId) { droppedNoAgentSession++; continue; }
-        if (!marsSessionId) { droppedNoMarsId++; continue; }
-        const meta: MarsSessionMeta = {
-          marsSessionId,
-          agentSessionId,
-          agentType,
-          sessionName: stringOrUndefined(row.session_name),
-          phaseOrder: numberOrUndefined(row.phase_order),
-          isBackground: Boolean(row.is_background),
-          taskId: stringOrUndefined(row.task_id),
-          taskTitle: stringOrUndefined(row.task_title),
-          taskStatus: stringOrUndefined(row.task_status),
-          workspaceId: stringOrUndefined(row.workspace_id),
-          workspaceName: stringOrUndefined(row.workspace_name),
-          workspacePath: stringOrUndefined(row.workspace_path),
-          updatedAt: stringOrUndefined(row.session_updated_at),
-        };
-        upsertMeta(meta);
-        validRows++;
-      }
-      void logDiag({
-        event: "mars.db.upsert",
-        dbPath,
-        validRows,
-        droppedNoAgentSession,
-        droppedNoMarsId,
-        droppedUnknownAgentType,
-      });
-    }
-
-    void logDiag({
-      event: "mars.parse.done",
-      totalRowsLoaded,
-      registry: {
-        claudeCode: marsRegistry.byAgentSessionId.claudeCode.size,
-        codex: marsRegistry.byAgentSessionId.codex.size,
-        copilotCli: marsRegistry.byAgentSessionId.copilotCli.size,
-      },
-    });
-
-    return { sessions: [], cursorUpdates: {} };
-  },
-};
-
-function createEmptyMarsRegistry(): MarsRegistry {
+export function createEmptyMarsRegistry(): MarsRegistry {
   return {
-    claudeRoots: [],
-    codexRoots: [],
-    copilotRoots: [],
     byAgentSessionId: {
       claudeCode: new Map(),
       codex: new Map(),
       copilotCli: new Map(),
     },
   };
+}
+
+export async function buildMarsRegistry(context: ParserContext): Promise<MarsRegistry> {
+  const registry = createEmptyMarsRegistry();
+  const enabledMars = (context.sources ?? []).filter((s) => s.enabled && s.type === "mars").map((s) => s.path);
+  const usedConfigured = enabledMars.length > 0;
+  const appSupportDirs = usedConfigured ? enabledMars : getMarsAppSupportDirectories();
+
+  void logDiag({
+    event: "mars.parse.start",
+    usedConfiguredSources: usedConfigured,
+    appSupportDirs,
+    appSupportDirCount: appSupportDirs.length,
+  });
+
+  let totalRowsLoaded = 0;
+  for (const appDir of appSupportDirs) {
+    const dbPath = path.join(appDir, "marsiwe.db");
+    const stat = await safeStat(dbPath);
+    if (!stat?.isFile()) {
+      void logDiag({ event: "mars.db.skip", dbPath, reason: "not-a-file", existed: stat !== null });
+      continue;
+    }
+
+    const loadResult = await loadMarsRows(dbPath);
+    void logDiag({
+      event: "mars.db.load",
+      dbPath,
+      sizeBytes: stat.size,
+      outcome: loadResult.outcome,
+      rowCount: loadResult.rows.length,
+      errorCode: loadResult.errorCode,
+      errorMessage: loadResult.errorMessage,
+    });
+
+    totalRowsLoaded += loadResult.rows.length;
+    let validRows = 0;
+    let droppedNoAgentSession = 0;
+    let droppedNoMarsId = 0;
+    let droppedUnknownAgentType = 0;
+    for (const row of loadResult.rows) {
+      const agentType = normalizeMarsAgentType(stringOrUndefined(row.agent_type_raw) ?? "");
+      const agentSessionId = typeof row.agent_session_id === "string" ? row.agent_session_id.trim() : "";
+      const marsSessionId = stringOrUndefined(row.mars_session_id);
+      if (!agentType) {
+        droppedUnknownAgentType++;
+        continue;
+      }
+      if (!agentSessionId) {
+        droppedNoAgentSession++;
+        continue;
+      }
+      if (!marsSessionId) {
+        droppedNoMarsId++;
+        continue;
+      }
+      const meta: MarsSessionMeta = {
+        marsSessionId,
+        agentSessionId,
+        agentType,
+        sessionName: stringOrUndefined(row.session_name),
+        phaseOrder: numberOrUndefined(row.phase_order),
+        isBackground: Boolean(row.is_background),
+        taskId: stringOrUndefined(row.task_id),
+        taskTitle: stringOrUndefined(row.task_title),
+        taskStatus: stringOrUndefined(row.task_status),
+        workspaceId: stringOrUndefined(row.workspace_id),
+        workspaceName: stringOrUndefined(row.workspace_name),
+        workspacePath: stringOrUndefined(row.workspace_path),
+        updatedAt: stringOrUndefined(row.session_updated_at),
+      };
+      upsertMeta(registry, meta);
+      validRows++;
+    }
+
+    void logDiag({
+      event: "mars.db.upsert",
+      dbPath,
+      validRows,
+      droppedNoAgentSession,
+      droppedNoMarsId,
+      droppedUnknownAgentType,
+    });
+  }
+
+  void logDiag({
+    event: "mars.parse.done",
+    totalRowsLoaded,
+    registry: {
+      claudeCode: registry.byAgentSessionId.claudeCode.size,
+      codex: registry.byAgentSessionId.codex.size,
+      copilotCli: registry.byAgentSessionId.copilotCli.size,
+    },
+  });
+
+  return registry;
 }
 
 function normalizeMarsAgentType(raw: string): MarsAgentType | null {
@@ -175,6 +166,7 @@ async function loadMarsRows(dbPath: string): Promise<LoadResult> {
       errorMessage: error instanceof Error ? error.message : String(error),
     };
   }
+
   try {
     const rows = db.prepare(`
       SELECT
@@ -220,12 +212,12 @@ function errorCodeOf(error: unknown): string | undefined {
   return undefined;
 }
 
-function upsertMeta(meta: MarsSessionMeta): void {
+function upsertMeta(registry: MarsRegistry, meta: MarsSessionMeta): void {
   const map = meta.agentType === "claude-code"
-    ? marsRegistry.byAgentSessionId.claudeCode
+    ? registry.byAgentSessionId.claudeCode
     : meta.agentType === "codex"
-      ? marsRegistry.byAgentSessionId.codex
-      : marsRegistry.byAgentSessionId.copilotCli;
+      ? registry.byAgentSessionId.codex
+      : registry.byAgentSessionId.copilotCli;
   const existing = map.get(meta.agentSessionId);
   if (!existing || rankUpdatedAt(meta.updatedAt) >= rankUpdatedAt(existing.updatedAt)) {
     map.set(meta.agentSessionId, meta);
@@ -238,11 +230,6 @@ function rankUpdatedAt(value: string | undefined): number {
   if (Number.isFinite(parsed)) return parsed;
   const asNumber = Number(value);
   return Number.isFinite(asNumber) ? asNumber : 0;
-}
-
-async function maybeAddRoot(dir: string, roots: string[]): Promise<void> {
-  const stat = await safeStat(dir);
-  if (stat?.isDirectory()) roots.push(dir);
 }
 
 async function safeStat(target: string): Promise<Awaited<ReturnType<typeof fs.stat>> | null> {

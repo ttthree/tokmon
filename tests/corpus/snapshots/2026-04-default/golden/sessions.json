@@ -38,6 +38,46 @@
     "tokenProvenance": "sdk-cc-jsonl"
   },
   {
+    "id": "02416bca-95d7-4171-9f51-c4e8f3602379",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/aiterminal",
+    "project": "aiterminal",
+    "model": "gemini-3-flash",
+    "createdAt": -8276853,
+    "modifiedAt": -8276853,
+    "durationSeconds": 3,
+    "turns": 1,
+    "messageCount": 3,
+    "toolCallCount": 1,
+    "tokens": {
+      "input": 7327,
+      "output": 194,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0.021981,
+      "output": 0.00291,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0.024891
+    },
+    "toolBreakdown": {
+      "Bash": 1
+    },
+    "modelUsage": {
+      "gemini-3-flash": {
+        "input": 7327,
+        "output": 194,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
     "id": "08299bd9-83ad-4b1b-a4da-6cc1f6423d36",
     "machineId": "machine",
     "source": "claude-code",
@@ -75,6 +115,48 @@
         "output": 1012,
         "cacheCreation": 0,
         "cacheRead": 124551
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
+    "id": "0b6db824-7128-41cd-aa94-754025eddeb5",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/MarsIWE/.worktrees/438b434c-87f4-4842-a9c8-1c349151bbe9",
+    "project": "MarsIWE",
+    "model": "claude-opus-4-6",
+    "createdAt": -5268431,
+    "modifiedAt": -5268431,
+    "durationSeconds": 117,
+    "turns": 1,
+    "messageCount": 33,
+    "toolCallCount": 14,
+    "tokens": {
+      "input": 38,
+      "output": 97,
+      "cacheCreation": 142284,
+      "cacheRead": 269114
+    },
+    "cost": {
+      "input": 0.000114,
+      "output": 0.001455,
+      "cacheCreation": 0.533565,
+      "cacheRead": 0.0807342,
+      "total": 0.6158682
+    },
+    "toolBreakdown": {
+      "Glob": 5,
+      "Grep": 3,
+      "mcp__acp__Read": 6
+    },
+    "modelUsage": {
+      "claude-opus-4-6": {
+        "input": 38,
+        "output": 97,
+        "cacheCreation": 142284,
+        "cacheRead": 269114
       }
     },
     "tokenProvenance": "sdk-cc-jsonl"
@@ -365,7 +447,7 @@
       "total": 0
     },
     "toolBreakdown": {},
-    "tokenProvenance": "telemetry-incomplete",
+    "tokenProvenance": "none",
     "orchestrator": {
       "kind": "eureka"
     }
@@ -412,6 +494,47 @@
     "tokenProvenance": "sdk-cc-jsonl"
   },
   {
+    "id": "2da153e3-b121-416c-8e25-2af4e6c5d105",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/MarsIWE/.worktrees/438b434c-87f4-4842-a9c8-1c349151bbe9",
+    "project": "MarsIWE",
+    "model": "claude-opus-4-6",
+    "createdAt": -5259048,
+    "modifiedAt": -5258914,
+    "durationSeconds": 423,
+    "turns": 2,
+    "messageCount": 21,
+    "toolCallCount": 8,
+    "tokens": {
+      "input": 22,
+      "output": 194,
+      "cacheCreation": 262426,
+      "cacheRead": 536044
+    },
+    "cost": {
+      "input": 0.000066,
+      "output": 0.00291,
+      "cacheCreation": 0.9840975,
+      "cacheRead": 0.1608132,
+      "total": 1.1478867
+    },
+    "toolBreakdown": {
+      "TodoWrite": 2,
+      "mcp__acp__Read": 6
+    },
+    "modelUsage": {
+      "claude-opus-4-6": {
+        "input": 22,
+        "output": 194,
+        "cacheCreation": 262426,
+        "cacheRead": 536044
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
     "id": "2f5f7a3d-b031-45b8-8694-e5ab34a574e0",
     "machineId": "machine",
     "source": "claude-code",
@@ -445,6 +568,167 @@
         "output": 6,
         "cacheCreation": 0,
         "cacheRead": 15753
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
+    "id": "2fdae889-75d7-4278-9a07-54196d21d38b",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/m365-connector-extension/.worktrees/c33609b7-375c-49ab-9208-d4c28ab5919f",
+    "project": "m365-connector-extension",
+    "model": "claude-opus-4-6",
+    "createdAt": -3875311,
+    "modifiedAt": -3875311,
+    "durationSeconds": 88,
+    "turns": 1,
+    "messageCount": 2,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 3,
+      "output": 1,
+      "cacheCreation": 5240,
+      "cacheRead": 166788
+    },
+    "cost": {
+      "input": 0.000009,
+      "output": 0.000014999999999999999,
+      "cacheCreation": 0.01965,
+      "cacheRead": 0.050036399999999995,
+      "total": 0.06971039999999999
+    },
+    "toolBreakdown": {},
+    "modelUsage": {
+      "claude-opus-4-6": {
+        "input": 3,
+        "output": 1,
+        "cacheCreation": 5240,
+        "cacheRead": 166788
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
+    "id": "3082a4ad-9005-4c13-ac7e-9f4897febdd6",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/lumina",
+    "project": "lumina",
+    "model": "claude-haiku-4-5-20251001",
+    "createdAt": -5272024,
+    "modifiedAt": -5272024,
+    "durationSeconds": 70,
+    "turns": 1,
+    "messageCount": 29,
+    "toolCallCount": 11,
+    "tokens": {
+      "input": 44,
+      "output": 50,
+      "cacheCreation": 107708,
+      "cacheRead": 254469
+    },
+    "cost": {
+      "input": 0.000132,
+      "output": 0.00075,
+      "cacheCreation": 0.403905,
+      "cacheRead": 0.0763407,
+      "total": 0.4811277
+    },
+    "toolBreakdown": {
+      "Bash": 1,
+      "Grep": 1,
+      "mcp__acp__Read": 9
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "input": 44,
+        "output": 50,
+        "cacheCreation": 107708,
+        "cacheRead": 254469
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
+    "id": "3091f5d6-b797-4dcf-b47a-90fe4ce5b38a",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/lumina/.worktrees/9559ce6b-1cd9-4039-af4b-3a7b34069393",
+    "project": "lumina",
+    "model": "claude-haiku-4-5-20251001",
+    "createdAt": -6580451,
+    "modifiedAt": -6580451,
+    "durationSeconds": 67,
+    "turns": 1,
+    "messageCount": 53,
+    "toolCallCount": 22,
+    "tokens": {
+      "input": 165,
+      "output": 73,
+      "cacheCreation": 138475,
+      "cacheRead": 638088
+    },
+    "cost": {
+      "input": 0.000495,
+      "output": 0.001095,
+      "cacheCreation": 0.5192812499999999,
+      "cacheRead": 0.1914264,
+      "total": 0.7122976499999999
+    },
+    "toolBreakdown": {
+      "Glob": 6,
+      "Grep": 2,
+      "mcp__acp__Read": 9,
+      "Bash": 5
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "input": 165,
+        "output": 73,
+        "cacheCreation": 138475,
+        "cacheRead": 638088
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
+    "id": "3d4b0a00-ac65-4f8d-98bc-0e8a0675947c",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/lumina",
+    "project": "lumina",
+    "model": "claude-opus-4-5-20251101",
+    "createdAt": -6659550,
+    "modifiedAt": -6659550,
+    "durationSeconds": 3,
+    "turns": 1,
+    "messageCount": 2,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 3,
+      "output": 1,
+      "cacheCreation": 340,
+      "cacheRead": 57570
+    },
+    "cost": {
+      "input": 0.000009,
+      "output": 0.000014999999999999999,
+      "cacheCreation": 0.001275,
+      "cacheRead": 0.017271,
+      "total": 0.018570000000000003
+    },
+    "toolBreakdown": {},
+    "modelUsage": {
+      "claude-opus-4-5-20251101": {
+        "input": 3,
+        "output": 1,
+        "cacheCreation": 340,
+        "cacheRead": 57570
       }
     },
     "tokenProvenance": "sdk-cc-jsonl"
@@ -568,6 +852,48 @@
     "tokenProvenance": "sdk-cc-jsonl"
   },
   {
+    "id": "5f16a5d6-6f8a-46cb-b3f0-7fdfc347c521",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/MarsIWE/.worktrees/438b434c-87f4-4842-a9c8-1c349151bbe9",
+    "project": "MarsIWE",
+    "model": "claude-haiku-4-5-20251001",
+    "createdAt": -5441573,
+    "modifiedAt": -5441573,
+    "durationSeconds": 59,
+    "turns": 1,
+    "messageCount": 22,
+    "toolCallCount": 9,
+    "tokens": {
+      "input": 63,
+      "output": 23,
+      "cacheCreation": 49879,
+      "cacheRead": 172432
+    },
+    "cost": {
+      "input": 0.00018899999999999999,
+      "output": 0.000345,
+      "cacheCreation": 0.18704625,
+      "cacheRead": 0.0517296,
+      "total": 0.23930985
+    },
+    "toolBreakdown": {
+      "Glob": 5,
+      "Grep": 1,
+      "mcp__acp__Read": 3
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "input": 63,
+        "output": 23,
+        "cacheCreation": 49879,
+        "cacheRead": 172432
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
     "id": "604c1bfc-9767-4ef6-b5cd-3a436920f628",
     "machineId": "machine",
     "source": "claude-code",
@@ -575,37 +901,85 @@
     "projectPath": "/Users/testuser/work/craft-agents",
     "project": "craft-agents",
     "model": "claude-opus-4-6",
-    "createdAt": -1397098,
+    "createdAt": -1987792,
     "modifiedAt": -1397098,
-    "durationSeconds": 949,
-    "turns": 2,
-    "messageCount": 38,
-    "toolCallCount": 14,
+    "durationSeconds": 2230,
+    "turns": 8,
+    "messageCount": 318,
+    "toolCallCount": 126,
     "tokens": {
-      "input": 189,
-      "output": 4865,
-      "cacheCreation": 204986,
-      "cacheRead": 2532212
+      "input": 8878,
+      "output": 24078,
+      "cacheCreation": 856240,
+      "cacheRead": 8209070
     },
     "cost": {
-      "input": 0.000567,
-      "output": 0.07297500000000001,
-      "cacheCreation": 0.7686975,
-      "cacheRead": 0.7596636,
-      "total": 1.6019031
+      "input": 0.026634,
+      "output": 0.36117,
+      "cacheCreation": 3.2109,
+      "cacheRead": 2.462721,
+      "total": 6.061425
     },
     "toolBreakdown": {
-      "Bash": 5,
-      "Read": 5,
-      "Grep": 2,
-      "Edit": 2
+      "Bash": 28,
+      "Read": 34,
+      "Grep": 50,
+      "Edit": 4,
+      "Glob": 10
     },
     "modelUsage": {
       "claude-opus-4-6": {
-        "input": 189,
-        "output": 4865,
-        "cacheCreation": 204986,
-        "cacheRead": 2532212
+        "input": 378,
+        "output": 9730,
+        "cacheCreation": 409972,
+        "cacheRead": 5064424
+      },
+      "claude-haiku-4-5-20251001": {
+        "input": 8500,
+        "output": 14348,
+        "cacheCreation": 446268,
+        "cacheRead": 3144646
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
+    "id": "66405091-8043-4ae9-97f6-4fe280e74cdf",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/MarsIWE/.worktrees/2a436f20-2c8a-4a98-962d-2eaff11ce951",
+    "project": "MarsIWE",
+    "model": "claude-haiku-4-5-20251001",
+    "createdAt": -6574037,
+    "modifiedAt": -6574037,
+    "durationSeconds": 14,
+    "turns": 1,
+    "messageCount": 22,
+    "toolCallCount": 9,
+    "tokens": {
+      "input": 60,
+      "output": 18,
+      "cacheCreation": 103735,
+      "cacheRead": 81563
+    },
+    "cost": {
+      "input": 0.00018,
+      "output": 0.00027,
+      "cacheCreation": 0.38900625,
+      "cacheRead": 0.0244689,
+      "total": 0.41392515
+    },
+    "toolBreakdown": {
+      "mcp__acp__Read": 3,
+      "Glob": 6
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "input": 60,
+        "output": 18,
+        "cacheCreation": 103735,
+        "cacheRead": 81563
       }
     },
     "tokenProvenance": "sdk-cc-jsonl"
@@ -644,6 +1018,49 @@
         "output": 13,
         "cacheCreation": 0,
         "cacheRead": 15626
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
+    "id": "74ea6ea5-b021-49b3-83aa-967e6efa603d",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/craft-agents/.worktrees/015d89f8-38ea-49f9-9be2-6858a6ee9653",
+    "project": "craft-agents",
+    "model": "claude-haiku-4-5-20251001",
+    "createdAt": -6995691,
+    "modifiedAt": -6995691,
+    "durationSeconds": 73,
+    "turns": 1,
+    "messageCount": 43,
+    "toolCallCount": 17,
+    "tokens": {
+      "input": 243,
+      "output": 38,
+      "cacheCreation": 107220,
+      "cacheRead": 1017100
+    },
+    "cost": {
+      "input": 0.000729,
+      "output": 0.00057,
+      "cacheCreation": 0.40207499999999996,
+      "cacheRead": 0.30512999999999996,
+      "total": 0.7085039999999999
+    },
+    "toolBreakdown": {
+      "Glob": 5,
+      "Grep": 4,
+      "Read": 6,
+      "Bash": 2
+    },
+    "modelUsage": {
+      "claude-haiku-4-5-20251001": {
+        "input": 243,
+        "output": 38,
+        "cacheCreation": 107220,
+        "cacheRead": 1017100
       }
     },
     "tokenProvenance": "sdk-cc-jsonl"
@@ -803,621 +1220,6 @@
     "tokenProvenance": "sdk-cc-jsonl"
   },
   {
-    "id": "agent-a13b10b12d74dc1a0",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/craft-agents",
-    "project": "craft-agents",
-    "model": "claude-haiku-4-5-20251001",
-    "createdAt": -1397098,
-    "modifiedAt": -1397098,
-    "durationSeconds": 98,
-    "turns": 1,
-    "messageCount": 63,
-    "toolCallCount": 26,
-    "tokens": {
-      "input": 4043,
-      "output": 2367,
-      "cacheCreation": 158698,
-      "cacheRead": 833952
-    },
-    "cost": {
-      "input": 0.012129,
-      "output": 0.035505,
-      "cacheCreation": 0.5951175,
-      "cacheRead": 0.2501856,
-      "total": 0.8929370999999999
-    },
-    "toolBreakdown": {
-      "Bash": 9,
-      "Glob": 4,
-      "Read": 7,
-      "Grep": 6
-    },
-    "modelUsage": {
-      "claude-haiku-4-5-20251001": {
-        "input": 4043,
-        "output": 2367,
-        "cacheCreation": 158698,
-        "cacheRead": 833952
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-a429fd8ad57fc681b",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
-    "project": "other",
-    "model": "claude-opus-4-6",
-    "createdAt": -1397100,
-    "modifiedAt": -1397100,
-    "durationSeconds": 448,
-    "turns": 2,
-    "messageCount": 38,
-    "toolCallCount": 14,
-    "tokens": {
-      "input": 37,
-      "output": 3663,
-      "cacheCreation": 96762,
-      "cacheRead": 989615
-    },
-    "cost": {
-      "input": 0.00011099999999999999,
-      "output": 0.054945,
-      "cacheCreation": 0.3628575,
-      "cacheRead": 0.2968845,
-      "total": 0.714798
-    },
-    "toolBreakdown": {
-      "Skill": 1,
-      "Bash": 5,
-      "Read": 5,
-      "Write": 2,
-      "Edit": 1
-    },
-    "modelUsage": {
-      "claude-opus-4-6": {
-        "input": 37,
-        "output": 3663,
-        "cacheCreation": 96762,
-        "cacheRead": 989615
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-a92bc60",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/MarsIWE/.worktrees/438b434c-87f4-4842-a9c8-1c349151bbe9",
-    "project": "MarsIWE",
-    "model": "claude-opus-4-6",
-    "createdAt": -5268431,
-    "modifiedAt": -5268431,
-    "durationSeconds": 117,
-    "turns": 1,
-    "messageCount": 33,
-    "toolCallCount": 14,
-    "tokens": {
-      "input": 38,
-      "output": 97,
-      "cacheCreation": 142284,
-      "cacheRead": 269114
-    },
-    "cost": {
-      "input": 0.000114,
-      "output": 0.001455,
-      "cacheCreation": 0.533565,
-      "cacheRead": 0.0807342,
-      "total": 0.6158682
-    },
-    "toolBreakdown": {
-      "Glob": 5,
-      "Grep": 3,
-      "mcp__acp__Read": 6
-    },
-    "modelUsage": {
-      "claude-opus-4-6": {
-        "input": 38,
-        "output": 97,
-        "cacheCreation": 142284,
-        "cacheRead": 269114
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-a99bb83",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/lumina",
-    "project": "lumina",
-    "model": "claude-haiku-4-5-20251001",
-    "createdAt": -5272024,
-    "modifiedAt": -5272024,
-    "durationSeconds": 70,
-    "turns": 1,
-    "messageCount": 29,
-    "toolCallCount": 11,
-    "tokens": {
-      "input": 44,
-      "output": 50,
-      "cacheCreation": 107708,
-      "cacheRead": 254469
-    },
-    "cost": {
-      "input": 0.000132,
-      "output": 0.00075,
-      "cacheCreation": 0.403905,
-      "cacheRead": 0.0763407,
-      "total": 0.4811277
-    },
-    "toolBreakdown": {
-      "Bash": 1,
-      "Grep": 1,
-      "mcp__acp__Read": 9
-    },
-    "modelUsage": {
-      "claude-haiku-4-5-20251001": {
-        "input": 44,
-        "output": 50,
-        "cacheCreation": 107708,
-        "cacheRead": 254469
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-ab8f265",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/MarsIWE/.worktrees/438b434c-87f4-4842-a9c8-1c349151bbe9",
-    "project": "MarsIWE",
-    "model": "claude-haiku-4-5-20251001",
-    "createdAt": -5441573,
-    "modifiedAt": -5441573,
-    "durationSeconds": 59,
-    "turns": 1,
-    "messageCount": 22,
-    "toolCallCount": 9,
-    "tokens": {
-      "input": 63,
-      "output": 23,
-      "cacheCreation": 49879,
-      "cacheRead": 172432
-    },
-    "cost": {
-      "input": 0.00018899999999999999,
-      "output": 0.000345,
-      "cacheCreation": 0.18704625,
-      "cacheRead": 0.0517296,
-      "total": 0.23930985
-    },
-    "toolBreakdown": {
-      "Glob": 5,
-      "Grep": 1,
-      "mcp__acp__Read": 3
-    },
-    "modelUsage": {
-      "claude-haiku-4-5-20251001": {
-        "input": 63,
-        "output": 23,
-        "cacheCreation": 49879,
-        "cacheRead": 172432
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-ac87da0",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/aiterminal",
-    "project": "aiterminal",
-    "model": "gemini-3-flash",
-    "createdAt": -8276853,
-    "modifiedAt": -8276853,
-    "durationSeconds": 3,
-    "turns": 1,
-    "messageCount": 3,
-    "toolCallCount": 1,
-    "tokens": {
-      "input": 7327,
-      "output": 194,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0.021981,
-      "output": 0.00291,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0.024891
-    },
-    "toolBreakdown": {
-      "Bash": 1
-    },
-    "modelUsage": {
-      "gemini-3-flash": {
-        "input": 7327,
-        "output": 194,
-        "cacheCreation": 0,
-        "cacheRead": 0
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-acc67fa",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/MarsIWE/.worktrees/438b434c-87f4-4842-a9c8-1c349151bbe9",
-    "project": "MarsIWE",
-    "model": "claude-opus-4-6",
-    "createdAt": -5259048,
-    "modifiedAt": -5259048,
-    "durationSeconds": 290,
-    "turns": 1,
-    "messageCount": 19,
-    "toolCallCount": 8,
-    "tokens": {
-      "input": 19,
-      "output": 193,
-      "cacheCreation": 89695,
-      "cacheRead": 536044
-    },
-    "cost": {
-      "input": 0.000057,
-      "output": 0.002895,
-      "cacheCreation": 0.33635624999999997,
-      "cacheRead": 0.1608132,
-      "total": 0.50012145
-    },
-    "toolBreakdown": {
-      "TodoWrite": 2,
-      "mcp__acp__Read": 6
-    },
-    "modelUsage": {
-      "claude-opus-4-6": {
-        "input": 19,
-        "output": 193,
-        "cacheCreation": 89695,
-        "cacheRead": 536044
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-acompact-423a18",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/m365-connector-extension/.worktrees/c33609b7-375c-49ab-9208-d4c28ab5919f",
-    "project": "m365-connector-extension",
-    "model": "claude-opus-4-6",
-    "createdAt": -3875311,
-    "modifiedAt": -3875311,
-    "durationSeconds": 88,
-    "turns": 1,
-    "messageCount": 2,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 3,
-      "output": 1,
-      "cacheCreation": 5240,
-      "cacheRead": 166788
-    },
-    "cost": {
-      "input": 0.000009,
-      "output": 0.000014999999999999999,
-      "cacheCreation": 0.01965,
-      "cacheRead": 0.050036399999999995,
-      "total": 0.06971039999999999
-    },
-    "toolBreakdown": {},
-    "modelUsage": {
-      "claude-opus-4-6": {
-        "input": 3,
-        "output": 1,
-        "cacheCreation": 5240,
-        "cacheRead": 166788
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-acompact-8e9d65",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/MarsIWE/.worktrees/438b434c-87f4-4842-a9c8-1c349151bbe9",
-    "project": "MarsIWE",
-    "model": "claude-opus-4-6",
-    "createdAt": -5258914,
-    "modifiedAt": -5258914,
-    "durationSeconds": 133,
-    "turns": 1,
-    "messageCount": 2,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 3,
-      "output": 1,
-      "cacheCreation": 172731,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0.000009,
-      "output": 0.000014999999999999999,
-      "cacheCreation": 0.6477412499999999,
-      "cacheRead": 0,
-      "total": 0.64776525
-    },
-    "toolBreakdown": {},
-    "modelUsage": {
-      "claude-opus-4-6": {
-        "input": 3,
-        "output": 1,
-        "cacheCreation": 172731,
-        "cacheRead": 0
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-ae1292111c7ad72d3",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/craft-agents",
-    "project": "craft-agents",
-    "model": "claude-haiku-4-5-20251001",
-    "createdAt": -1397098,
-    "modifiedAt": -1397098,
-    "durationSeconds": 68,
-    "turns": 1,
-    "messageCount": 58,
-    "toolCallCount": 23,
-    "tokens": {
-      "input": 207,
-      "output": 4807,
-      "cacheCreation": 64436,
-      "cacheRead": 738371
-    },
-    "cost": {
-      "input": 0.000621,
-      "output": 0.07210499999999999,
-      "cacheCreation": 0.241635,
-      "cacheRead": 0.2215113,
-      "total": 0.5358723
-    },
-    "toolBreakdown": {
-      "Grep": 17,
-      "Read": 5,
-      "Glob": 1
-    },
-    "modelUsage": {
-      "claude-haiku-4-5-20251001": {
-        "input": 207,
-        "output": 4807,
-        "cacheCreation": 64436,
-        "cacheRead": 738371
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-ae3e23c",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/lumina/.worktrees/9559ce6b-1cd9-4039-af4b-3a7b34069393",
-    "project": "lumina",
-    "model": "claude-haiku-4-5-20251001",
-    "createdAt": -6580451,
-    "modifiedAt": -6580451,
-    "durationSeconds": 67,
-    "turns": 1,
-    "messageCount": 53,
-    "toolCallCount": 22,
-    "tokens": {
-      "input": 165,
-      "output": 73,
-      "cacheCreation": 138475,
-      "cacheRead": 638088
-    },
-    "cost": {
-      "input": 0.000495,
-      "output": 0.001095,
-      "cacheCreation": 0.5192812499999999,
-      "cacheRead": 0.1914264,
-      "total": 0.7122976499999999
-    },
-    "toolBreakdown": {
-      "Glob": 6,
-      "Grep": 2,
-      "mcp__acp__Read": 9,
-      "Bash": 5
-    },
-    "modelUsage": {
-      "claude-haiku-4-5-20251001": {
-        "input": 165,
-        "output": 73,
-        "cacheCreation": 138475,
-        "cacheRead": 638088
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-aead1a1",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/craft-agents/.worktrees/015d89f8-38ea-49f9-9be2-6858a6ee9653",
-    "project": "craft-agents",
-    "model": "claude-haiku-4-5-20251001",
-    "createdAt": -6995691,
-    "modifiedAt": -6995691,
-    "durationSeconds": 73,
-    "turns": 1,
-    "messageCount": 43,
-    "toolCallCount": 17,
-    "tokens": {
-      "input": 243,
-      "output": 38,
-      "cacheCreation": 107220,
-      "cacheRead": 1017100
-    },
-    "cost": {
-      "input": 0.000729,
-      "output": 0.00057,
-      "cacheCreation": 0.40207499999999996,
-      "cacheRead": 0.30512999999999996,
-      "total": 0.7085039999999999
-    },
-    "toolBreakdown": {
-      "Glob": 5,
-      "Grep": 4,
-      "Read": 6,
-      "Bash": 2
-    },
-    "modelUsage": {
-      "claude-haiku-4-5-20251001": {
-        "input": 243,
-        "output": 38,
-        "cacheCreation": 107220,
-        "cacheRead": 1017100
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-af1c00a",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/MarsIWE/.worktrees/2a436f20-2c8a-4a98-962d-2eaff11ce951",
-    "project": "MarsIWE",
-    "model": "claude-haiku-4-5-20251001",
-    "createdAt": -6574037,
-    "modifiedAt": -6574037,
-    "durationSeconds": 14,
-    "turns": 1,
-    "messageCount": 22,
-    "toolCallCount": 9,
-    "tokens": {
-      "input": 60,
-      "output": 18,
-      "cacheCreation": 103735,
-      "cacheRead": 81563
-    },
-    "cost": {
-      "input": 0.00018,
-      "output": 0.00027,
-      "cacheCreation": 0.38900625,
-      "cacheRead": 0.0244689,
-      "total": 0.41392515
-    },
-    "toolBreakdown": {
-      "mcp__acp__Read": 3,
-      "Glob": 6
-    },
-    "modelUsage": {
-      "claude-haiku-4-5-20251001": {
-        "input": 60,
-        "output": 18,
-        "cacheCreation": 103735,
-        "cacheRead": 81563
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-aprompt_suggestion-894aff",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/lumina",
-    "project": "lumina",
-    "model": "claude-opus-4-5-20251101",
-    "createdAt": -6659550,
-    "modifiedAt": -6659550,
-    "durationSeconds": 3,
-    "turns": 1,
-    "messageCount": 2,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 3,
-      "output": 1,
-      "cacheCreation": 340,
-      "cacheRead": 57570
-    },
-    "cost": {
-      "input": 0.000009,
-      "output": 0.000014999999999999999,
-      "cacheCreation": 0.001275,
-      "cacheRead": 0.017271,
-      "total": 0.018570000000000003
-    },
-    "toolBreakdown": {},
-    "modelUsage": {
-      "claude-opus-4-5-20251101": {
-        "input": 3,
-        "output": 1,
-        "cacheCreation": 340,
-        "cacheRead": 57570
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
-    "id": "agent-aprompt_suggestion-93f6de",
-    "machineId": "machine",
-    "source": "claude-code",
-    "engine": "Claude Code",
-    "projectPath": "/Users/testuser/work/lumina",
-    "project": "lumina",
-    "model": "claude-opus-4-5-20251101",
-    "createdAt": -1397097,
-    "modifiedAt": -1397097,
-    "durationSeconds": 2,
-    "turns": 1,
-    "messageCount": 2,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 3,
-      "output": 1,
-      "cacheCreation": 598,
-      "cacheRead": 25830
-    },
-    "cost": {
-      "input": 0.000009,
-      "output": 0.000014999999999999999,
-      "cacheCreation": 0.0022425,
-      "cacheRead": 0.007748999999999999,
-      "total": 0.0100155
-    },
-    "toolBreakdown": {},
-    "modelUsage": {
-      "claude-opus-4-5-20251101": {
-        "input": 3,
-        "output": 1,
-        "cacheCreation": 598,
-        "cacheRead": 25830
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl"
-  },
-  {
     "id": "b2c375e8-5921-4daf-8b52-10780f65db7b",
     "machineId": "machine",
     "source": "claude-code",
@@ -1492,6 +1294,88 @@
         "output": 802,
         "cacheCreation": 2386,
         "cacheRead": 31506
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
+    "id": "c43f5843-b72a-493c-9a37-3a745a6a171b",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/work/lumina",
+    "project": "lumina",
+    "model": "claude-opus-4-5-20251101",
+    "createdAt": -6744643,
+    "modifiedAt": -1397097,
+    "durationSeconds": 4,
+    "turns": 2,
+    "messageCount": 4,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 6,
+      "output": 2,
+      "cacheCreation": 1196,
+      "cacheRead": 51660
+    },
+    "cost": {
+      "input": 0.000018,
+      "output": 0.000029999999999999997,
+      "cacheCreation": 0.004485,
+      "cacheRead": 0.015497999999999998,
+      "total": 0.020031
+    },
+    "toolBreakdown": {},
+    "modelUsage": {
+      "claude-opus-4-5-20251101": {
+        "input": 6,
+        "output": 2,
+        "cacheCreation": 1196,
+        "cacheRead": 51660
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl"
+  },
+  {
+    "id": "c66b52e2-7b1b-46bd-a115-0e106272ce76",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Claude Code",
+    "projectPath": "/Users/testuser/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
+    "project": "other",
+    "model": "claude-opus-4-6",
+    "createdAt": -3607428,
+    "modifiedAt": -1397100,
+    "durationSeconds": 896,
+    "turns": 4,
+    "messageCount": 76,
+    "toolCallCount": 28,
+    "tokens": {
+      "input": 74,
+      "output": 7326,
+      "cacheCreation": 193524,
+      "cacheRead": 1979230
+    },
+    "cost": {
+      "input": 0.00022199999999999998,
+      "output": 0.10989,
+      "cacheCreation": 0.725715,
+      "cacheRead": 0.593769,
+      "total": 1.429596
+    },
+    "toolBreakdown": {
+      "Skill": 2,
+      "Bash": 10,
+      "Read": 10,
+      "Write": 4,
+      "Edit": 2
+    },
+    "modelUsage": {
+      "claude-opus-4-6": {
+        "input": 74,
+        "output": 7326,
+        "cacheCreation": 193524,
+        "cacheRead": 1979230
       }
     },
     "tokenProvenance": "sdk-cc-jsonl"
@@ -19386,6 +19270,7 @@
       "total": 0
     },
     "toolBreakdown": {},
+    "tokenProvenance": "none",
     "orchestrator": {
       "kind": "eureka"
     }

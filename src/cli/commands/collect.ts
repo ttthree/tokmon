@@ -1,13 +1,16 @@
+import { attributeOrchestrator, ingestEurekaOrphans } from "../../core/attribute.js";
 import { mergeCursorState } from "../../core/cursor.js";
 import { updateSessions, loadMachineData, saveMachineData } from "../../core/data.js";
 import { logDiag } from "../../core/diag-log.js";
-import { getMachineId, getMachineName } from "../../core/machine.js";
-import { loadConfig } from "../../core/config.js";
-import { maybeRefreshPricing } from "../../core/pricing.js";
-import { parsers } from "../../parsers/index.js";
-import { marsRegistry } from "../../parsers/mars.js";
-import type { Session } from "../../core/types.js";
 import { enrichSession, enrichSessionsBatched } from "../../core/enrich.js";
+import { loadConfig } from "../../core/config.js";
+import { getMachineId, getMachineName } from "../../core/machine.js";
+import { discoverParseRoots } from "../../core/parse-roots.js";
+import { maybeRefreshPricing } from "../../core/pricing.js";
+import type { Session } from "../../core/types.js";
+import { sdkParsers } from "../../parsers/index.js";
+import { buildEurekaIndex } from "../../parsers/eureka-index.js";
+import { buildMarsRegistry } from "../../parsers/mars.js";
 
 export { enrichSession, enrichSessionsBatched } from "../../core/enrich.js";
 
@@ -51,20 +54,12 @@ function writeProgress(source: string, detail: string, silent: boolean): void {
   process.stdout.write(`  ⟳ ${label}: ${detail}`);
 }
 
-function writeSourceDone(source: string, count: number, ms: number, silent: boolean): void {
+function writeSourceDone(source: string, count: number, ms: number, silent: boolean, detail = "sessions"): void {
   if (silent) return;
   clearLine();
   const label = SOURCE_LABELS[source] ?? source;
   const time = ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
-  if (source === "mars") {
-    const tagged =
-      marsRegistry.byAgentSessionId.claudeCode.size +
-      marsRegistry.byAgentSessionId.codex.size +
-      marsRegistry.byAgentSessionId.copilotCli.size;
-    console.log(`  ✓ ${label}: registry loaded (${tagged} tagged) (${time})`);
-    return;
-  }
-  console.log(`  ✓ ${label}: ${count} sessions (${time})`);
+  console.log(`  ✓ ${label}: ${count} ${detail} (${time})`);
 }
 
 export async function collectCommand(options: CollectOptions = {}): Promise<CollectResult> {
@@ -94,48 +89,89 @@ export async function collectCommand(options: CollectOptions = {}): Promise<Coll
     orchestratorDistribution: beforeSnapshot,
   });
 
-  let sessions: Session[] = [];
+  writeProgress("mars", "discovering parse roots…", silent);
+  const parseRoots = await discoverParseRoots({ machineId, existingCursor: machineData._cursor, sources: config.sources });
+  void logDiag({
+    event: "collect.phase.parse-roots",
+    claudeRoots: parseRoots.claudeRoots.length,
+    codexRoots: parseRoots.codexRoots.length,
+    copilotRoots: parseRoots.copilotRoots.length,
+  });
+
+  const rawSessions: Session[] = [];
   const cursorUpdates: Record<string, (typeof machineData._cursor.files)[string]> = {};
   const perSourceCounts: Record<string, number> = {};
 
-  for (const parser of parsers) {
+  for (const parser of sdkParsers) {
     const sourceStart = Date.now();
     writeProgress(parser.source, "scanning…", silent);
     emit({ phase: "source-start", source: parser.source });
-    const parsed = await parser.parse({ machineId, existingCursor: machineData._cursor, sources: config.sources });
-
-    if (parsed.sessions.length > 0) {
-      writeProgress(parser.source, `enriching ${parsed.sessions.length} sessions…`, silent);
-      const enriched = await enrichSessionsBatched(parsed.sessions, machineId, config, (done, total) => {
-        writeProgress(parser.source, `enriching ${done}/${total}…`, silent);
-        emit({ phase: "source-progress", source: parser.source, detail: `enriching ${done}/${total}`, done, total });
-      });
-      sessions = sessions.concat(enriched);
-
-      // Log post-enrichment cost summary so we can correlate dashboard cost shifts to actual values.
-      const enrichedTotalCost = enriched.reduce((s, x) => s + (x.cost?.total ?? 0), 0);
-      void logDiag({
-        event: "enrich.summary",
-        source: parser.source,
-        sessionCount: enriched.length,
-        totalCost: Math.round(enrichedTotalCost * 100) / 100,
-        // Top 5 most expensive — usually where shifts originate.
-        topByCost: enriched
-          .map((s) => ({ id: s.id, cost: Math.round((s.cost?.total ?? 0) * 100) / 100, prov: s.tokenProvenance, tokens: { i: s.tokens.input, o: s.tokens.output, cr: s.tokens.cacheRead, cc: s.tokens.cacheCreation } }))
-          .sort((a, b) => b.cost - a.cost)
-          .slice(0, 5),
-      });
-    }
-
+    const extraRoots = parser.source === "claude-code"
+      ? parseRoots.claudeRoots
+      : parser.source === "codex"
+        ? parseRoots.codexRoots
+        : parseRoots.copilotRoots;
+    const parsed = await parser.parse({ machineId, existingCursor: machineData._cursor, sources: config.sources }, extraRoots);
+    rawSessions.push(...parsed.sessions);
     perSourceCounts[parser.source] = parsed.sessions.length;
     Object.assign(cursorUpdates, parsed.cursorUpdates);
     writeSourceDone(parser.source, parsed.sessions.length, Date.now() - sourceStart, silent);
     emit({ phase: "source-done", source: parser.source, count: parsed.sessions.length, ms: Date.now() - sourceStart });
   }
 
+  const marsStart = Date.now();
+  writeProgress("mars", "loading registry…", silent);
+  emit({ phase: "source-start", source: "mars" });
+  const [marsRegistry, eurekaIndex] = await Promise.all([
+    buildMarsRegistry({ machineId, existingCursor: machineData._cursor, sources: config.sources }),
+    buildEurekaIndex({ machineId, existingCursor: machineData._cursor, sources: config.sources }),
+  ]);
+  const marsTagged =
+    marsRegistry.byAgentSessionId.claudeCode.size +
+    marsRegistry.byAgentSessionId.codex.size +
+    marsRegistry.byAgentSessionId.copilotCli.size;
+  writeSourceDone("mars", marsTagged, Date.now() - marsStart, silent, "tagged");
+  emit({ phase: "source-done", source: "mars", count: marsTagged, ms: Date.now() - marsStart });
+  void logDiag({
+    event: "collect.phase.index",
+    marsTagged,
+    eurekaEntries: eurekaIndex.byCompositeKey.size,
+  });
+
+  const { attributed, matchedEurekaCompositeKeys } = attributeOrchestrator(rawSessions, marsRegistry, eurekaIndex);
+  const orphans = await ingestEurekaOrphans(eurekaIndex, matchedEurekaCompositeKeys, machineId);
+  void logDiag({
+    event: "collect.phase.attribute",
+    rawSessionCount: rawSessions.length,
+    attributedCount: attributed.length,
+    matchedEurekaCount: matchedEurekaCompositeKeys.size,
+    orphanCount: orphans.length,
+  });
+
+  const allSessions = attributed.concat(orphans);
+  writeProgress("save", `enriching ${allSessions.length} sessions…`, silent);
+  const enriched = await enrichSessionsBatched(allSessions, machineId, config, (done, total) => {
+    writeProgress("save", `enriching ${done}/${total}…`, silent);
+    emit({ phase: "source-progress", source: "save", detail: `enriching ${done}/${total}`, done, total });
+  });
+
+  for (const [source, sessions] of Object.entries(groupBySource(enriched))) {
+    const enrichedTotalCost = sessions.reduce((sum, session) => sum + (session.cost?.total ?? 0), 0);
+    void logDiag({
+      event: "enrich.summary",
+      source,
+      sessionCount: sessions.length,
+      totalCost: Math.round(enrichedTotalCost * 100) / 100,
+      topByCost: sessions
+        .map((session) => ({ id: session.id, cost: Math.round((session.cost?.total ?? 0) * 100) / 100, prov: session.tokenProvenance, tokens: { i: session.tokens.input, o: session.tokens.output, cr: session.tokens.cacheRead, cc: session.tokens.cacheCreation } }))
+        .sort((left, right) => right.cost - left.cost)
+        .slice(0, 5),
+    });
+  }
+
   writeProgress("save", "writing data…", silent);
   emit({ phase: "save", detail: "writing data" });
-  machineData.sessions = updateSessions(machineData.sessions, sessions, machineId);
+  machineData.sessions = updateSessions(machineData.sessions, enriched, machineId);
   machineData._cursor = mergeCursorState(machineData._cursor, cursorUpdates);
   await saveMachineData(machineData, await getMachineName());
   if (!silent) clearLine();
@@ -157,11 +193,20 @@ export async function collectCommand(options: CollectOptions = {}): Promise<Coll
   });
 
   const result = {
-    sessionCount: sessions.length,
+    sessionCount: enriched.length,
     durationMs: Date.now() - startedAt,
   };
   emit({ phase: "complete", ...result });
   return result;
+}
+
+function groupBySource(sessions: Session[]): Record<string, Session[]> {
+  const grouped: Record<string, Session[]> = {};
+  for (const session of sessions) {
+    grouped[session.source] ??= [];
+    grouped[session.source].push(session);
+  }
+  return grouped;
 }
 
 function snapshotOrchestrators(sessions: Record<string, Session>): Record<string, { count: number; cost: number }> {
@@ -172,8 +217,7 @@ function snapshotOrchestrators(sessions: Record<string, Session>): Record<string
     out[key].count++;
     out[key].cost += s.cost?.total ?? 0;
   }
-  // Round costs to make logs readable.
-  for (const k of Object.keys(out)) out[k].cost = Math.round(out[k].cost * 100) / 100;
+  for (const key of Object.keys(out)) out[key].cost = Math.round(out[key].cost * 100) / 100;
   return out;
 }
 
@@ -183,12 +227,12 @@ function diffSnapshots(
 ): Record<string, { count: number; cost: number }> {
   const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
   const delta: Record<string, { count: number; cost: number }> = {};
-  for (const k of keys) {
-    const b = before[k] ?? { count: 0, cost: 0 };
-    const a = after[k] ?? { count: 0, cost: 0 };
+  for (const key of keys) {
+    const b = before[key] ?? { count: 0, cost: 0 };
+    const a = after[key] ?? { count: 0, cost: 0 };
     const dc = a.count - b.count;
     const dcost = Math.round((a.cost - b.cost) * 100) / 100;
-    if (dc !== 0 || dcost !== 0) delta[k] = { count: dc, cost: dcost };
+    if (dc !== 0 || dcost !== 0) delta[key] = { count: dc, cost: dcost };
   }
   return delta;
 }
