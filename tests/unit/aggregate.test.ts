@@ -190,7 +190,7 @@ describe("aggregateData", () => {
     await fs.mkdir(path.dirname(machinePath), { recursive: true });
     const sessions = {
       [`${machineId}:claude-code:mars`]: makeSession({ id: "mars", machineId, orchestrator: { kind: "mars", taskTitle: "Task", marsSessionId: "m" } }),
-      [`${machineId}:eureka:eureka`]: makeSession({ id: "eureka", source: "eureka", machineId, orchestrator: { kind: "eureka" } }),
+      [`${machineId}:claude-code:eureka`]: makeSession({ id: "eureka", source: "claude-code", machineId, orchestrator: { kind: "eureka" } }),
       [`${machineId}:codex:none`]: makeSession({ id: "none", source: "codex", machineId }),
     };
     await fs.writeFile(machinePath, JSON.stringify({ machineId, hostname: "h", os: "darwin-arm64", lastUpdatedAt: new Date().toISOString(), sessions, _cursor: { version: 1, updatedAt: new Date(0).toISOString(), files: {} } }), "utf8");

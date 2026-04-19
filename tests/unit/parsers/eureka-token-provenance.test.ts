@@ -58,6 +58,8 @@ describe("token provenance matrix", () => {
     process.env.TOKMON_HOME = testHome;
     await createEurekaClaudeSdkFixture(testHome);
     const session = (await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() })).sessions[0];
+    expect(session.source).toBe("claude-code");
+    expect(session.orchestrator).toEqual({ kind: "eureka" });
     expect(session.tokenProvenance).toBe("sdk-cc-jsonl");
   });
 
@@ -74,6 +76,8 @@ describe("token provenance matrix", () => {
     process.env.TOKMON_HOME = testHome;
     await createEurekaCopilotFixture(testHome);
     const session = (await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() })).sessions[0];
+    expect(session.source).toBe("copilot-cli");
+    expect(session.orchestrator).toEqual({ kind: "eureka" });
     expect(session.tokenProvenance).toBe("sdk-shutdown");
   });
 
@@ -103,6 +107,8 @@ describe("token provenance matrix", () => {
     process.env.TOKMON_HOME = testHome;
     await createEurekaCodexFixture(testHome);
     const session = (await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() })).sessions[0];
+    expect(session.source).toBe("codex");
+    expect(session.orchestrator).toEqual({ kind: "eureka" });
     expect(session.tokenProvenance).toBe("sdk-codex-rollout");
   });
 

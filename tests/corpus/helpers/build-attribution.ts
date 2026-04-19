@@ -39,7 +39,7 @@ export function buildAttribution(sessions: Session[]): AttributionGolden {
       marsSessionCount: sessions.filter((session) => session.orchestrator?.kind === "mars").length,
     },
     eurekaLinkage: sessions
-      .filter((session) => session.source === "eureka")
+      .filter((session) => session.orchestrator?.kind === "eureka")
       .map((session) => ({
         eurekaSessionId: session.id,
         engine: session.engine ?? "unknown",

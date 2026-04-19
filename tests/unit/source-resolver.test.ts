@@ -39,6 +39,21 @@ describe("source resolver", () => {
   it("returns null when the project path is empty", async () => {
     expect(await resolveSourcePath(createSession({ source: "claude-code", projectPath: "" }))).toBeNull();
   });
+
+  it("resolves eureka sessions by orchestrator metadata", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+
+    const candidate = path.join(testHome, ".craft-agent", "workspaces", "workspace-1", "sessions", "eureka-session", "session.jsonl");
+    await fs.mkdir(path.dirname(candidate), { recursive: true });
+    await fs.writeFile(candidate, "{}\n", "utf8");
+
+    expect(await resolveSourcePath(createSession({
+      id: "eureka-session",
+      source: "claude-code",
+      orchestrator: { kind: "eureka" },
+    }))).toBe(candidate);
+  });
 });
 
 describe("encodeClaudeProjectPath", () => {

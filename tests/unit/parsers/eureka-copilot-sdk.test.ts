@@ -46,6 +46,8 @@ describe("eureka copilot sdk parser", () => {
       "gpt-4.1": { input: 180, output: 40, cacheCreation: 8, cacheRead: 20 },
       "gpt-4.1-mini": { input: 90, output: 15, cacheCreation: 2, cacheRead: 10 },
     });
+    expect(session.source).toBe("copilot-cli");
+    expect(session.orchestrator).toEqual({ kind: "eureka" });
     expect(session.tokenProvenance).toBe("sdk-shutdown");
     expect(session.model).toBe("gpt-4.1");
   });
