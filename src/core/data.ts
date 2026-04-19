@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 
 import { createEmptyCursorState } from "./cursor.js";
+import { logDiag } from "./diag-log.js";
 import { ensureTokmonDirectories, getMachineDataPath, loadMachineDataFromPath, pathExists } from "./config.js";
 import { inferSourceFromEngine } from "./orchestrator.js";
 import type { CursorState, MachineData, Session } from "./types.js";
@@ -87,6 +88,19 @@ export function mergeSession(existing: Session | undefined, updated: Session): S
   if (!existing) {
     return updated;
   }
+  const existingKind = existing.orchestrator?.kind;
+  const updatedKind = updated.orchestrator?.kind;
+  if (existingKind !== updatedKind || existing.source !== updated.source) {
+    void logDiag({
+      event: "merge.attribution-change",
+      sessionId: updated.id,
+      source: { from: existing.source, to: updated.source },
+      orchestratorKind: { from: existingKind ?? null, to: updatedKind ?? null },
+      cost: { existing: existing.cost?.total ?? 0, updated: updated.cost?.total ?? 0 },
+      // A "drop" is the case the user is seeing: existing had a tag, updated lost it.
+      isDrop: Boolean(existingKind) && !updatedKind,
+    });
+  }
   return {
     ...updated,
     createdAt: existing.createdAt,
@@ -95,9 +109,30 @@ export function mergeSession(existing: Session | undefined, updated: Session): S
 
 export function updateSessions(existing: Record<string, Session>, newSessions: Session[], machineId: string): Record<string, Session> {
   const result = { ...existing };
+  let drops = 0;
+  let changes = 0;
   for (const session of newSessions) {
     const key = getSessionKey(machineId, session);
-    result[key] = mergeSession(result[key], session);
+    const prev = result[key];
+    const merged = mergeSession(prev, session);
+    if (prev) {
+      const prevKind = prev.orchestrator?.kind;
+      const nextKind = merged.orchestrator?.kind;
+      if (prevKind !== nextKind || prev.source !== merged.source) {
+        changes++;
+        if (prevKind && !nextKind) drops++;
+      }
+    }
+    result[key] = merged;
+  }
+  if (changes > 0 || drops > 0) {
+    void logDiag({
+      event: "updateSessions.summary",
+      machineId,
+      newSessionCount: newSessions.length,
+      attributionChanges: changes,
+      attributionDrops: drops,
+    });
   }
   return result;
 }
@@ -111,6 +146,8 @@ export function replaceCursor(machineData: MachineData, cursor: CursorState): Ma
 
 export function normalizeLegacySources(machine: MachineData): MachineData {
   const fixed: Record<string, Session> = {};
+  let migratedEurekaCount = 0;
+  let collidedCount = 0;
 
   for (const session of Object.values(machine.sessions)) {
     const raw = session as Omit<Session, "source"> & { source: string };
@@ -121,13 +158,27 @@ export function normalizeLegacySources(machine: MachineData): MachineData {
         orchestrator: raw.orchestrator ?? { kind: "eureka" },
       };
       const key = getSessionKey(machine.machineId, migrated);
+      if (fixed[key]) collidedCount++;
       fixed[key] = fixed[key] ? pickFresher(fixed[key], migrated) : migrated;
+      migratedEurekaCount++;
       continue;
     }
 
     const direct = raw as Session;
     const key = getSessionKey(machine.machineId, direct);
+    if (fixed[key]) collidedCount++;
     fixed[key] = fixed[key] ? pickFresher(fixed[key], direct) : direct;
+  }
+
+  if (migratedEurekaCount > 0 || collidedCount > 0) {
+    void logDiag({
+      event: "normalizeLegacySources",
+      machineId: machine.machineId,
+      inputCount: Object.keys(machine.sessions).length,
+      outputCount: Object.keys(fixed).length,
+      migratedEurekaCount,
+      collidedCount,
+    });
   }
 
   return { ...machine, sessions: fixed };

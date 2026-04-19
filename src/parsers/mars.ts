@@ -4,6 +4,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 
 import { getMarsAppSupportDirectories } from "../core/config.js";
+import { logDiag } from "../core/diag-log.js";
 import type { ParseResult, Parser, ParserContext } from "../core/types.js";
 
 type MarsAgentType = "claude-code" | "codex" | "copilot-cli";
@@ -46,7 +47,15 @@ export const marsParser: Parser = {
   async parse(context: ParserContext): Promise<ParseResult> {
     resetMarsRegistry();
     const enabledMars = (context.sources ?? []).filter((s) => s.enabled && s.type === "mars").map((s) => s.path);
-    const appSupportDirs = enabledMars.length > 0 ? enabledMars : getMarsAppSupportDirectories();
+    const usedConfigured = enabledMars.length > 0;
+    const appSupportDirs = usedConfigured ? enabledMars : getMarsAppSupportDirectories();
+
+    void logDiag({
+      event: "mars.parse.start",
+      usedConfiguredSources: usedConfigured,
+      appSupportDirs,
+      appSupportDirCount: appSupportDirs.length,
+    });
 
     for (const appDir of appSupportDirs) {
       await maybeAddRoot(path.join(appDir, "agent-configs", "claude"), marsRegistry.claudeRoots);
@@ -54,17 +63,36 @@ export const marsParser: Parser = {
       await maybeAddRoot(path.join(appDir, "agent-configs", "copilot"), marsRegistry.copilotRoots);
     }
 
+    let totalRowsLoaded = 0;
     for (const appDir of appSupportDirs) {
       const dbPath = path.join(appDir, "marsiwe.db");
       const stat = await safeStat(dbPath);
-      if (!stat?.isFile()) continue;
-      const rows = await loadMarsRows(dbPath);
-      for (const row of rows) {
+      if (!stat?.isFile()) {
+        void logDiag({ event: "mars.db.skip", dbPath, reason: "not-a-file", existed: stat !== null });
+        continue;
+      }
+      const loadResult = await loadMarsRows(dbPath);
+      void logDiag({
+        event: "mars.db.load",
+        dbPath,
+        sizeBytes: stat.size,
+        outcome: loadResult.outcome,
+        rowCount: loadResult.rows.length,
+        errorCode: loadResult.errorCode,
+        errorMessage: loadResult.errorMessage,
+      });
+      totalRowsLoaded += loadResult.rows.length;
+      let validRows = 0;
+      let droppedNoAgentSession = 0;
+      let droppedNoMarsId = 0;
+      let droppedUnknownAgentType = 0;
+      for (const row of loadResult.rows) {
         const agentType = normalizeMarsAgentType(stringOrUndefined(row.agent_type_raw) ?? "");
         const agentSessionId = typeof row.agent_session_id === "string" ? row.agent_session_id.trim() : "";
         const marsSessionId = stringOrUndefined(row.mars_session_id);
-        if (!agentType || !agentSessionId) continue;
-        if (!marsSessionId) continue;
+        if (!agentType) { droppedUnknownAgentType++; continue; }
+        if (!agentSessionId) { droppedNoAgentSession++; continue; }
+        if (!marsSessionId) { droppedNoMarsId++; continue; }
         const meta: MarsSessionMeta = {
           marsSessionId,
           agentSessionId,
@@ -81,8 +109,27 @@ export const marsParser: Parser = {
           updatedAt: stringOrUndefined(row.session_updated_at),
         };
         upsertMeta(meta);
+        validRows++;
       }
+      void logDiag({
+        event: "mars.db.upsert",
+        dbPath,
+        validRows,
+        droppedNoAgentSession,
+        droppedNoMarsId,
+        droppedUnknownAgentType,
+      });
     }
+
+    void logDiag({
+      event: "mars.parse.done",
+      totalRowsLoaded,
+      registry: {
+        claudeCode: marsRegistry.byAgentSessionId.claudeCode.size,
+        codex: marsRegistry.byAgentSessionId.codex.size,
+        copilotCli: marsRegistry.byAgentSessionId.copilotCli.size,
+      },
+    });
 
     return { sessions: [], cursorUpdates: {} };
   },
@@ -109,15 +156,27 @@ function normalizeMarsAgentType(raw: string): MarsAgentType | null {
   return null;
 }
 
-async function loadMarsRows(dbPath: string): Promise<Array<Record<string, unknown>>> {
+interface LoadResult {
+  rows: Array<Record<string, unknown>>;
+  outcome: "ok" | "open-failed" | "query-failed" | "schema-mismatch";
+  errorCode?: string;
+  errorMessage?: string;
+}
+
+async function loadMarsRows(dbPath: string): Promise<LoadResult> {
   let db: Database.Database;
   try {
     db = new Database(dbPath, { readonly: true, fileMustExist: true });
-  } catch {
-    return [];
+  } catch (error) {
+    return {
+      rows: [],
+      outcome: "open-failed",
+      errorCode: errorCodeOf(error),
+      errorMessage: error instanceof Error ? error.message : String(error),
+    };
   }
   try {
-    return db.prepare(`
+    const rows = db.prepare(`
       SELECT
         lower(hex(s.id)) AS mars_session_id,
         s.agent_session_id AS agent_session_id,
@@ -137,13 +196,28 @@ async function loadMarsRows(dbPath: string): Promise<Array<Record<string, unknow
       LEFT JOIN workspaces w ON s.workspace_id = w.id
       WHERE s.agent_session_id IS NOT NULL
     `).all() as Array<Record<string, unknown>>;
+    return { rows, outcome: "ok" };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (message.includes("no such table") || message.includes("file is not a database")) return [];
-    throw error;
+    if (message.includes("no such table") || message.includes("file is not a database")) {
+      return { rows: [], outcome: "schema-mismatch", errorMessage: message };
+    }
+    return {
+      rows: [],
+      outcome: "query-failed",
+      errorCode: errorCodeOf(error),
+      errorMessage: message,
+    };
   } finally {
     db.close();
   }
+}
+
+function errorCodeOf(error: unknown): string | undefined {
+  if (error && typeof error === "object" && "code" in error && typeof (error as { code: unknown }).code === "string") {
+    return (error as { code: string }).code;
+  }
+  return undefined;
 }
 
 function upsertMeta(meta: MarsSessionMeta): void {

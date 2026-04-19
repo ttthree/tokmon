@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { getClaudeDirectory, getCraftAgentClaudeDirectory } from "../core/config.js";
+import { logDiag } from "../core/diag-log.js";
 import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
 import { streamJsonl } from "./util/jsonl-stream.js";
@@ -130,6 +131,19 @@ export const claudeCodeParser: Parser = {
         const marsMeta = marsRegistry.byAgentSessionId.claudeCode.get(session.id);
         if (marsMeta) {
           session = applyMarsMeta(session, marsMeta, "claude-code");
+        } else {
+          // Only log when registry was non-empty — an empty registry means we're not
+          // even looking for mars sessions (mars source disabled / no DB), so a "miss"
+          // there is meaningless. A miss against a populated registry is the signal
+          // that matters: this session genuinely isn't a mars session, *or* the
+          // registry doesn't know about it yet (could explain attribution drops).
+          if (marsRegistry.byAgentSessionId.claudeCode.size > 0) {
+            void logDiag({
+              event: "cc.session.mars-miss",
+              sessionId: session.id,
+              registrySize: marsRegistry.byAgentSessionId.claudeCode.size,
+            });
+          }
         }
         // Skip empty sessions (no tokens = no meaningful API interactions)
         if (session.tokens.input === 0 && session.tokens.output === 0 && session.tokens.cacheRead === 0 && session.tokens.cacheCreation === 0) {

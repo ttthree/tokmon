@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { getCraftAgentClaudeDirectory, getHomeDirectory } from "../core/config.js";
+import { logDiag } from "../core/diag-log.js";
 import { computeActiveDurationSeconds } from "../core/duration.js";
 import { inferUnderlyingSource } from "../core/orchestrator.js";
 import { normalizeProjectPath } from "../core/project.js";
@@ -146,10 +147,15 @@ export const eurekaParser: Parser = {
         // Invalidate cursor if previous parse left tokens incomplete (CC .jsonl wasn't ready yet) so we retry.
         const cursor = context.existingCursor.files[primaryFile] ?? null;
         const sessionMtimeMs = await getEurekaSessionMtime(sessionPath, cursor?.claimedSdkSessionId, cursor?.claimedSdkCwd);
+        // Legacy cursor (pre-claim mechanism) has no lastProvenance recorded at all.
+        // Force re-parse so claimedSdkSessionId gets populated; otherwise the CC parser
+        // walks the same SDK .jsonl file and double-counts cost on every collect.
+        const legacyCursor = cursor !== null && cursor.lastProvenance === undefined;
         const legacyIncompleteSdkCursor = Boolean(cursor?.claimedSdkSessionId) && (!cursor?.lastProvenance || !cursor?.claimedSdkCwd);
         const cursorIsStale =
-          Boolean(cursor?.claimedSdkSessionId) &&
-          (cursor?.lastProvenance === "telemetry-incomplete" || legacyIncompleteSdkCursor);
+          legacyCursor ||
+          (Boolean(cursor?.claimedSdkSessionId) &&
+            (cursor?.lastProvenance === "telemetry-incomplete" || legacyIncompleteSdkCursor));
         if (
           cursor &&
           !cursorIsStale &&
@@ -178,6 +184,16 @@ export const eurekaParser: Parser = {
 
         if (result) {
           sessions.push(result.session);
+          void logDiag({
+            event: "eureka.session.write",
+            sessionId: result.session.id,
+            source: result.session.source,
+            orchestratorKind: result.session.orchestrator?.kind ?? null,
+            tokenProvenance: result.session.tokenProvenance,
+            sdkSessionId: result.sdkSessionId ?? null,
+            cursorWasStale: cursor ? Boolean((cursor.lastProvenance === undefined) || (cursor.lastProvenance === "telemetry-incomplete") || (cursor.claimedSdkSessionId && (!cursor.lastProvenance || !cursor.claimedSdkCwd))) : null,
+            cost: result.session.cost?.total ?? 0,
+          });
           // Recompute mtime AFTER the parse — this captures the CC SDK .jsonl mtime that we
           // may have just learned about (via the parsed sdkCwd), so we don't immediately
           // re-parse on the next collect when the SDK file grew during this run.

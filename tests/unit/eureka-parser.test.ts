@@ -83,6 +83,42 @@ describe("eureka parser source attribution", () => {
     const ccResult = await claudeCodeParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
     expect(ccResult.sessions.some((session) => session.id === "claimed-sdk-session")).toBe(false);
   });
+
+  it("re-parses legacy Eureka cursors that pre-date the claim mechanism", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+
+    await createEurekaClaudeSdkFixture(testHome, { sessionId: "legacy-eureka-session", sdkSessionId: "legacy-sdk-session" });
+
+    // Build a legacy cursor: matches inode/size/mtime exactly but lacks
+    // claimedSdkSessionId/claimedSdkCwd/lastProvenance. Without the legacy-cursor
+    // fix the cache hit short-circuits parsing and CC parser double-counts the SDK file.
+    const eurekaSessionPath = path.join(testHome, ".craft-agent", "workspaces", "workspace-1", "sessions", "legacy-eureka-session");
+    const telemetryPath = path.join(eurekaSessionPath, "llm-telemetry.jsonl");
+    const primaryStat = await fs.stat(telemetryPath);
+
+    const cursorState = createEmptyCursorState();
+    cursorState.files[telemetryPath] = {
+      path: telemetryPath,
+      inode: Number(primaryStat.ino),
+      size: Number(primaryStat.size),
+      mtimeMs: Number(primaryStat.mtimeMs),
+      byteOffset: Number(primaryStat.size),
+      processedAt: new Date().toISOString(),
+      // Intentionally no claimedSdkSessionId / claimedSdkCwd / lastProvenance
+    };
+
+    const eurekaResult = await eurekaParser.parse({ machineId: "machine-1", existingCursor: cursorState });
+    // Should re-parse, producing the session and a fresh cursor with claim info.
+    expect(eurekaResult.sessions.some((s) => s.id === "legacy-eureka-session")).toBe(true);
+    const newCursor = eurekaResult.cursorUpdates[telemetryPath];
+    expect(newCursor?.claimedSdkSessionId).toBe("legacy-sdk-session");
+    expect(newCursor?.lastProvenance).toBeDefined();
+
+    // CC parser must skip the now-claimed SDK file.
+    const ccResult = await claudeCodeParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
+    expect(ccResult.sessions.some((s) => s.id === "legacy-sdk-session")).toBe(false);
+  });
 });
 
 async function writeNoSdkSession(testHome: string, sessionId: string, runtimeProvider: string, engine: string): Promise<void> {
