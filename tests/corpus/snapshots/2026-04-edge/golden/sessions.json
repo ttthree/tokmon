@@ -1,5 +1,129 @@
 [
   {
+    "id": "eureka-cc-normal",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Eureka + CC",
+    "projectPath": "/Users/testuser/proj/eureka-cc",
+    "project": "eureka-cc",
+    "summary": "eureka cc",
+    "model": "claude-sonnet-4-20250514",
+    "createdAt": 3600,
+    "modifiedAt": 3780,
+    "durationSeconds": 0,
+    "turns": 2,
+    "messageCount": 4,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 120,
+      "output": 30,
+      "cacheCreation": 0,
+      "cacheRead": 40
+    },
+    "cost": {
+      "input": 0.00036,
+      "output": 0.00045,
+      "cacheCreation": 0,
+      "cacheRead": 0.000012,
+      "total": 0.0008219999999999999
+    },
+    "toolBreakdown": {},
+    "modelUsage": {
+      "claude-sonnet-4-20250514": {
+        "input": 120,
+        "output": 30,
+        "cacheCreation": 0,
+        "cacheRead": 40
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "eureka-cc-orphan",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Eureka + CC",
+    "projectPath": "/Users/testuser/proj/eureka-orphan",
+    "project": "eureka-orphan",
+    "summary": "orphan",
+    "model": "claude-sonnet-4-20250514",
+    "createdAt": 4200,
+    "modifiedAt": 4260,
+    "durationSeconds": 0,
+    "turns": 2,
+    "messageCount": 4,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "telemetry-incomplete",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "eureka-subagent",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Eureka + CC",
+    "projectPath": "/Users/testuser/proj/subagent",
+    "project": "subagent",
+    "summary": "eureka sub",
+    "model": "claude-sonnet-4-20250514",
+    "createdAt": 5400,
+    "modifiedAt": 5700,
+    "durationSeconds": 0,
+    "turns": 2,
+    "messageCount": 4,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 57,
+      "output": 13,
+      "cacheCreation": 0,
+      "cacheRead": 11
+    },
+    "cost": {
+      "input": 0.000171,
+      "output": 0.000195,
+      "cacheCreation": 0,
+      "cacheRead": 0.0000032999999999999997,
+      "total": 0.00036930000000000003
+    },
+    "toolBreakdown": {},
+    "modelUsage": {
+      "claude-sonnet-4-20250514": {
+        "input": 50,
+        "output": 10,
+        "cacheCreation": 0,
+        "cacheRead": 10
+      },
+      "claude-haiku-4-5-20251001": {
+        "input": 7,
+        "output": 3,
+        "cacheCreation": 0,
+        "cacheRead": 1
+      }
+    },
+    "tokenProvenance": "sdk-cc-jsonl",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
     "id": "malformed-cc",
     "machineId": "machine",
     "source": "claude-code",
@@ -253,85 +377,9 @@
     "tokenProvenance": "sdk-codex-rollout"
   },
   {
-    "id": "eureka-cc-normal",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + CC",
-    "projectPath": "/Users/testuser/proj/eureka-cc",
-    "project": "eureka-cc",
-    "summary": "eureka cc",
-    "model": "claude-sonnet-4-20250514",
-    "createdAt": 3600,
-    "modifiedAt": 3780,
-    "durationSeconds": 0,
-    "turns": 2,
-    "messageCount": 4,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 120,
-      "output": 30,
-      "cacheCreation": 0,
-      "cacheRead": 40
-    },
-    "cost": {
-      "input": 0.00036,
-      "output": 0.00045,
-      "cacheCreation": 0,
-      "cacheRead": 0.000012,
-      "total": 0.0008219999999999999
-    },
-    "toolBreakdown": {},
-    "modelUsage": {
-      "claude-sonnet-4-20250514": {
-        "input": 120,
-        "output": 30,
-        "cacheCreation": 0,
-        "cacheRead": 40
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "eureka-cc-orphan",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + CC",
-    "projectPath": "/Users/testuser/proj/eureka-orphan",
-    "project": "eureka-orphan",
-    "summary": "orphan",
-    "model": "claude-sonnet-4-20250514",
-    "createdAt": 4200,
-    "modifiedAt": 4260,
-    "durationSeconds": 0,
-    "turns": 2,
-    "messageCount": 4,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "telemetry-incomplete",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
     "id": "eureka-codex",
     "machineId": "machine",
-    "source": "eureka",
+    "source": "codex",
     "engine": "Eureka + Codex",
     "projectPath": "/Users/testuser/proj/eureka-codex",
     "project": "eureka-codex",
@@ -350,11 +398,11 @@
       "cacheRead": 50
     },
     "cost": {
-      "input": 0.00045,
-      "output": 0.00030000000000000003,
+      "input": 0.0003,
+      "output": 0.00016,
       "cacheCreation": 0,
-      "cacheRead": 0.000015,
-      "total": 0.0007650000000000001
+      "cacheRead": 0.000025,
+      "total": 0.000485
     },
     "toolBreakdown": {},
     "modelUsage": {
@@ -366,54 +414,6 @@
       }
     },
     "tokenProvenance": "sdk-codex-rollout",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "eureka-subagent",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + CC",
-    "projectPath": "/Users/testuser/proj/subagent",
-    "project": "subagent",
-    "summary": "eureka sub",
-    "model": "claude-sonnet-4-20250514",
-    "createdAt": 5400,
-    "modifiedAt": 5700,
-    "durationSeconds": 0,
-    "turns": 2,
-    "messageCount": 4,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 57,
-      "output": 13,
-      "cacheCreation": 0,
-      "cacheRead": 11
-    },
-    "cost": {
-      "input": 0.000171,
-      "output": 0.000195,
-      "cacheCreation": 0,
-      "cacheRead": 0.0000032999999999999997,
-      "total": 0.00036930000000000003
-    },
-    "toolBreakdown": {},
-    "modelUsage": {
-      "claude-sonnet-4-20250514": {
-        "input": 50,
-        "output": 10,
-        "cacheCreation": 0,
-        "cacheRead": 10
-      },
-      "claude-haiku-4-5-20251001": {
-        "input": 7,
-        "output": 3,
-        "cacheCreation": 0,
-        "cacheRead": 1
-      }
-    },
-    "tokenProvenance": "sdk-cc-jsonl",
     "orchestrator": {
       "kind": "eureka"
     }

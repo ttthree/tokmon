@@ -10,32 +10,26 @@
       "cacheRead": 194
     },
     "cost": {
-      "input": 0.002001,
-      "output": 0.00171,
+      "input": 0.001851,
+      "output": 0.00157,
       "cacheCreation": 0,
-      "cacheRead": 0.0000582,
-      "total": 0.0037692
+      "cacheRead": 0.0000682,
+      "total": 0.0034892
     },
     "cacheHitRate": 0.225319396051
   },
   "perSource": [
     {
-      "key": "eureka",
-      "label": "eureka",
-      "cost": 0.0019563,
-      "sessions": 4
-    },
-    {
       "key": "claude-code",
       "label": "claude-code",
-      "cost": 0.0018129,
-      "sessions": 5
+      "cost": 0.0030042,
+      "sessions": 8
     },
     {
       "key": "codex",
       "label": "codex",
-      "cost": 0,
-      "sessions": 1
+      "cost": 0.000485,
+      "sessions": 2
     }
   ],
   "perModel": [
@@ -48,7 +42,7 @@
     {
       "key": "gpt-5.4",
       "label": "gpt-5.4",
-      "cost": 0.000765,
+      "cost": 0.000485,
       "sessions": 1
     },
     {
@@ -74,7 +68,7 @@
     {
       "key": "machine",
       "label": "machine",
-      "cost": 0.0037692,
+      "cost": 0.0034892,
       "sessions": 10
     }
   ],
@@ -82,7 +76,7 @@
     {
       "key": "__untagged__",
       "label": "__untagged__",
-      "cost": 0.0029787,
+      "cost": 0.0026987,
       "sessions": 8
     },
     {
@@ -95,7 +89,7 @@
   "perDay": [
     {
       "date": "2026-04-18",
-      "cost": 0.0037692,
+      "cost": 0.0034892,
       "sessions": 10,
       "tokens": 975
     }
@@ -111,7 +105,7 @@
       "avgCostPerSession": 0.000822,
       "avgTurnsPerSession": 2,
       "activeDays": 1,
-      "topSource": "eureka",
+      "topSource": "claude-code",
       "topModel": "claude-sonnet-4-20250514",
       "topMachine": "machine",
       "tokenBreakdown": {
@@ -129,8 +123,8 @@
       },
       "sourceBreakdown": [
         {
-          "key": "eureka",
-          "label": "eureka",
+          "key": "claude-code",
+          "label": "claude-code",
           "cost": 0.000822,
           "sessions": 1
         }
@@ -210,57 +204,6 @@
       ]
     },
     {
-      "projectKey": "eureka-codex",
-      "projectLabel": "eureka-codex",
-      "totalCost": 0.000765,
-      "totalTokens": 220,
-      "sessionCount": 1,
-      "totalTurns": 2,
-      "avgCostPerSession": 0.000765,
-      "avgTurnsPerSession": 2,
-      "activeDays": 1,
-      "topSource": "eureka",
-      "topModel": "gpt-5.4",
-      "topMachine": "machine",
-      "tokenBreakdown": {
-        "input": 150,
-        "output": 20,
-        "cacheCreation": 0,
-        "cacheRead": 50
-      },
-      "costBreakdown": {
-        "input": 0.00045,
-        "output": 0.0003,
-        "cacheCreation": 0,
-        "cacheRead": 0.000015,
-        "total": 0.000765
-      },
-      "sourceBreakdown": [
-        {
-          "key": "eureka",
-          "label": "eureka",
-          "cost": 0.000765,
-          "sessions": 1
-        }
-      ],
-      "modelBreakdown": [
-        {
-          "key": "gpt-5.4",
-          "label": "gpt-5.4",
-          "cost": 0.000765,
-          "sessions": 1
-        }
-      ],
-      "machineBreakdown": [
-        {
-          "key": "machine",
-          "label": "machine",
-          "cost": 0.000765,
-          "sessions": 1
-        }
-      ]
-    },
-    {
       "projectKey": "plain",
       "projectLabel": "plain",
       "totalCost": 0.000615,
@@ -312,6 +255,57 @@
       ]
     },
     {
+      "projectKey": "eureka-codex",
+      "projectLabel": "eureka-codex",
+      "totalCost": 0.000485,
+      "totalTokens": 220,
+      "sessionCount": 1,
+      "totalTurns": 2,
+      "avgCostPerSession": 0.000485,
+      "avgTurnsPerSession": 2,
+      "activeDays": 1,
+      "topSource": "codex",
+      "topModel": "gpt-5.4",
+      "topMachine": "machine",
+      "tokenBreakdown": {
+        "input": 150,
+        "output": 20,
+        "cacheCreation": 0,
+        "cacheRead": 50
+      },
+      "costBreakdown": {
+        "input": 0.0003,
+        "output": 0.00016,
+        "cacheCreation": 0,
+        "cacheRead": 0.000025,
+        "total": 0.000485
+      },
+      "sourceBreakdown": [
+        {
+          "key": "codex",
+          "label": "codex",
+          "cost": 0.000485,
+          "sessions": 1
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "key": "gpt-5.4",
+          "label": "gpt-5.4",
+          "cost": 0.000485,
+          "sessions": 1
+        }
+      ],
+      "machineBreakdown": [
+        {
+          "key": "machine",
+          "label": "machine",
+          "cost": 0.000485,
+          "sessions": 1
+        }
+      ]
+    },
+    {
       "projectKey": "subagent",
       "projectLabel": "subagent",
       "totalCost": 0.0003693,
@@ -321,7 +315,7 @@
       "avgCostPerSession": 0.0003693,
       "avgTurnsPerSession": 2,
       "activeDays": 1,
-      "topSource": "eureka",
+      "topSource": "claude-code",
       "topModel": "claude-sonnet-4-20250514",
       "topMachine": "machine",
       "tokenBreakdown": {
@@ -339,8 +333,8 @@
       },
       "sourceBreakdown": [
         {
-          "key": "eureka",
-          "label": "eureka",
+          "key": "claude-code",
+          "label": "claude-code",
           "cost": 0.0003693,
           "sessions": 1
         }
@@ -525,7 +519,7 @@
       "avgCostPerSession": 0,
       "avgTurnsPerSession": 2,
       "activeDays": 1,
-      "topSource": "eureka",
+      "topSource": "claude-code",
       "topModel": "claude-sonnet-4-20250514",
       "topMachine": "machine",
       "tokenBreakdown": {
@@ -543,8 +537,8 @@
       },
       "sourceBreakdown": [
         {
-          "key": "eureka",
-          "label": "eureka",
+          "key": "claude-code",
+          "label": "claude-code",
           "cost": 0,
           "sessions": 1
         }
@@ -571,8 +565,8 @@
     "topProjects": [
       "eureka-cc",
       "mars-workspace",
-      "eureka-codex",
       "plain",
+      "eureka-codex",
       "subagent",
       "multi",
       "broken",

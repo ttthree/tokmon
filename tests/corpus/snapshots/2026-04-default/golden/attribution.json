@@ -2,10 +2,9 @@
   "summary": {
     "totalSessions": 616,
     "perSource": {
-      "claude-code": 37,
-      "codex": 564,
-      "copilot-cli": 3,
-      "eureka": 12
+      "claude-code": 42,
+      "codex": 571,
+      "copilot-cli": 3
     },
     "perEngine": {
       "Claude Code": 37,

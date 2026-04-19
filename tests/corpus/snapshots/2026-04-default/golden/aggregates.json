@@ -10,32 +10,26 @@
       "cacheRead": 37044309
     },
     "cost": {
-      "input": 3.321384,
-      "output": 1.53523,
+      "input": 2.932473,
+      "output": 1.288396,
       "cacheCreation": 6.06599625,
-      "cacheRead": 13.1683583,
-      "total": 24.09096855
+      "cacheRead": 16.3486719,
+      "total": 26.63553715
     },
     "cacheHitRate": 0.928246707093
   },
   "perSource": [
     {
+      "key": "codex",
+      "label": "codex",
+      "cost": 15.332752,
+      "sessions": 571
+    },
+    {
       "key": "claude-code",
       "label": "claude-code",
       "cost": 11.16313935,
-      "sessions": 37
-    },
-    {
-      "key": "eureka",
-      "label": "eureka",
-      "cost": 6.4661334,
-      "sessions": 12
-    },
-    {
-      "key": "codex",
-      "label": "codex",
-      "cost": 6.32205,
-      "sessions": 564
+      "sessions": 42
     },
     {
       "key": "copilot-cli",
@@ -48,7 +42,7 @@
     {
       "key": "gpt-5.4",
       "label": "gpt-5.4",
-      "cost": 6.6056892,
+      "cost": 9.1502578,
       "sessions": 7
     },
     {
@@ -122,7 +116,7 @@
     {
       "key": "machine",
       "label": "machine",
-      "cost": 24.09096855,
+      "cost": 26.63553715,
       "sessions": 616
     }
   ],
@@ -130,7 +124,7 @@
     {
       "key": "__untagged__",
       "label": "__untagged__",
-      "cost": 24.09096855,
+      "cost": 26.63553715,
       "sessions": 616
     }
   ],
@@ -557,7 +551,7 @@
     },
     {
       "date": "2026-04-12",
-      "cost": 6.902445,
+      "cost": 9.4470136,
       "sessions": 8,
       "tokens": 16841363
     },
@@ -624,13 +618,7 @@
           "key": "claude-code",
           "label": "claude-code",
           "cost": 4.1967585,
-          "sessions": 13
-        },
-        {
-          "key": "eureka",
-          "label": "eureka",
-          "cost": 0,
-          "sessions": 1
+          "sessions": 14
         }
       ],
       "modelBreakdown": [
@@ -677,14 +665,14 @@
     {
       "projectKey": "openharness",
       "projectLabel": "openharness",
-      "totalCost": 7.5221952,
+      "totalCost": 10.0667638,
       "totalTokens": 17738365,
       "sessionCount": 9,
       "totalTurns": 33,
-      "avgCostPerSession": 0.835799466667,
+      "avgCostPerSession": 1.118529311111,
       "avgTurnsPerSession": 3.6666666666666665,
       "activeDays": 3,
-      "topSource": "eureka",
+      "topSource": "codex",
       "topModel": "gpt-5.4",
       "topMachine": "machine",
       "tokenBreakdown": {
@@ -694,29 +682,23 @@
         "cacheRead": 17129874
       },
       "costBreakdown": {
-        "input": 1.686033,
-        "output": 0.6972,
+        "input": 1.297122,
+        "output": 0.450366,
         "cacheCreation": 0,
-        "cacheRead": 5.1389622,
-        "total": 7.5221952
+        "cacheRead": 8.3192758,
+        "total": 10.0667638
       },
       "sourceBreakdown": [
         {
-          "key": "eureka",
-          "label": "eureka",
-          "cost": 6.4661334,
-          "sessions": 1
+          "key": "codex",
+          "label": "codex",
+          "cost": 9.010702,
+          "sessions": 5
         },
         {
           "key": "claude-code",
           "label": "claude-code",
           "cost": 1.0560618,
-          "sessions": 4
-        },
-        {
-          "key": "codex",
-          "label": "codex",
-          "cost": 0,
           "sessions": 4
         }
       ],
@@ -724,7 +706,7 @@
         {
           "key": "gpt-5.4",
           "label": "gpt-5.4",
-          "cost": 6.4661334,
+          "cost": 9.010702,
           "sessions": 1
         },
         {
@@ -744,7 +726,7 @@
         {
           "key": "machine",
           "label": "machine",
-          "cost": 7.5221952,
+          "cost": 10.0667638,
           "sessions": 9
         }
       ]
@@ -849,7 +831,7 @@
           "key": "claude-code",
           "label": "claude-code",
           "cost": 1.1968248,
-          "sessions": 4
+          "sessions": 7
         },
         {
           "key": "copilot-cli",
@@ -861,13 +843,7 @@
           "key": "codex",
           "label": "codex",
           "cost": 0,
-          "sessions": 102
-        },
-        {
-          "key": "eureka",
-          "label": "eureka",
-          "cost": 0,
-          "sessions": 7
+          "sessions": 106
         }
       ],
       "modelBreakdown": [
@@ -1029,13 +1005,7 @@
           "key": "codex",
           "label": "codex",
           "cost": 0,
-          "sessions": 2
-        },
-        {
-          "key": "eureka",
-          "label": "eureka",
-          "cost": 0,
-          "sessions": 2
+          "sessions": 4
         }
       ],
       "modelBreakdown": [
@@ -1173,19 +1143,13 @@
           "key": "claude-code",
           "label": "claude-code",
           "cost": 0.1658829,
-          "sessions": 1
+          "sessions": 2
         },
         {
           "key": "codex",
           "label": "codex",
           "cost": 0.01757,
           "sessions": 22
-        },
-        {
-          "key": "eureka",
-          "label": "eureka",
-          "cost": 0,
-          "sessions": 1
         }
       ],
       "modelBreakdown": [

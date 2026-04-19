@@ -2,9 +2,8 @@
   "summary": {
     "totalSessions": 10,
     "perSource": {
-      "claude-code": 5,
-      "codex": 1,
-      "eureka": 4
+      "claude-code": 8,
+      "codex": 2
     },
     "perEngine": {
       "Claude Code": 3,

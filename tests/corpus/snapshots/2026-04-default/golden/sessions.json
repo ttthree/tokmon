@@ -201,6 +201,176 @@
     "tokenProvenance": "sdk-cc-jsonl"
   },
   {
+    "id": "260305-strong-cove",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Eureka + CC",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
+    "project": "other",
+    "summary": "session-5",
+    "model": "claude-opus-4.6-1m",
+    "createdAt": -3783698,
+    "modifiedAt": -3783698,
+    "durationSeconds": 0,
+    "turns": 1,
+    "messageCount": 10,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "none",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "260307-calm-lion",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Eureka + CC",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
+    "project": "other",
+    "summary": "session-1",
+    "model": "claude-opus-4.6-1m",
+    "createdAt": -3607579,
+    "modifiedAt": -3607579,
+    "durationSeconds": 0,
+    "turns": 1,
+    "messageCount": 13,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "none",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "260310-young-salmon",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Eureka + CC",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
+    "project": "other",
+    "summary": "session-3",
+    "model": "claude-sonnet-4.6",
+    "createdAt": -3372483,
+    "modifiedAt": -3372483,
+    "durationSeconds": 0,
+    "turns": 1,
+    "messageCount": 6,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "none",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "260311-coral-flint",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Eureka + CC",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/work/ScratchPad",
+    "project": "ScratchPad",
+    "summary": "session-4",
+    "model": "claude-sonnet-4.6",
+    "createdAt": -3255039,
+    "modifiedAt": -3255039,
+    "durationSeconds": 0,
+    "turns": 1,
+    "messageCount": 3,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "none",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "260317-focal-ruby",
+    "machineId": "machine",
+    "source": "claude-code",
+    "engine": "Eureka + CC",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/work/craft-agents",
+    "project": "craft-agents",
+    "summary": "session-2",
+    "model": "claude-opus-4.6-1m",
+    "createdAt": -2738714,
+    "modifiedAt": -2738714,
+    "durationSeconds": 0,
+    "turns": 2,
+    "messageCount": 30,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "telemetry-incomplete",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
     "id": "2b92e544-ae08-48de-94dd-5e7e9f5b2bb5",
     "machineId": "machine",
     "source": "claude-code",
@@ -18976,6 +19146,251 @@
     "tokenProvenance": "sdk-codex-rollout"
   },
   {
+    "id": "260213-sleek-rainbow",
+    "machineId": "machine",
+    "source": "codex",
+    "engine": "Eureka + Codex",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f",
+    "project": "tokmon",
+    "summary": "session-9",
+    "model": "gpt-5.3-codex",
+    "createdAt": -5508834,
+    "modifiedAt": -5508834,
+    "durationSeconds": 0,
+    "turns": 2,
+    "messageCount": 4,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "none",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "260307-rapid-boulder",
+    "machineId": "machine",
+    "source": "codex",
+    "engine": "Eureka + Codex",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
+    "project": "other",
+    "summary": "session-12",
+    "model": "gpt-5.4",
+    "createdAt": -3629451,
+    "modifiedAt": -3629451,
+    "durationSeconds": 0,
+    "turns": 5,
+    "messageCount": 62,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "none",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "260308-onyx-ocean",
+    "machineId": "machine",
+    "source": "codex",
+    "engine": "Eureka + Codex",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
+    "project": "other",
+    "summary": "session-6",
+    "model": "gpt-5.4",
+    "createdAt": -3534528,
+    "modifiedAt": -3534528,
+    "durationSeconds": 0,
+    "turns": 1,
+    "messageCount": 2,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "none",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "260309-high-palm",
+    "machineId": "machine",
+    "source": "codex",
+    "engine": "Eureka + Codex",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
+    "project": "other",
+    "summary": "session-7",
+    "model": "gpt-5.4",
+    "createdAt": -3453193,
+    "modifiedAt": -3453193,
+    "durationSeconds": 0,
+    "turns": 1,
+    "messageCount": 14,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "none",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "260310-awake-pebble",
+    "machineId": "machine",
+    "source": "codex",
+    "engine": "Eureka + Codex",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
+    "project": "other",
+    "summary": "session-8",
+    "model": "gpt-5.3-codex",
+    "createdAt": -3329004,
+    "modifiedAt": -3329004,
+    "durationSeconds": 0,
+    "turns": 3,
+    "messageCount": 21,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "tokenProvenance": "none",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "260412-ready-puma",
+    "machineId": "machine",
+    "source": "codex",
+    "engine": "Eureka + Codex",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/work/openharness",
+    "project": "openharness",
+    "summary": "session-10",
+    "model": "gpt-5.4",
+    "createdAt": -512125,
+    "modifiedAt": -512125,
+    "durationSeconds": 0,
+    "turns": 16,
+    "messageCount": 194,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 388911,
+      "output": 35262,
+      "cacheCreation": 0,
+      "cacheRead": 15901568
+    },
+    "cost": {
+      "input": 0.777822,
+      "output": 0.282096,
+      "cacheCreation": 0,
+      "cacheRead": 7.950784,
+      "total": 9.010702
+    },
+    "toolBreakdown": {},
+    "modelUsage": {
+      "gpt-5.4": {
+        "input": 388911,
+        "output": 35262,
+        "cacheCreation": 0,
+        "cacheRead": 15901568
+      }
+    },
+    "tokenProvenance": "sdk-codex-rollout",
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
+    "id": "260418-quiet-woods",
+    "machineId": "machine",
+    "source": "codex",
+    "engine": "Eureka + Codex",
+    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/work/tokmon",
+    "project": "tokmon",
+    "summary": "session-11",
+    "model": "gpt-5.4",
+    "createdAt": -2384,
+    "modifiedAt": -2384,
+    "durationSeconds": 0,
+    "turns": 1,
+    "messageCount": 5,
+    "toolCallCount": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0
+    },
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheCreation": 0,
+      "cacheRead": 0,
+      "total": 0
+    },
+    "toolBreakdown": {},
+    "orchestrator": {
+      "kind": "eureka"
+    }
+  },
+  {
     "id": "637e9759-c856-4798-ac45-dc269fd8027b",
     "machineId": "machine",
     "source": "copilot-cli",
@@ -19064,420 +19479,5 @@
     },
     "toolBreakdown": {},
     "tokenProvenance": "telemetry"
-  },
-  {
-    "id": "260213-sleek-rainbow",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + Codex",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f",
-    "project": "tokmon",
-    "summary": "session-9",
-    "model": "gpt-5.3-codex",
-    "createdAt": -5508834,
-    "modifiedAt": -5508834,
-    "durationSeconds": 0,
-    "turns": 2,
-    "messageCount": 4,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "none",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260305-strong-cove",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + CC",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
-    "project": "other",
-    "summary": "session-5",
-    "model": "claude-opus-4.6-1m",
-    "createdAt": -3783698,
-    "modifiedAt": -3783698,
-    "durationSeconds": 0,
-    "turns": 1,
-    "messageCount": 10,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "none",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260307-calm-lion",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + CC",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
-    "project": "other",
-    "summary": "session-1",
-    "model": "claude-opus-4.6-1m",
-    "createdAt": -3607579,
-    "modifiedAt": -3607579,
-    "durationSeconds": 0,
-    "turns": 1,
-    "messageCount": 13,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "none",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260307-rapid-boulder",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + Codex",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
-    "project": "other",
-    "summary": "session-12",
-    "model": "gpt-5.4",
-    "createdAt": -3629451,
-    "modifiedAt": -3629451,
-    "durationSeconds": 0,
-    "turns": 5,
-    "messageCount": 62,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "none",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260308-onyx-ocean",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + Codex",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
-    "project": "other",
-    "summary": "session-6",
-    "model": "gpt-5.4",
-    "createdAt": -3534528,
-    "modifiedAt": -3534528,
-    "durationSeconds": 0,
-    "turns": 1,
-    "messageCount": 2,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "none",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260309-high-palm",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + Codex",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
-    "project": "other",
-    "summary": "session-7",
-    "model": "gpt-5.4",
-    "createdAt": -3453193,
-    "modifiedAt": -3453193,
-    "durationSeconds": 0,
-    "turns": 1,
-    "messageCount": 14,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "none",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260310-awake-pebble",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + Codex",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
-    "project": "other",
-    "summary": "session-8",
-    "model": "gpt-5.3-codex",
-    "createdAt": -3329004,
-    "modifiedAt": -3329004,
-    "durationSeconds": 0,
-    "turns": 3,
-    "messageCount": 21,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "none",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260310-young-salmon",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + CC",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/.craft-agent/workspaces/9df32373-5d69-dc49-bd69-e55a0acb599f/workdirectory",
-    "project": "other",
-    "summary": "session-3",
-    "model": "claude-sonnet-4.6",
-    "createdAt": -3372483,
-    "modifiedAt": -3372483,
-    "durationSeconds": 0,
-    "turns": 1,
-    "messageCount": 6,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "none",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260311-coral-flint",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + CC",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/work/ScratchPad",
-    "project": "ScratchPad",
-    "summary": "session-4",
-    "model": "claude-sonnet-4.6",
-    "createdAt": -3255039,
-    "modifiedAt": -3255039,
-    "durationSeconds": 0,
-    "turns": 1,
-    "messageCount": 3,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "none",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260317-focal-ruby",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + CC",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/work/craft-agents",
-    "project": "craft-agents",
-    "summary": "session-2",
-    "model": "claude-opus-4.6-1m",
-    "createdAt": -2738714,
-    "modifiedAt": -2738714,
-    "durationSeconds": 0,
-    "turns": 2,
-    "messageCount": 30,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "tokenProvenance": "telemetry-incomplete",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260412-ready-puma",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + Codex",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/work/openharness",
-    "project": "openharness",
-    "summary": "session-10",
-    "model": "gpt-5.4",
-    "createdAt": -512125,
-    "modifiedAt": -512125,
-    "durationSeconds": 0,
-    "turns": 16,
-    "messageCount": 194,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 388911,
-      "output": 35262,
-      "cacheCreation": 0,
-      "cacheRead": 15901568
-    },
-    "cost": {
-      "input": 1.166733,
-      "output": 0.52893,
-      "cacheCreation": 0,
-      "cacheRead": 4.7704704,
-      "total": 6.4661334
-    },
-    "toolBreakdown": {},
-    "modelUsage": {
-      "gpt-5.4": {
-        "input": 388911,
-        "output": 35262,
-        "cacheCreation": 0,
-        "cacheRead": 15901568
-      }
-    },
-    "tokenProvenance": "sdk-codex-rollout",
-    "orchestrator": {
-      "kind": "eureka"
-    }
-  },
-  {
-    "id": "260418-quiet-woods",
-    "machineId": "machine",
-    "source": "eureka",
-    "engine": "Eureka + Codex",
-    "projectPath": "/repo/tests/corpus/snapshots/2026-04-default/home/work/tokmon",
-    "project": "tokmon",
-    "summary": "session-11",
-    "model": "gpt-5.4",
-    "createdAt": -2384,
-    "modifiedAt": -2384,
-    "durationSeconds": 0,
-    "turns": 1,
-    "messageCount": 5,
-    "toolCallCount": 0,
-    "tokens": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0
-    },
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheCreation": 0,
-      "cacheRead": 0,
-      "total": 0
-    },
-    "toolBreakdown": {},
-    "orchestrator": {
-      "kind": "eureka"
-    }
   }
 ]
