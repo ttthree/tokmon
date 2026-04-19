@@ -28,6 +28,8 @@ describe("eureka parser", () => {
 
     expect(result.sessions).toHaveLength(1);
     const session = result.sessions[0];
+    expect(session.source).toBe("codex");
+    expect(session.orchestrator).toEqual({ kind: "eureka" });
     expect(session.model).toBe("gpt-5.4");
     expect(session.tokens).toEqual({ input: 1300, output: 90, cacheCreation: 0, cacheRead: 300 });
     expect(session.modelUsage).toEqual({
@@ -69,6 +71,8 @@ describe("eureka parser", () => {
 
     expect(result.sessions).toHaveLength(1);
     const session = result.sessions[0];
+    expect(session.source).toBe("codex");
+    expect(session.orchestrator).toEqual({ kind: "eureka" });
     expect(session.model).toBe("gpt-5.4");
     expect(session.modelUsage).toEqual({
       "gpt-5.4": { input: 500, output: 25, cacheCreation: 0, cacheRead: 400 },

@@ -20,6 +20,8 @@ interface ActiveFiltersBarProps {
   onClearRange: () => void;
   sourceLabel: string | null;
   onClearSource: () => void;
+  orchestratorLabel: string | null;
+  onClearOrchestrator: () => void;
   machineLabel: string | null;
   onClearMachine: () => void;
   projectLabel: string | null;
@@ -38,6 +40,8 @@ export function ActiveFiltersBar({
   onClearRange,
   sourceLabel,
   onClearSource,
+  orchestratorLabel,
+  onClearOrchestrator,
   machineLabel,
   onClearMachine,
   projectLabel,
@@ -61,7 +65,10 @@ export function ActiveFiltersBar({
     });
   }
   if (sourceLabel) {
-    chips.push({ key: "source", label: "Agent", value: sourceLabel, onClear: onClearSource });
+    chips.push({ key: "source", label: "Source", value: sourceLabel, onClear: onClearSource });
+  }
+  if (orchestratorLabel) {
+    chips.push({ key: "orchestrator", label: "Orchestrator", value: orchestratorLabel, onClear: onClearOrchestrator });
   }
   if (machineLabel) {
     chips.push({ key: "machine", label: "Machine", value: machineLabel, onClear: onClearMachine });

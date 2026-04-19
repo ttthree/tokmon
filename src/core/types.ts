@@ -1,6 +1,8 @@
-export type Source = "claude-code" | "codex" | "copilot-cli" | "eureka" | "mars";
+export type Source = "claude-code" | "codex" | "copilot-cli";
 
 export type OrchestratorKind = "mars" | "eureka";
+
+export type SourceType = Source | OrchestratorKind;
 
 export interface OrchestratorInfo {
   kind: OrchestratorKind;
@@ -118,7 +120,7 @@ export interface PricingConfig {
 
 export interface SourceEntry {
   id: string;
-  type: Source;
+  type: SourceType;
   path: string;
   enabled: boolean;
   autoDetected: boolean;
@@ -248,7 +250,7 @@ export interface ParserContext {
 }
 
 export interface Parser {
-  source: Source;
+  source: SourceType;
   parse(context: ParserContext): Promise<ParseResult>;
 }
 

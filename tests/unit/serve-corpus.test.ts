@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 
-import corporaRegistry from "../corpus/corpora.json" assert { type: "json" };
+import corporaRegistry from "../corpus/corpora.json" with { type: "json" };
 import { serveCorpus, type CorpusServer } from "../e2e/helpers/serve-corpus.js";
 
 const CORPUS_IDS = corporaRegistry.corpora.map((corpus) => corpus.id);
