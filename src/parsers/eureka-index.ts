@@ -1,8 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { getHomeDirectory } from "../core/config.js";
+import { getCraftAgentClaudeDirectory, getHomeDirectory } from "../core/config.js";
 import { inferUnderlyingSource } from "../core/orchestrator.js";
+import { encodeClaudeProjectPath } from "../core/source-resolver.js";
 import type { ParserContext, Source, TokenBreakdown, TokenProvenance } from "../core/types.js";
 
 interface LlmTelemetryEntry {
@@ -76,33 +77,36 @@ export async function buildEurekaIndex(context: ParserContext): Promise<EurekaIn
         path.join(getHomeDirectory(), ".craft-agent", "workspaces"),
         path.join(getHomeDirectory(), ".eureka", "workspaces"),
       ];
-  const byCompositeKey = new Map<string, EurekaIndexEntry>();
-  const bySdkSessionId = new Map<string, EurekaIndexEntry[]>();
+  const discovered: EurekaIndexEntry[] = [];
 
   for (const workspacesDir of workspacesDirs) {
     const stat = await safeStat(workspacesDir);
     if (!stat?.isDirectory()) continue;
-    const workspaces = await fs.readdir(workspacesDir, { withFileTypes: true }).catch(() => []);
+    const workspaces = (await fs.readdir(workspacesDir, { withFileTypes: true }).catch(() => [])).sort((a, b) => a.name.localeCompare(b.name));
     for (const workspace of workspaces) {
       if (!workspace.isDirectory()) continue;
       const sessionsDir = path.join(workspacesDir, workspace.name, "sessions");
       const sessionsDirStat = await safeStat(sessionsDir);
       if (!sessionsDirStat?.isDirectory()) continue;
-      const sessionDirs = await fs.readdir(sessionsDir, { withFileTypes: true }).catch(() => []);
+      const sessionDirs = (await fs.readdir(sessionsDir, { withFileTypes: true }).catch(() => [])).sort((a, b) => a.name.localeCompare(b.name));
       for (const sessionDir of sessionDirs) {
         if (!sessionDir.isDirectory()) continue;
         const entry = await readEurekaIndexEntry(path.join(sessionsDir, sessionDir.name), workspace.name);
         if (!entry) continue;
-        if (!byCompositeKey.has(entry.compositeKey)) {
-          byCompositeKey.set(entry.compositeKey, entry);
-        }
-        if (entry.sdkSessionId) {
-          const matches = bySdkSessionId.get(entry.sdkSessionId) ?? [];
-          matches.push(entry);
-          bySdkSessionId.set(entry.sdkSessionId, matches);
-        }
+        discovered.push(entry);
       }
     }
+  }
+
+  const deduped = await dedupeEurekaEntries(discovered);
+  const byCompositeKey = new Map<string, EurekaIndexEntry>();
+  const bySdkSessionId = new Map<string, EurekaIndexEntry[]>();
+  for (const entry of deduped) {
+    byCompositeKey.set(entry.compositeKey, entry);
+    if (!entry.sdkSessionId) continue;
+    const matches = bySdkSessionId.get(entry.sdkSessionId) ?? [];
+    matches.push(entry);
+    bySdkSessionId.set(entry.sdkSessionId, matches);
   }
 
   return {
@@ -120,6 +124,80 @@ export async function buildEurekaIndex(context: ParserContext): Promise<EurekaIn
       return undefined;
     },
   };
+}
+
+async function dedupeEurekaEntries(entries: EurekaIndexEntry[]): Promise<EurekaIndexEntry[]> {
+  const grouped = new Map<string, EurekaIndexEntry[]>();
+  for (const entry of entries) {
+    const key = `${entry.underlyingSource}:${entry.eurekaSessionId}`;
+    grouped.set(key, [...(grouped.get(key) ?? []), entry]);
+  }
+
+  const deduped: EurekaIndexEntry[] = [];
+  for (const group of grouped.values()) {
+    if (group.length === 1) {
+      deduped.push(group[0]);
+      continue;
+    }
+
+    let best = group[0];
+    let bestScore = await scoreEurekaEntry(group[0]);
+    for (let index = 1; index < group.length; index += 1) {
+      const candidate = group[index];
+      const candidateScore = await scoreEurekaEntry(candidate);
+      if (candidateScore > bestScore) {
+        best = candidate;
+        bestScore = candidateScore;
+      }
+    }
+    deduped.push(best);
+  }
+
+  return deduped;
+}
+
+async function scoreEurekaEntry(entry: EurekaIndexEntry): Promise<number> {
+  let score = 0;
+  if (await hasSdkArtifacts(entry)) score += 1_000_000;
+  if (entry.telemetryTokens && hasAnyTokens(entry.telemetryTokens)) score += 100_000;
+  score += Date.parse(entry.lastTimestamp ?? entry.firstTimestamp ?? new Date(0).toISOString()) || 0;
+  return score;
+}
+
+async function hasSdkArtifacts(entry: EurekaIndexEntry): Promise<boolean> {
+  if (!entry.sdkSessionId) return false;
+  if (entry.underlyingSource === "claude-code") {
+    const encoded = entry.sdkCwd ? encodeClaudeProjectPath(entry.sdkCwd) : null;
+    if (!encoded) return false;
+    const mainFile = path.join(getCraftAgentClaudeDirectory(), "projects", encoded, `${entry.sdkSessionId}.jsonl`);
+    if (await safeStat(mainFile)) return true;
+    const subDir = path.join(getCraftAgentClaudeDirectory(), "projects", encoded, entry.sdkSessionId, "subagents");
+    const subStat = await safeStat(subDir);
+    return Boolean(subStat?.isDirectory());
+  }
+  if (entry.underlyingSource === "codex") {
+    const codexDir = path.join(entry.sessionPath, ".codex-home", "sessions");
+    return hasNestedJsonlMatching(codexDir, entry.sdkSessionId);
+  }
+  const eventsPath = path.join(entry.sessionPath, ".copilot-sdk", "session-state", entry.sdkSessionId, "events.jsonl");
+  return Boolean(await safeStat(eventsPath));
+}
+
+async function hasNestedJsonlMatching(rootDir: string, sdkSessionId: string): Promise<boolean> {
+  const stat = await safeStat(rootDir);
+  if (!stat?.isDirectory()) return false;
+  const entries = await fs.readdir(rootDir, { withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    const candidate = path.join(rootDir, entry.name);
+    if (entry.isDirectory()) {
+      if (await hasNestedJsonlMatching(candidate, sdkSessionId)) return true;
+      continue;
+    }
+    if (entry.isFile() && entry.name.endsWith('.jsonl') && entry.name.includes(sdkSessionId)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function makeEurekaCompositeKey(sdkSessionId: string | undefined, sdkCwd: string | undefined, eurekaSessionId: string): string {

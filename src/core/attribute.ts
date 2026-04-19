@@ -3,27 +3,28 @@ import path from "node:path";
 import { computeActiveDurationSeconds } from "./duration.js";
 import { normalizeProjectPath } from "./project.js";
 import type { Session } from "./types.js";
+import { preferSession } from "./data.js";
 import { applyMarsMeta } from "../parsers/orchestrator.js";
 import type { EurekaIndex, EurekaIndexEntry } from "../parsers/eureka-index.js";
 import { eurekaEngineLabel, hasAnyBreakdown, readEurekaFallbackTokens } from "../parsers/eureka-fallback.js";
 import type { MarsRegistry } from "../parsers/mars.js";
 
-export function attributeOrchestrator(
+export async function attributeOrchestrator(
   sessions: Session[],
   marsRegistry: MarsRegistry,
   eurekaIndex: EurekaIndex,
-): { attributed: Session[]; matchedEurekaCompositeKeys: Set<string> } {
+): Promise<{ attributed: Session[]; matchedEurekaCompositeKeys: Set<string> }> {
   const matchedEurekaCompositeKeys = new Set<string>();
-  const attributed = sessions.map((session) => {
+  const attributed = await Promise.all(sessions.map(async (session) => {
     const eurekaEntry = eurekaIndex.lookup(session.id, session.projectPath);
     if (eurekaEntry) {
       matchedEurekaCompositeKeys.add(eurekaEntry.compositeKey);
-      return applyEurekaMeta(session, eurekaEntry);
+      return applyEurekaMeta(await maybeUpgradeMatchedEurekaSession(session, eurekaEntry), eurekaEntry);
     }
 
     const marsMeta = resolveMarsMeta(session, marsRegistry);
     return marsMeta ? applyMarsMeta(session, marsMeta, session.source) : session;
-  });
+  }));
   return { attributed, matchedEurekaCompositeKeys };
 }
 
@@ -79,6 +80,36 @@ function applyEurekaMeta(session: Session, entry: EurekaIndexEntry): Session {
     summary: entry.name ?? session.summary,
     orchestrator: { kind: "eureka" },
   };
+}
+
+async function maybeUpgradeMatchedEurekaSession(session: Session, entry: EurekaIndexEntry): Promise<Session> {
+  if (!shouldCheckMatchedFallback(session)) {
+    return session;
+  }
+
+  const fallback = await readEurekaFallbackTokens(entry);
+  if (!fallback || !fallbackHasUsefulTokens(fallback.tokens)) {
+    return session;
+  }
+
+  const upgraded: Session = {
+    ...session,
+    tokens: fallback.tokens,
+    model: pickModel(entry, fallback),
+    modelUsage: Object.keys(fallback.modelUsage).length > 0 ? fallback.modelUsage : session.modelUsage,
+    tokenProvenance: fallback.provenance,
+    modifiedAt: entry.lastTimestamp ?? session.modifiedAt,
+  };
+
+  return preferSession(session, upgraded);
+}
+
+function shouldCheckMatchedFallback(session: Session): boolean {
+  return session.tokenProvenance === "telemetry" || session.tokenProvenance === "none" || session.tokenProvenance === undefined;
+}
+
+function fallbackHasUsefulTokens(tokens: Session["tokens"]): boolean {
+  return tokens.input > 0 || tokens.output > 0 || tokens.cacheCreation > 0 || tokens.cacheRead > 0;
 }
 
 function resolveMarsMeta(session: Session, marsRegistry: MarsRegistry) {

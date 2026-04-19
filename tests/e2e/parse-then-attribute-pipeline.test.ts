@@ -31,6 +31,30 @@ describe("parse-then-attribute pipeline", () => {
       sdkSessionId: "claude-sdk-match",
       workingDirectory: matchedWorkingDir,
     });
+    const staleDuplicateDir = path.join(testHome, ".craft-agent", "workspaces", "workspace-2", "sessions", "eureka-matched");
+    await fs.mkdir(staleDuplicateDir, { recursive: true });
+    await fs.writeFile(
+      path.join(staleDuplicateDir, "session.jsonl"),
+      [
+        JSON.stringify({
+          id: "eureka-matched",
+          createdAt: Date.parse("2026-04-17T09:00:00.000Z"),
+          lastUsedAt: Date.parse("2026-04-17T09:05:00.000Z"),
+          name: "Stale duplicate",
+          engine: "claude",
+          model: "claude-sonnet-4-20250514",
+          runtimeProvider: "claude_agent_sdk",
+          type: "task",
+          messageCount: 2,
+          userMessageCount: 1,
+          workingDirectory: matchedWorkingDir,
+          sdkSessionId: "claude-sdk-missing",
+          sdkCwd: matchedWorkingDir,
+        }),
+        "",
+      ].join("\n"),
+      "utf8",
+    );
     await createEurekaCopilotFixture(testHome, {
       sessionId: "eureka-orphan",
       sdkSessionId: "copilot-sdk-orphan",

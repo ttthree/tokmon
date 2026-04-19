@@ -1,14 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { attributeOrchestrator } from "../../src/core/attribute.js";
-import { makeEurekaCompositeKey, type EurekaIndex, type EurekaIndexEntry } from "../../src/parsers/eureka-index.js";
-import { createEmptyMarsRegistry, type MarsRegistry } from "../../src/parsers/mars.js";
 import type { Session } from "../../src/core/types.js";
+import * as eurekaFallback from "../../src/parsers/eureka-fallback.js";
+import { makeEurekaCompositeKey, type EurekaIndex, type EurekaIndexEntry } from "../../src/parsers/eureka-index.js";
+import { createEmptyMarsRegistry } from "../../src/parsers/mars.js";
 
 describe("attributeOrchestrator", () => {
-  it("rekeys sessions on Eureka match and records matched composite keys", () => {
+  it("rekeys sessions on Eureka match and records matched composite keys", async () => {
     const entry = makeEurekaEntry({ eurekaSessionId: "eureka-1", sdkSessionId: "sdk-1", sdkCwd: "/tmp/project" });
-    const result = attributeOrchestrator([
+    const result = await attributeOrchestrator([
       makeSession({ id: "sdk-1", projectPath: "/tmp/project" }),
     ], createEmptyMarsRegistry(), makeEurekaIndex([entry]));
 
@@ -18,7 +19,7 @@ describe("attributeOrchestrator", () => {
     expect([...result.matchedEurekaCompositeKeys]).toEqual([entry.compositeKey]);
   });
 
-  it("falls back to Mars tagging when Eureka does not match", () => {
+  it("falls back to Mars tagging when Eureka does not match", async () => {
     const registry = createEmptyMarsRegistry();
     registry.byAgentSessionId.codex.set("mars-cx", {
       marsSessionId: "mars-1",
@@ -30,7 +31,7 @@ describe("attributeOrchestrator", () => {
       workspacePath: "/tmp/ws",
     });
 
-    const result = attributeOrchestrator([
+    const result = await attributeOrchestrator([
       makeSession({ id: "mars-cx", source: "codex", engine: "Codex", projectPath: "/tmp/raw" }),
     ], registry, makeEurekaIndex([]));
 
@@ -41,12 +42,12 @@ describe("attributeOrchestrator", () => {
     });
   });
 
-  it("leaves ambiguous bare sdkSessionId lookups unmatched", () => {
+  it("leaves ambiguous bare sdkSessionId lookups unmatched", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const entryA = makeEurekaEntry({ eurekaSessionId: "eureka-a", sdkSessionId: "shared", sdkCwd: "/tmp/a" });
     const entryB = makeEurekaEntry({ eurekaSessionId: "eureka-b", sdkSessionId: "shared", sdkCwd: "/tmp/b" });
 
-    const result = attributeOrchestrator([
+    const result = await attributeOrchestrator([
       makeSession({ id: "shared", projectPath: "/tmp/unknown" }),
     ], createEmptyMarsRegistry(), makeEurekaIndex([entryA, entryB]));
 
@@ -54,6 +55,48 @@ describe("attributeOrchestrator", () => {
     expect(result.attributed[0].orchestrator).toBeUndefined();
     expect(result.matchedEurekaCompositeKeys.size).toBe(0);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("ambiguous sdkSessionId lookup: shared"));
+  });
+
+  it("upgrades matched Eureka sessions when fallback provenance is stronger", async () => {
+    const spy = vi.spyOn(eurekaFallback, "readEurekaFallbackTokens").mockResolvedValue({
+      tokens: { input: 200, output: 40, cacheCreation: 8, cacheRead: 20 },
+      models: ["gpt-4.1"],
+      modelUsage: {
+        "gpt-4.1": { input: 200, output: 40, cacheCreation: 8, cacheRead: 20 },
+      },
+      provenance: "sdk-shutdown",
+    });
+
+    const entry = makeEurekaEntry({
+      eurekaSessionId: "eureka-copilot",
+      underlyingSource: "copilot-cli",
+      sdkSessionId: "copilot-sdk-1",
+      sdkCwd: "/tmp/project",
+      lastTimestamp: "2026-04-18T12:10:00.000Z",
+      headerModel: "gpt-4.1",
+    });
+
+    const result = await attributeOrchestrator([
+      makeSession({
+        id: "copilot-sdk-1",
+        source: "copilot-cli",
+        engine: "Copilot CLI",
+        projectPath: "/tmp/project",
+        model: "gpt-4.1",
+        tokenProvenance: "telemetry",
+        tokens: { input: 60, output: 12, cacheCreation: 4, cacheRead: 10 },
+      }),
+    ], createEmptyMarsRegistry(), makeEurekaIndex([entry]));
+
+    expect(result.attributed[0]).toMatchObject({
+      id: "eureka-copilot",
+      engine: "Eureka + Copilot",
+      tokenProvenance: "sdk-shutdown",
+      tokens: { input: 200, output: 40, cacheCreation: 8, cacheRead: 20 },
+      model: "gpt-4.1",
+      modifiedAt: "2026-04-18T12:10:00.000Z",
+    });
+    spy.mockRestore();
   });
 });
 

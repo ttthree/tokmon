@@ -138,7 +138,7 @@ export async function collectCommand(options: CollectOptions = {}): Promise<Coll
     eurekaEntries: eurekaIndex.byCompositeKey.size,
   });
 
-  const { attributed, matchedEurekaCompositeKeys } = attributeOrchestrator(rawSessions, marsRegistry, eurekaIndex);
+  const { attributed, matchedEurekaCompositeKeys } = await attributeOrchestrator(rawSessions, marsRegistry, eurekaIndex);
   const orphans = await ingestEurekaOrphans(eurekaIndex, matchedEurekaCompositeKeys, machineId);
   void logDiag({
     event: "collect.phase.attribute",

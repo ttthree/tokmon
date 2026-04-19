@@ -96,6 +96,50 @@ describe("buildEurekaIndex", () => {
     expect(entry.telemetryProvenance).toBe("telemetry");
     expect(entry.telemetryTokens).toEqual({ input: 90, output: 12, cacheCreation: 2, cacheRead: 10 });
   });
+
+  it("dedupes duplicate Eureka session ids by preferring entries with live SDK artifacts", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+
+    await createEurekaClaudeSdkFixture(testHome, {
+      sessionId: "eureka-dup",
+      sdkSessionId: "claude-sdk-live",
+      workingDirectory: path.join(testHome, "work", "dup"),
+    });
+
+    const staleSessionDir = path.join(testHome, ".craft-agent", "workspaces", "workspace-2", "sessions", "eureka-dup");
+    await fs.mkdir(staleSessionDir, { recursive: true });
+    await fs.writeFile(
+      path.join(staleSessionDir, "session.jsonl"),
+      [
+        JSON.stringify({
+          id: "eureka-dup",
+          createdAt: Date.parse("2026-04-18T08:00:00.000Z"),
+          lastUsedAt: Date.parse("2026-04-18T08:05:00.000Z"),
+          name: "Stale duplicate",
+          engine: "claude",
+          model: "claude-sonnet-4-20250514",
+          runtimeProvider: "claude_agent_sdk",
+          type: "task",
+          workingDirectory: path.join(testHome, "work", "dup"),
+          sdkSessionId: "claude-sdk-missing",
+          sdkCwd: path.join(testHome, "work", "dup"),
+        }),
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const index = await buildEurekaIndex({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
+    const matches = [...index.byCompositeKey.values()].filter((entry) => entry.eurekaSessionId === "eureka-dup");
+
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toMatchObject({
+      eurekaSessionId: "eureka-dup",
+      sdkSessionId: "claude-sdk-live",
+      workspaceId: "workspace-1",
+    });
+  });
 });
 
 async function findEntry(eurekaSessionId: string) {

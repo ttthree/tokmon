@@ -88,10 +88,56 @@ export function mergeSession(existing: Session | undefined, updated: Session): S
   if (!existing) {
     return updated;
   }
+  const preferred = preferSession(existing, updated);
+  const createdAt = existing.createdAt < updated.createdAt ? existing.createdAt : updated.createdAt;
   return {
-    ...updated,
-    createdAt: existing.createdAt,
+    ...preferred,
+    createdAt,
   };
+}
+
+export function preferSession(left: Session, right: Session): Session {
+  const leftRank = tokenProvenanceRank(left.tokenProvenance);
+  const rightRank = tokenProvenanceRank(right.tokenProvenance);
+  if (rightRank !== leftRank) {
+    return rightRank > leftRank ? right : left;
+  }
+
+  const leftTokens = totalTokens(left);
+  const rightTokens = totalTokens(right);
+  if (rightTokens !== leftTokens) {
+    return rightTokens > leftTokens ? right : left;
+  }
+
+  const leftCost = left.cost.total;
+  const rightCost = right.cost.total;
+  if (rightCost !== leftCost) {
+    return rightCost > leftCost ? right : left;
+  }
+
+  return Date.parse(right.modifiedAt) >= Date.parse(left.modifiedAt) ? right : left;
+}
+
+function tokenProvenanceRank(provenance: Session["tokenProvenance"]): number {
+  switch (provenance) {
+    case "sdk-cc-jsonl":
+    case "sdk-codex-rollout":
+      return 5;
+    case "sdk-shutdown":
+      return 4;
+    case "sdk-events":
+      return 3;
+    case "telemetry":
+      return 2;
+    case "none":
+    case undefined:
+    default:
+      return 1;
+  }
+}
+
+function totalTokens(session: Session): number {
+  return session.tokens.input + session.tokens.output + session.tokens.cacheCreation + session.tokens.cacheRead;
 }
 
 export function updateSessions(existing: Record<string, Session>, newSessions: Session[], machineId: string): Record<string, Session> {

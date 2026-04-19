@@ -1,5 +1,6 @@
 import { attributeOrchestrator, ingestEurekaOrphans } from "../../../core/attribute.js";
 import { createEmptyCursorState } from "../../../core/cursor.js";
+import { mergeSession } from "../../../core/data.js";
 import { loadConfig, detectAvailableSources } from "../../../core/config.js";
 import { discoverParseRoots } from "../../../core/parse-roots.js";
 import { enrichSession } from "../../../core/enrich.js";
@@ -37,7 +38,7 @@ export async function parseAllPure(options: ParseAllPureOptions = {}): Promise<S
     buildMarsRegistry({ machineId, existingCursor, sources }),
     buildEurekaIndex({ machineId, existingCursor, sources }),
   ]);
-  const { attributed, matchedEurekaCompositeKeys } = attributeOrchestrator(rawSessions, marsRegistry, eurekaIndex);
+  const { attributed, matchedEurekaCompositeKeys } = await attributeOrchestrator(rawSessions, marsRegistry, eurekaIndex);
   const orphans = await ingestEurekaOrphans(eurekaIndex, matchedEurekaCompositeKeys, machineId);
   const sessions = await Promise.all(attributed.concat(orphans).map((session) => enrichSession(session, machineId, config)));
 
@@ -48,7 +49,8 @@ export async function parseAllPure(options: ParseAllPureOptions = {}): Promise<S
   // in the golden but only once at runtime — making e2e totals drift.
   const deduped = new Map<string, Session>();
   for (const session of sessions) {
-    deduped.set(`${session.source}:${session.id}`, session);
+    const key = `${session.source}:${session.id}`;
+    deduped.set(key, mergeSession(deduped.get(key), session));
   }
   return [...deduped.values()];
 }
