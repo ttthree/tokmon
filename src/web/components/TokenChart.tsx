@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { useState } from "react";
 import { Area, Bar, ComposedChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -12,7 +11,7 @@ interface TokenChartPoint {
   cacheCreation: number;
   cacheRead: number;
   cost: number;
-  // Optional per-series cost breakdown for stacked bars
+  // Optional per-source cost breakdown for stacked bars
   costBySource?: Record<string, number>;
 }
 
@@ -23,8 +22,6 @@ export function TokenChart({
   title = "Token & Cost Trend",
   sources,
   sourceLabels,
-  seriesColors,
-  actions,
 }: {
   data: TokenChartPoint[];
   title?: string;
@@ -32,8 +29,6 @@ export function TokenChart({
   sources?: string[];
   /** Optional human-readable labels for sources (e.g. claude-code → "Claude Code"). */
   sourceLabels?: Record<string, string>;
-  seriesColors?: Record<string, string>;
-  actions?: ReactNode;
 }) {
   const { theme } = useTheme();
   const { colors } = theme;
@@ -69,28 +64,25 @@ export function TokenChart({
         <div className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
           {title}
         </div>
-        <div className="flex items-center gap-2">
-          {actions}
-          <div className="flex gap-1 text-xs">
-            {(["both", "tokens", "cost"] as ChartMode[]).map((m) => {
-              const active = m === mode;
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMode(m)}
-                  className="rounded px-2 py-1 capitalize"
-                  style={{
-                    background: active ? "var(--accent)" : "var(--bg-panel-muted)",
-                    color: active ? "var(--accent-fg)" : "var(--text-secondary)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  {m === "both" ? "Both" : m === "tokens" ? "Tokens" : "Cost"}
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex gap-1 text-xs">
+          {(["both", "tokens", "cost"] as ChartMode[]).map((m) => {
+            const active = m === mode;
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className="rounded px-2 py-1 capitalize"
+                style={{
+                  background: active ? "var(--accent)" : "var(--bg-panel-muted)",
+                  color: active ? "var(--accent-fg)" : "var(--text-secondary)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                {m === "both" ? "Both" : m === "tokens" ? "Tokens" : "Cost"}
+              </button>
+            );
+          })}
         </div>
       </div>
       <div className="h-72">
@@ -141,7 +133,7 @@ export function TokenChart({
             {showCost && stacked
               ? sources!.map((src, idx) => {
                   const palette = colors.chartPalette;
-                  const fill = seriesColors?.[src] ?? palette[idx % palette.length];
+                  const fill = palette[idx % palette.length];
                   const isLast = idx === sources!.length - 1;
                   const label = sourceLabels?.[src] ?? src;
                   return (

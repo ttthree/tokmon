@@ -1,16 +1,17 @@
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
-import { getClaudeDirectory, getCodexDirectory, getCopilotDirectory, getHomeDirectory } from "./config.js";
+import { getClaudeDirectory, getCodexDirectory, getCopilotDirectory } from "./config.js";
 import type { Session } from "./types.js";
 
 export async function resolveSourcePath(session: Session): Promise<string | null> {
-  if (session.orchestrator?.kind === "eureka") {
-    return resolveEurekaPath(session);
-  }
-
   if (session.source === "claude-code") {
     return resolveClaudeCodePath(session);
+  }
+
+  if (session.source === "eureka") {
+    return resolveEurekaPath(session);
   }
 
   if (session.source === "codex") {
@@ -34,10 +35,9 @@ function resolveClaudeCodePath(session: Session): string | null {
 }
 
 async function resolveEurekaPath(session: Session): Promise<string | null> {
-  const home = getHomeDirectory();
   const workspacesDirs = [
-    path.join(home, ".craft-agent", "workspaces"),
-    path.join(home, ".eureka", "workspaces"),
+    path.join(os.homedir(), ".craft-agent", "workspaces"),
+    path.join(os.homedir(), ".eureka", "workspaces"),
   ];
   for (const workspacesDir of workspacesDirs) {
     try {

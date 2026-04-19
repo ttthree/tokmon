@@ -2,7 +2,7 @@ import os from "node:os";
 import path from "node:path";
 import fs from "node:fs/promises";
 
-import type { AppConfig, MachineData, SourceEntry, SourceType } from "./types.js";
+import type { AppConfig, MachineData, Source, SourceEntry } from "./types.js";
 
 export const DEFAULT_CONFIG: AppConfig = {
   github: {
@@ -188,8 +188,7 @@ export async function setConfigValue(keyPath: string, value: unknown): Promise<A
 
 export async function loadMachineDataFromPath(machinePath: string): Promise<MachineData> {
   const raw = JSON.parse(await fs.readFile(machinePath, "utf8")) as MachineData;
-  const { tagLegacySourceMigration } = await import("./data.js");
-  return tagLegacySourceMigration(raw);
+  return raw;
 }
 
 export async function loadMachineDataFromPathSafe(machinePath: string): Promise<MachineData | null> {
@@ -238,7 +237,7 @@ function mergeConfig(base: AppConfig, override: Partial<AppConfig>): AppConfig {
 }
 
 interface DetectedCandidate {
-  type: SourceType;
+  type: Source;
   path: string;
   label?: string;
 }
@@ -271,7 +270,7 @@ async function collectDetectionCandidates(): Promise<DetectedCandidate[]> {
   return results.filter((c): c is DetectedCandidate => c !== null);
 }
 
-function makeSourceId(type: SourceType, p: string): string {
+function makeSourceId(type: Source, p: string): string {
   return `${type}:${p}`;
 }
 

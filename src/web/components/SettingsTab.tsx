@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type { AppConfig, SourceEntry, SourceType } from "../../core/types.js";
+import type { AppConfig, Source, SourceEntry } from "../../core/types.js";
 import {
   fetchMachineIdentity,
   fetchSettings,
@@ -10,7 +10,7 @@ import {
   type MachineIdentity,
 } from "../api.js";
 
-const SOURCE_TYPES: Array<{ id: SourceType; label: string }> = [
+const SOURCE_TYPES: Array<{ id: Source; label: string }> = [
   { id: "claude-code", label: "Claude Code" },
   { id: "codex", label: "Codex" },
   { id: "copilot-cli", label: "Copilot CLI" },
@@ -35,7 +35,7 @@ export function SettingsTab() {
   const [machineName, setMachineName] = useState("");
   const [machineIdentity, setMachineIdentity] = useState<MachineIdentity | null>(null);
 
-  const [newType, setNewType] = useState<SourceType>("claude-code");
+  const [newType, setNewType] = useState<Source>("claude-code");
   const [newPath, setNewPath] = useState("");
 
   useEffect(() => {
@@ -207,7 +207,7 @@ export function SettingsTab() {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <select
             value={newType}
-            onChange={(e) => setNewType(e.target.value as SourceType)}
+            onChange={(e) => setNewType(e.target.value as Source)}
             className="rounded border px-2 py-1 text-sm"
             style={inputStyle}
           >
@@ -314,7 +314,7 @@ function formatEvent(e: CollectSSEEvent): string {
   }
 }
 
-function typeLabel(t: SourceType): string {
+function typeLabel(t: Source): string {
   return SOURCE_TYPES.find((s) => s.id === t)?.label ?? t;
 }
 

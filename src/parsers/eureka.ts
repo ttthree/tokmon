@@ -3,11 +3,10 @@ import path from "node:path";
 
 import { getCraftAgentClaudeDirectory, getHomeDirectory } from "../core/config.js";
 import { computeActiveDurationSeconds } from "../core/duration.js";
-import { inferUnderlyingSource } from "../core/orchestrator.js";
 import { normalizeProjectPath } from "../core/project.js";
 import { encodeClaudeProjectPath } from "../core/source-resolver.js";
 import { streamJsonl } from "./util/jsonl-stream.js";
-import type { FileCursor, ParseResult, Parser, ParserContext, Session, Source, TokenBreakdown, TokenProvenance } from "../core/types.js";
+import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown, TokenProvenance } from "../core/types.js";
 
 // Set of CC session IDs claimed by Eureka (populated during parse, read by CC parser)
 export const claimedCcSessionIds = new Set<string>();
@@ -301,13 +300,11 @@ async function parseEurekaSession(
   }
 
   // Read precise token data + model info from the underlying SDK session files.
-  let underlyingSource: Source;
   if (meta.sdkSessionId) {
     const runtimeProvider = (meta.runtimeProvider ?? "").toLowerCase();
     const engine = (meta.engine ?? "").toLowerCase();
 
     if (runtimeProvider.includes("copilot")) {
-      underlyingSource = "copilot-cli";
       const result = await readSdkSessionTokens(sessionPath, meta.sdkSessionId, meta.headerModel);
       if (result) {
         meta.tokens = result.tokens;
@@ -318,7 +315,6 @@ async function parseEurekaSession(
         meta.tokenProvenance = "telemetry-incomplete";
       }
     } else if (engine.includes("codex") || runtimeProvider.includes("codex")) {
-      underlyingSource = "codex";
       const result = await readSdkSessionTokens(sessionPath, meta.sdkSessionId, meta.headerModel);
       if (result) {
         meta.tokens = result.tokens;
@@ -329,7 +325,6 @@ async function parseEurekaSession(
         meta.tokenProvenance = telemetryProvenance(meta.tokens, "telemetry");
       }
     } else {
-      underlyingSource = "claude-code";
       const result = await readCcSessionTokens(meta.sdkSessionId, meta.sdkCwd);
       if (result) {
         meta.tokens = result.tokens;
@@ -343,7 +338,6 @@ async function parseEurekaSession(
 
     claimedCcSessionIds.add(meta.sdkSessionId);
   } else {
-    underlyingSource = inferUnderlyingSource(meta.runtimeProvider, meta.engine);
     meta.tokens = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
     meta.modelUsage = undefined;
     meta.models.clear();
@@ -384,7 +378,7 @@ async function parseEurekaSession(
   const session: Session = {
     id: sessionId,
     machineId,
-    source: underlyingSource,
+    source: "eureka",
     engine: formatEurekaEngine(meta.engine, meta.providers),
     projectPath,
     project,

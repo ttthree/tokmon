@@ -15,15 +15,15 @@ describe("buildAttribution", () => {
 
     const result = buildAttribution([
       makeSession({ id: "plain-cc", source: "claude-code", engine: "Claude Code" }),
-      makeSession({ id: "eureka-1", source: "claude-code", engine: "Eureka + CC", orchestrator: { kind: "eureka" }, tokens: { input: 10, output: 4, cacheCreation: 0, cacheRead: 2 } }),
-      makeSession({ id: "eureka-2", source: "claude-code", engine: "Eureka + CC", orchestrator: { kind: "eureka" }, tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 } }),
+      makeSession({ id: "eureka-1", source: "eureka", engine: "Eureka + CC", tokens: { input: 10, output: 4, cacheCreation: 0, cacheRead: 2 } }),
+      makeSession({ id: "eureka-2", source: "eureka", engine: "Eureka + CC", tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 } }),
       makeSession({ id: "mars-1", source: "claude-code", engine: "Mars + CC", costTotal: 3, orchestrator: { kind: "mars", taskId: "task-1", taskTitle: "Task One", marsSessionId: "m1" } }),
       makeSession({ id: "mars-2", source: "codex", engine: "Mars + Codex", costTotal: 2, orchestrator: { kind: "mars", taskId: "task-1", taskTitle: "Task One", marsSessionId: "m2" } }),
     ]);
 
     expect(result.summary).toEqual({
       totalSessions: 5,
-      perSource: { "claude-code": 4, codex: 1 },
+      perSource: { "claude-code": 2, codex: 1, eureka: 2 },
       perEngine: { "Claude Code": 1, "Eureka + CC": 2, "Mars + CC": 1, "Mars + Codex": 1 },
       marsSessionCount: 2,
     });
@@ -42,7 +42,7 @@ describe("buildAttribution", () => {
 
     const result = buildAttribution([
       makeSession({ id: "claimed-cc", source: "claude-code", engine: "Claude Code" }),
-      makeSession({ id: "eureka-1", source: "claude-code", engine: "Eureka + CC", orchestrator: { kind: "eureka" } }),
+      makeSession({ id: "eureka-1", source: "eureka", engine: "Eureka + CC" }),
     ]);
 
     expect(result.doubleCounting.ccIdsBothStandaloneAndClaimed).toEqual(["claimed-cc"]);

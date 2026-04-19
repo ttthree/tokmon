@@ -20,7 +20,7 @@ import { parseClaudeCodeMessagesDetailed, parseCodexMessagesDetailed, parseCopil
 import { getMachineId } from "../core/machine.js";
 import type { SessionMessages } from "../core/messages.js";
 import { resolveSourcePath } from "../core/source-resolver.js";
-import type { AppConfig, DataFilters, MachineConfig, Session, SourceEntry, SourceType } from "../core/types.js";
+import type { AppConfig, DataFilters, MachineConfig, Session, SourceEntry } from "../core/types.js";
 import { collectCommand, type CollectProgressEvent } from "../cli/commands/collect.js";
 import { compareVersions, fetchLatestVersion, getPackageVersion, PACKAGE_NAME } from "../core/version.js";
 
@@ -95,14 +95,12 @@ export function createApp(): express.Express {
 
   app.get("/api/data", async (req, res, next) => {
     try {
-      const rawSource = asOptionalString(req.query.source);
-      const legacyOrchestrator = rawSource === "eureka" || rawSource === "mars" ? rawSource : undefined;
       const filters: DataFilters = {
         days: parseNumber(req.query.days),
         months: parseNumber(req.query.months),
         project: asOptionalString(req.query.project),
         machine: asOptionalString(req.query.machine),
-        orchestrator: asOptionalOrchestrator(req.query.orchestrator) ?? legacyOrchestrator,
+        orchestrator: asOptionalOrchestrator(req.query.orchestrator),
       };
       const data = await aggregateData(filters);
       res.json(data);
@@ -143,11 +141,11 @@ export function createApp(): express.Express {
       const result =
         session.source === "copilot-cli"
           ? await parseCopilotCliMessagesDetailed(sourcePath, session.id)
-          : session.orchestrator?.kind === "eureka"
-            ? await parseEurekaMessagesDetailed(sourcePath)
-            : session.source === "codex"
-              ? await parseCodexMessagesDetailed(sourcePath)
-              : await parseClaudeCodeMessagesDetailed(sourcePath);
+          : await (session.source === "eureka"
+              ? parseEurekaMessagesDetailed
+              : session.source === "codex"
+                ? parseCodexMessagesDetailed
+                : parseClaudeCodeMessagesDetailed)(sourcePath);
       const payload: SessionMessages = {
         sessionId: session.id,
         source: session.source,
@@ -313,23 +311,8 @@ async function findSession(machineId: string, source: string, id: string): Promi
     return localData.sessions[sessionKey];
   }
 
-  if (source === "eureka") {
-    const localSessions = localMachineId === machineId ? Object.values(localData.sessions) : [];
-    const localMatch = localSessions.find((session) => isLegacyEurekaSession(session, machineId, id));
-    if (localMatch) {
-      return localMatch;
-    }
-  }
-
   const remoteSessions = await loadRemoteSessions();
-  if (source === "eureka") {
-    return remoteSessions.find((session) => isLegacyEurekaSession(session, machineId, id)) ?? null;
-  }
   return remoteSessions.find((session) => session.machineId === machineId && session.source === source && session.id === id) ?? null;
-}
-
-function isLegacyEurekaSession(session: Session, machineId: string, id: string): boolean {
-  return session.machineId === machineId && session.id === id && session.orchestrator?.kind === "eureka";
 }
 
 async function loadRemoteSessions(): Promise<Session[]> {
@@ -388,7 +371,7 @@ function asOptionalOrchestrator(value: unknown): DataFilters["orchestrator"] {
   return undefined;
 }
 
-const VALID_SOURCE_TYPES = new Set<SourceType>(["claude-code", "codex", "copilot-cli", "eureka", "mars"]);
+const VALID_SOURCE_TYPES = new Set(["claude-code", "codex", "copilot-cli", "eureka", "mars"]);
 
 function sanitizeMachine(input: unknown, current: MachineConfig | undefined): MachineConfig | undefined {
   if (input === undefined) return current;

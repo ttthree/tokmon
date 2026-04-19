@@ -156,7 +156,7 @@ export async function serveCorpus(corpusId: string, opts: { timeoutMs?: number }
       },
       stdio: ["ignore", "pipe", "pipe"],
     },
-  ) as unknown as ChildProcessWithoutNullStreams;
+  ) as ChildProcessWithoutNullStreams;
 
   const url = await waitForReadyLine(child, opts.timeoutMs ?? 30_000);
 
