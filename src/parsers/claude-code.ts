@@ -6,9 +6,6 @@ import { getClaudeDirectory, getCraftAgentClaudeDirectory } from "../core/config
 import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
 import { streamJsonl } from "./util/jsonl-stream.js";
-import { claimedCcSessionIds } from "./eureka.js";
-import { marsRegistry } from "./mars.js";
-import { applyMarsMeta } from "./orchestrator.js";
 import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown } from "../core/types.js";
 
 interface ClaudeSessionIndexEntry {
@@ -58,28 +55,25 @@ type ClaudeUsage = {
 
 export const claudeCodeParser: Parser = {
   source: "claude-code",
-  async parse(context: ParserContext): Promise<ParseResult> {
-    const sessions: Session[] = [];
+  async parse(context: ParserContext, extraRoots: string[] = []): Promise<ParseResult> {
+    const sessionsByKey = new Map<string, Session>();
     const cursorUpdates: Record<string, FileCursor> = {};
 
-    // Scan ~/.claude (direct CLI sessions → source="claude-code") and
-    // ~/.craft-agent/.claude (Eureka sub-agents → source="claude-code" for unclaimed files).
-    // Files claimed by Eureka parser (via sdkSessionId) are skipped to avoid double-counting.
     const enabledClaude = (context.sources ?? [])
       .filter((s) => s.enabled && s.type === "claude-code")
       .map((s) => s.path);
     const craftAgentClaude = getCraftAgentClaudeDirectory();
-    const directories: Array<{ dir: string; excludeClaimed: boolean }> = [
+    const directories = [
       ...(enabledClaude.length > 0
-        ? enabledClaude.map((dir) => ({ dir, excludeClaimed: dir === craftAgentClaude }))
+        ? enabledClaude
         : [
-            { dir: getClaudeDirectory(), excludeClaimed: false },
-            { dir: craftAgentClaude, excludeClaimed: true },
+            getClaudeDirectory(),
+            craftAgentClaude,
           ]),
-      ...marsRegistry.claudeRoots.map((dir) => ({ dir, excludeClaimed: false })),
+      ...extraRoots,
     ];
 
-    for (const { dir: claudeDir, excludeClaimed } of directories) {
+    for (const claudeDir of directories) {
       const rootDir = path.join(claudeDir, "projects");
 
       // Build index from sessions-index.json files (may be stale)
@@ -104,15 +98,6 @@ export const claudeCodeParser: Parser = {
           await new Promise((resolve) => setTimeout(resolve, 0));
         }
 
-        // Skip files claimed by Eureka parser (matched via sdkSessionId)
-        if (excludeClaimed) {
-          const fileSessionId = path.basename(sessionPath, ".jsonl");
-          if (claimedCcSessionIds.has(fileSessionId)) continue;
-          // Also skip sub-agent files whose parent is claimed
-          const parentDir = path.basename(path.dirname(path.dirname(sessionPath)));
-          if (claimedCcSessionIds.has(parentDir)) continue;
-        }
-
         const sessionCursor = context.existingCursor.files[sessionPath] ?? null;
         const stat = await safeStat(sessionPath);
         if (!stat || !stat.isFile()) continue;
@@ -126,11 +111,7 @@ export const claudeCodeParser: Parser = {
         const indexEntry = indexByPath.get(sessionPath);
         const entry = indexEntry ?? await synthesizeEntryFromFile(sessionPath, stat);
 
-        let session = await parseClaudeSessionFile(sessionPath, entry, context.machineId);
-        const marsMeta = marsRegistry.byAgentSessionId.claudeCode.get(session.id);
-        if (marsMeta) {
-          session = applyMarsMeta(session, marsMeta, "claude-code");
-        }
+        const session = await parseClaudeSessionFile(sessionPath, entry, context.machineId);
         // Skip empty sessions (no tokens = no meaningful API interactions)
         if (session.tokens.input === 0 && session.tokens.output === 0 && session.tokens.cacheRead === 0 && session.tokens.cacheCreation === 0) {
           cursorUpdates[sessionPath] = {
@@ -143,7 +124,9 @@ export const claudeCodeParser: Parser = {
           };
           continue;
         }
-        sessions.push(session);
+        const key = `${session.source}:${session.id}`;
+        const existing = sessionsByKey.get(key);
+        sessionsByKey.set(key, existing ? mergeClaudeSessions(existing, session) : session);
         cursorUpdates[sessionPath] = {
           path: sessionPath,
           inode: Number(stat.ino),
@@ -155,12 +138,62 @@ export const claudeCodeParser: Parser = {
       }
     }
 
-    return { sessions, cursorUpdates };
+    return { sessions: [...sessionsByKey.values()], cursorUpdates };
   },
 };
 
+function mergeClaudeSessions(existing: Session, incoming: Session): Session {
+  const mergedModelUsage = mergeModelUsage(existing.modelUsage, incoming.modelUsage);
+  return {
+    ...existing,
+    projectPath: existing.projectPath || incoming.projectPath,
+    project: existing.project !== "other" ? existing.project : incoming.project,
+    summary: existing.summary ?? incoming.summary,
+    firstPrompt: existing.firstPrompt ?? incoming.firstPrompt,
+    model: existing.model !== "unknown" ? existing.model : incoming.model,
+    createdAt: existing.createdAt < incoming.createdAt ? existing.createdAt : incoming.createdAt,
+    modifiedAt: existing.modifiedAt > incoming.modifiedAt ? existing.modifiedAt : incoming.modifiedAt,
+    durationSeconds: existing.durationSeconds + incoming.durationSeconds,
+    turns: existing.turns + incoming.turns,
+    messageCount: existing.messageCount + incoming.messageCount,
+    toolCallCount: existing.toolCallCount + incoming.toolCallCount,
+    tokens: {
+      input: existing.tokens.input + incoming.tokens.input,
+      output: existing.tokens.output + incoming.tokens.output,
+      cacheCreation: existing.tokens.cacheCreation + incoming.tokens.cacheCreation,
+      cacheRead: existing.tokens.cacheRead + incoming.tokens.cacheRead,
+    },
+    toolBreakdown: mergeBreakdown(existing.toolBreakdown, incoming.toolBreakdown),
+    modelUsage: mergedModelUsage,
+  };
+}
+
+function mergeModelUsage(
+  existing: Record<string, TokenBreakdown> | undefined,
+  incoming: Record<string, TokenBreakdown> | undefined,
+): Record<string, TokenBreakdown> | undefined {
+  if (!existing && !incoming) return undefined;
+  const merged: Record<string, TokenBreakdown> = {};
+  for (const usage of [existing, incoming]) {
+    if (!usage) continue;
+    for (const [model, tokens] of Object.entries(usage)) {
+      const bucket = merged[model] ?? (merged[model] = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 });
+      addTokens(bucket, tokens);
+    }
+  }
+  return Object.keys(merged).length > 0 ? merged : undefined;
+}
+
+function mergeBreakdown(existing: Record<string, number>, incoming: Record<string, number>): Record<string, number> {
+  const merged = { ...existing };
+  for (const [key, value] of Object.entries(incoming)) {
+    merged[key] = (merged[key] ?? 0) + value;
+  }
+  return merged;
+}
+
 async function synthesizeEntryFromFile(sessionPath: string, stat: Awaited<ReturnType<typeof fs.stat>>): Promise<ClaudeSessionIndexEntry> {
-  const sessionId = path.basename(sessionPath, ".jsonl");
+  const sessionId = deriveClaudeSessionId(sessionPath);
   const meta = await extractFileMetadata(sessionPath);
   const projectPath = await synthesizeProjectPath(sessionPath, meta.cwd);
 
@@ -173,6 +206,14 @@ async function synthesizeEntryFromFile(sessionPath: string, stat: Awaited<Return
     modified: new Date(Number(stat.mtimeMs)).toISOString(),
     projectPath: ensureAbsolute(projectPath),
   };
+}
+
+function deriveClaudeSessionId(sessionPath: string): string {
+  const projectDir = path.dirname(sessionPath);
+  if (path.basename(projectDir) === "subagents") {
+    return path.basename(path.dirname(projectDir));
+  }
+  return path.basename(sessionPath, ".jsonl");
 }
 
 async function synthesizeProjectPath(sessionPath: string, fileCwd?: string): Promise<string> {

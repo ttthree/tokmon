@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 
-import corporaRegistry from "../corpus/corpora.json" assert { type: "json" };
+import corporaRegistry from "../corpus/corpora.json" with { type: "json" };
 import { loadGoldens, type CorpusGoldens } from "./helpers/corpus-goldens.js";
 import { parseCost } from "./helpers/format.js";
 import { serveCorpus, type CorpusServer } from "./helpers/serve-corpus.js";

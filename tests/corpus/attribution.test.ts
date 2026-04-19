@@ -36,6 +36,6 @@ describe.each(corpora)("attribution: $id", ({ id }) => {
   });
 
   it("has no double-counting", () => {
-    expect(actual.doubleCounting.ccIdsBothStandaloneAndClaimed).toEqual([]);
+    expect(actual.doubleCounting.duplicateSessionKeys).toEqual([]);
   });
 });

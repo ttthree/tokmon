@@ -2,9 +2,8 @@
   "summary": {
     "totalSessions": 10,
     "perSource": {
-      "claude-code": 5,
-      "codex": 1,
-      "eureka": 4
+      "claude-code": 8,
+      "codex": 2
     },
     "perEngine": {
       "Claude Code": 3,
@@ -73,13 +72,7 @@
       "totalTokens": 215
     }
   ],
-  "claimedCcSessionIds": [
-    "019dedgecodex000000000000000001",
-    "cc-sdk-normal",
-    "cc-sdk-orphan",
-    "cc-sdk-subagent"
-  ],
   "doubleCounting": {
-    "ccIdsBothStandaloneAndClaimed": []
+    "duplicateSessionKeys": []
   }
 }

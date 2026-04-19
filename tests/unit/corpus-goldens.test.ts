@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import corporaRegistry from "../corpus/corpora.json" assert { type: "json" };
+import corporaRegistry from "../corpus/corpora.json" with { type: "json" };
 import { loadGoldens } from "../e2e/helpers/corpus-goldens.js";
 
 const CORPUS_IDS = corporaRegistry.corpora.map((corpus) => corpus.id);
@@ -15,6 +15,6 @@ describe("loadGoldens helper", () => {
 
     expect(goldens.attribution).toHaveProperty("summary");
     expect(goldens.attribution).toHaveProperty("eurekaLinkage");
-    expect(goldens.attribution).toHaveProperty("claimedCcSessionIds");
+    expect(goldens.attribution).toHaveProperty("doubleCounting");
   });
 });

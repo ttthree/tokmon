@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { CostBreakdown, DataResponse, ProjectSummary, Session, Source, TokenBreakdown } from "../core/types.js";
+import type { CostBreakdown, DataResponse, OrchestratorKind, ProjectSummary, Session, Source, TokenBreakdown } from "../core/types.js";
 import { fetchDashboardData, fetchMachineIdentity, triggerCollect } from "./api.js";
 import { ActiveFiltersBar } from "./components/ActiveFiltersBar.js";
 import { BreakdownChart } from "./components/BreakdownChart.js";
@@ -26,11 +26,29 @@ const SOURCE_LABELS: Record<Source, string> = {
   "claude-code": "Claude Code",
   codex: "Codex",
   "copilot-cli": "Copilot CLI",
+};
+
+const ORCHESTRATOR_LABELS: Record<OrchestratorKind | "none", string> = {
+  none: "Direct",
   eureka: "Eureka",
   mars: "Mars",
 };
 
-type AgentFilter = Source | "mars" | "all";
+const SOURCE_STACK_COLORS: Record<Source, string> = {
+  "claude-code": "#18181b",
+  codex: "#3f3f46",
+  "copilot-cli": "#71717a",
+};
+
+const ORCHESTRATOR_STACK_COLORS: Record<OrchestratorKind | "none", string> = {
+  none: "#71717a",
+  eureka: "#2563eb",
+  mars: "#dc2626",
+};
+
+type SourceFilter = Source | "all";
+type OrchestratorFilter = OrchestratorKind | "none" | "all";
+type ChartStackBy = "source" | "orchestrator";
 type Tab = "overview" | "projects" | "sessions" | "logs" | "settings";
 
 const LOGS_STORAGE_KEY = "tokmon:change-log:v1";
@@ -83,18 +101,12 @@ function isMeaningfulDelta(delta: ReturnType<typeof diffSnapshot>): boolean {
   return false;
 }
 
-const AGENT_FILTER_LABELS: Record<Exclude<AgentFilter, "all">, string> = {
-  "claude-code": "Claude Code",
-  codex: "Codex",
-  "copilot-cli": "Copilot CLI",
-  eureka: "Eureka",
-  mars: "Mars",
-};
-
 export function App() {
   const [range, setRange] = useState<RangeFilter>("all");
-  const [sourceFilter, setSourceFilter] = useState<AgentFilter>("all");
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+  const [orchestratorFilter, setOrchestratorFilter] = useState<OrchestratorFilter>("all");
   const [machineFilter, setMachineFilter] = useState<string | "all">("all");
+  const [chartStackBy, setChartStackBy] = useState<ChartStackBy>("source");
   const [modelFilter, setModelFilter] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [projectSearch, setProjectSearch] = useState("");
@@ -220,11 +232,11 @@ export function App() {
     };
   }, [buildParams, refreshNow]);
 
-  // Clear selected project and model filter when source filter changes
+  // Clear selected project and model filter when the top-level agent filters change.
   useEffect(() => {
     setSelectedProject(null);
     setModelFilter(null);
-  }, [sourceFilter]);
+  }, [sourceFilter, orchestratorFilter]);
 
   // Reset machine filter if the chosen machine disappears from data
   useEffect(() => {
@@ -240,50 +252,50 @@ export function App() {
     setModelFilter(null);
   }, [selectedProject]);
 
-  // Derive available agent filters (sub-agent sources + Mars orchestrator if present)
-  const availableSources = useMemo((): AgentFilter[] => {
+  const availableSources = useMemo((): SourceFilter[] => {
     if (!data) return [];
     const sources = new Set(data.sessions.map((s) => s.source));
-    const ordered: AgentFilter[] = (["claude-code", "codex", "copilot-cli", "eureka"] as Source[]).filter((s) =>
+    return (["claude-code", "codex", "copilot-cli"] as Source[]).filter((s) =>
       sources.has(s),
     );
-    if (data.sessions.some((s) => s.orchestrator?.kind === "mars")) {
-      ordered.push("mars");
-    }
-    return ordered;
   }, [data]);
 
-  // Apply agent + machine filters before all other computations
+  const availableOrchestrators = useMemo((): OrchestratorFilter[] => {
+    if (!data) return [];
+    const values = new Set<OrchestratorFilter>();
+    if (data.sessions.some((s) => s.orchestrator === undefined)) values.add("none");
+    if (data.sessions.some((s) => s.orchestrator?.kind === "eureka")) values.add("eureka");
+    if (data.sessions.some((s) => s.orchestrator?.kind === "mars")) values.add("mars");
+    return (["none", "eureka", "mars"] as const).filter((value) => values.has(value));
+  }, [data]);
+
+  // Apply source + orchestrator + machine filters before all other computations.
   const sourceSessions = useMemo(() => {
     if (!data) return [];
     let result = data.sessions;
-    if (sourceFilter !== "all") {
-      if (sourceFilter === "mars") {
-        result = result.filter((s) => s.orchestrator?.kind === "mars");
-      } else {
-        result = result.filter((s) => s.source === sourceFilter);
-      }
-    }
+    if (sourceFilter !== "all") result = result.filter((s) => s.source === sourceFilter);
+    if (orchestratorFilter === "none") result = result.filter((s) => s.orchestrator === undefined);
+    else if (orchestratorFilter !== "all") result = result.filter((s) => s.orchestrator?.kind === orchestratorFilter);
     if (machineFilter !== "all") {
       result = result.filter((s) => s.machineId === machineFilter);
     }
     return result;
-  }, [data, sourceFilter, machineFilter]);
+  }, [data, sourceFilter, orchestratorFilter, machineFilter]);
 
   // Recompute totals for filtered sessions
   const filteredTotals = useMemo((): DataResponse["totals"] | undefined => {
     if (!data) return undefined;
-    if (sourceFilter === "all" && machineFilter === "all") return data.totals;
+    if (sourceFilter === "all" && orchestratorFilter === "all" && machineFilter === "all") return data.totals;
     return computeFilteredTotals(sourceSessions);
-  }, [data, sourceFilter, machineFilter, sourceSessions]);
+  }, [data, sourceFilter, orchestratorFilter, machineFilter, sourceSessions]);
 
   // Recompute projects for filtered sessions
   const sourceProjects = useMemo(() => {
     if (!data) return [];
-    if (sourceFilter === "all" && machineFilter === "all") return data.projects;
+    if (sourceFilter === "all" && orchestratorFilter === "all" && machineFilter === "all") return data.projects;
     const machineNames = new Map(data.machines.map((m) => [m.machineId, m.name]));
     return buildFilteredProjects(sourceSessions, machineNames);
-  }, [data, sourceFilter, machineFilter, sourceSessions]);
+  }, [data, sourceFilter, orchestratorFilter, machineFilter, sourceSessions]);
 
   // Validate selectedProject against the *filtered* project set so a project
   // that disappears under the current agent/machine filters doesn't keep
@@ -323,14 +335,15 @@ export function App() {
     [data?.machines],
   );
 
-  const chartData = useMemo(() => buildChartData(sourceSessions, range), [sourceSessions, range]);
+  const chartData = useMemo(() => buildChartData(sourceSessions, range, chartStackBy), [sourceSessions, range, chartStackBy]);
   const projectChartData = useMemo(() => {
-    if (!selectedProject) return { points: [], sources: [] };
+    if (!selectedProject) return { points: [], stackKeys: [] };
     return buildChartData(
       sourceSessions.filter((s) => s.project === selectedProject),
       range,
+      chartStackBy,
     );
-  }, [sourceSessions, selectedProject, range]);
+  }, [sourceSessions, selectedProject, range, chartStackBy]);
   const projectData = useMemo(() => buildProjectData(sourceProjects), [sourceProjects]);
   const modelData = useMemo(() => buildModelData(sourceSessions), [sourceSessions]);
   const agentData = useMemo(() => buildAgentData(sourceSessions), [sourceSessions]);
@@ -343,9 +356,18 @@ export function App() {
   const selectedModelData = useMemo(() => buildBreakdownChartData(selectedProjectSummary?.modelBreakdown), [selectedProjectSummary]);
   const selectedMachineData = useMemo(() => buildBreakdownChartData(selectedProjectSummary?.machineBreakdown), [selectedProjectSummary]);
   const selectedProjectLabel = selectedProjectSummary?.projectLabel ?? null;
-  const agentSelectedLabel = sourceFilter === "all" ? null : AGENT_FILTER_LABELS[sourceFilter] ?? null;
+  const sourceSelectedLabel = sourceFilter === "all" ? null : SOURCE_LABELS[sourceFilter] ?? null;
+  const orchestratorSelectedLabel = orchestratorFilter === "all" ? null : ORCHESTRATOR_LABELS[orchestratorFilter] ?? null;
   const machineSelectedLabel =
     machineFilter === "all" ? null : machineNames.get(machineFilter) ?? machineFilter;
+  const stackSeriesLabels = chartStackBy === "source" ? SOURCE_LABELS : ORCHESTRATOR_LABELS;
+  const stackSeriesColors = chartStackBy === "source" ? SOURCE_STACK_COLORS : ORCHESTRATOR_STACK_COLORS;
+  const overviewStackKeys = chartStackBy === "source"
+    ? (sourceFilter === "all" ? chartData.stackKeys : undefined)
+    : (orchestratorFilter === "all" ? chartData.stackKeys : undefined);
+  const projectStackKeys = chartStackBy === "source"
+    ? (sourceFilter === "all" ? projectChartData.stackKeys : undefined)
+    : (orchestratorFilter === "all" ? projectChartData.stackKeys : undefined);
 
   useEffect(() => {
     if (!selectedSession) {
@@ -382,6 +404,11 @@ export function App() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <SourceFilter sources={availableSources} value={sourceFilter} onChange={setSourceFilter} />
+            <OrchestratorFilterMenu
+              orchestrators={availableOrchestrators}
+              value={orchestratorFilter}
+              onChange={setOrchestratorFilter}
+            />
             <MachineFilter
               machines={data?.machines ?? []}
               value={machineFilter}
@@ -436,8 +463,10 @@ export function App() {
             <section>
               <TokenChart
                 data={chartData.points}
-                sources={sourceFilter === "all" ? chartData.sources : undefined}
-                sourceLabels={SOURCE_LABELS}
+                sources={overviewStackKeys}
+                sourceLabels={stackSeriesLabels}
+                seriesColors={stackSeriesColors}
+                actions={<ChartStackToggle value={chartStackBy} onChange={setChartStackBy} />}
               />
             </section>
 
@@ -477,8 +506,10 @@ export function App() {
               <section>
                 <TokenChart
                   data={projectChartData.points}
-                  sources={sourceFilter === "all" ? projectChartData.sources : undefined}
-                  sourceLabels={SOURCE_LABELS}
+                  sources={projectStackKeys}
+                  sourceLabels={stackSeriesLabels}
+                  seriesColors={stackSeriesColors}
+                  actions={<ChartStackToggle value={chartStackBy} onChange={setChartStackBy} />}
                   title={`Token & Cost Trend — ${selectedProjectSummary.projectLabel}`}
                 />
               </section>
@@ -528,7 +559,7 @@ export function App() {
                     title="Cost by Agent"
                     data={agentData}
                     formatValue={(v) => `$${v.toFixed(2)}`}
-                    selectedName={agentSelectedLabel}
+                    selectedName={sourceSelectedLabel}
                     onSelect={(name) => {
                       if (name == null) {
                         setSourceFilter("all");
@@ -555,7 +586,7 @@ export function App() {
                   Sessions
                 </div>
                 <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {buildSessionsSubtitle(selectedProjectSummary?.projectLabel, modelFilter, agentSelectedLabel)}
+                  {buildSessionsSubtitle(selectedProjectSummary?.projectLabel, modelFilter, sourceSelectedLabel, orchestratorSelectedLabel)}
                 </div>
               </div>
               <input
@@ -595,8 +626,10 @@ export function App() {
       <ActiveFiltersBar
         range={range}
         onClearRange={() => setRange("all")}
-        sourceLabel={agentSelectedLabel}
+        sourceLabel={sourceSelectedLabel}
         onClearSource={() => setSourceFilter("all")}
+        orchestratorLabel={orchestratorSelectedLabel}
+        onClearOrchestrator={() => setOrchestratorFilter("all")}
         machineLabel={machineSelectedLabel}
         onClearMachine={() => setMachineFilter("all")}
         projectLabel={selectedProjectSummary?.projectLabel ?? null}
@@ -610,6 +643,7 @@ export function App() {
         onClearAll={() => {
           setRange("all");
           setSourceFilter("all");
+          setOrchestratorFilter("all");
           setMachineFilter("all");
           setSelectedProject(null);
           setModelFilter(null);
@@ -626,18 +660,16 @@ export function App() {
   }
 }
 
-function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter) {
+function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter, stackBy: ChartStackBy) {
   const isMonthly = range === "12m";
   const formatter = isMonthly
     ? (value: string) => value.slice(0, 7)
     : (value: string) => value.slice(5, 10);
   const grouped = new Map<string, { input: number; output: number; cacheCreation: number; cacheRead: number; cost: number; costBySource: Record<string, number> }>();
-  // Track which sources actually appear so the chart only renders bars for them.
-  const sourcesSeen = new Set<string>();
-  // Track full ISO date so we can compute span for filling gaps
+  const stackKeysSeen = new Set<string>();
   const seenIso: string[] = [];
   for (const session of sessions) {
-    const iso = session.createdAt.slice(0, 10); // YYYY-MM-DD
+    const iso = session.createdAt.slice(0, 10);
     seenIso.push(iso);
     const label = formatter(session.createdAt);
     const bucket = grouped.get(label) ?? { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0, costBySource: {} };
@@ -646,19 +678,17 @@ function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter) 
     bucket.cacheCreation += session.tokens.cacheCreation;
     bucket.cacheRead += session.tokens.cacheRead;
     bucket.cost += session.cost.total;
-    const src = session.source;
-    bucket.costBySource[src] = (bucket.costBySource[src] ?? 0) + session.cost.total;
-    sourcesSeen.add(src);
+    const key = stackBy === "source" ? session.source : session.orchestrator?.kind ?? "none";
+    bucket.costBySource[key] = (bucket.costBySource[key] ?? 0) + session.cost.total;
+    stackKeysSeen.add(key);
     grouped.set(label, bucket);
   }
 
-  // Build the full label list so chart x-axis includes every day/month in the
-  // selected range — even if there are no sessions on a given day.
   const labels = buildContinuousLabels(range, seenIso, isMonthly);
   const empty = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0, costBySource: {} as Record<string, number> };
   const points = labels.map((label) => ({ label, ...(grouped.get(label) ?? empty) }));
-  const sources = [...sourcesSeen].sort();
-  return { points, sources };
+  const stackKeys = [...stackKeysSeen].sort();
+  return { points, stackKeys };
 }
 
 function buildContinuousLabels(range: RangeFilter, seenIso: string[], isMonthly: boolean): string[] {
@@ -787,10 +817,16 @@ function sessionMatchesModel(session: Session, modelLabel: string): boolean {
   return matches(session.model);
 }
 
-function buildSessionsSubtitle(project: string | undefined, model: string | null, agent: string | null): string {
+function buildSessionsSubtitle(
+  project: string | undefined,
+  model: string | null,
+  source: string | null,
+  orchestrator: string | null,
+): string {
   const filters: string[] = [];
   if (project) filters.push(`project: ${project}`);
-  if (agent) filters.push(`agent: ${agent}`);
+  if (source) filters.push(`source: ${source}`);
+  if (orchestrator) filters.push(`orchestrator: ${orchestrator}`);
   if (model) filters.push(`model: ${model}`);
   if (filters.length === 0) return "Showing sessions for all projects in range.";
   return `Filtered by ${filters.join(" · ")}.`;
@@ -935,22 +971,46 @@ function SourceFilter({
   value,
   onChange,
 }: {
-  sources: AgentFilter[];
-  value: AgentFilter;
-  onChange: (v: AgentFilter) => void;
+  sources: SourceFilter[];
+  value: SourceFilter;
+  onChange: (v: SourceFilter) => void;
 }) {
   if (sources.length === 0) return null;
-  // Single-agent environments: still render the icon dropdown so the row
-  // height stays consistent, but with only the one option.
-  const options = (["all", ...sources] as AgentFilter[]).map((option) => ({
+  const options = (["all", ...sources] as SourceFilter[]).map((option) => ({
     value: option,
-    label: option === "all" ? "All agents" : AGENT_FILTER_LABELS[option] ?? option,
+    label: option === "all" ? "All sources" : SOURCE_LABELS[option] ?? option,
   }));
   return (
     <IconDropdown
-      ariaLabel="Agent"
-      menuTitle="Agent"
+      ariaLabel="Source"
+      menuTitle="Source"
       icon={<AgentIcon />}
+      value={value}
+      options={options}
+      onChange={onChange}
+    />
+  );
+}
+
+function OrchestratorFilterMenu({
+  orchestrators,
+  value,
+  onChange,
+}: {
+  orchestrators: OrchestratorFilter[];
+  value: OrchestratorFilter;
+  onChange: (v: OrchestratorFilter) => void;
+}) {
+  if (orchestrators.length === 0) return null;
+  const options = (["all", ...orchestrators] as OrchestratorFilter[]).map((option) => ({
+    value: option,
+    label: option === "all" ? "All orchestrators" : ORCHESTRATOR_LABELS[option],
+  }));
+  return (
+    <IconDropdown
+      ariaLabel="Orchestrator"
+      menuTitle="Orchestrator"
+      icon={<OrchestratorIcon />}
       value={value}
       options={options}
       onChange={onChange}
@@ -1017,6 +1077,29 @@ function AgentIcon() {
   );
 }
 
+function OrchestratorIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 3v6" />
+      <path d="M18 15v6" />
+      <path d="M6 9a3 3 0 1 0 0 6h12" />
+      <circle cx="6" cy="3" r="2" />
+      <circle cx="18" cy="21" r="2" />
+    </svg>
+  );
+}
+
 function MachineIcon() {
   return (
     <svg
@@ -1035,6 +1118,31 @@ function MachineIcon() {
       <path d="M8 20h8" />
       <path d="M12 16v4" />
     </svg>
+  );
+}
+
+function ChartStackToggle({ value, onChange }: { value: ChartStackBy; onChange: (value: ChartStackBy) => void }) {
+  return (
+    <div className="flex gap-1 text-xs">
+      {(["source", "orchestrator"] as ChartStackBy[]).map((option) => {
+        const active = option === value;
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            className="rounded px-2 py-1"
+            style={{
+              background: active ? "var(--accent)" : "var(--bg-panel-muted)",
+              color: active ? "var(--accent-fg)" : "var(--text-secondary)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            {option === "source" ? "By source" : "By orchestrator"}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
