@@ -28,7 +28,7 @@ export async function loadMachineData(machineId: string): Promise<MachineData> {
   if (!(await pathExists(machinePath))) {
     return createEmptyMachineData(machineId);
   }
-  return loadMachineDataFromPath(machinePath);
+  return sanitizeLoadedMachineData(await loadMachineDataFromPath(machinePath));
 }
 
 export async function saveMachineData(machineData: MachineData, name?: string): Promise<void> {
@@ -75,8 +75,84 @@ export function mergeSession(existing: Session | undefined, updated: Session): S
   }
   return {
     ...updated,
-    createdAt: existing.createdAt,
+    createdAt: pickEarlierCreatedAt(existing.createdAt, updated.createdAt),
   };
+}
+
+export function sanitizeLoadedMachineData(machineData: MachineData): MachineData {
+  let changed = false;
+  const sessions = Object.fromEntries(Object.entries(machineData.sessions).flatMap(([key, session]) => {
+    if (shouldDropGhostSession(session)) {
+      changed = true;
+      return [];
+    }
+    const normalized = normalizeSessionTimestamps(session);
+    if (normalized !== session) {
+      changed = true;
+    }
+    return [[key, normalized]];
+  }));
+
+  if (!changed) {
+    return machineData;
+  }
+
+  return {
+    ...machineData,
+    sessions,
+  };
+}
+
+function pickEarlierCreatedAt(left: string, right: string): string {
+  const leftMs = parseValidSessionTime(left);
+  const rightMs = parseValidSessionTime(right);
+  if (leftMs !== null && rightMs !== null) {
+    return leftMs <= rightMs ? left : right;
+  }
+  if (leftMs !== null) return left;
+  if (rightMs !== null) return right;
+  return left < right ? left : right;
+}
+
+function normalizeSessionTimestamps(session: Session): Session {
+  const createdMs = parseValidSessionTime(session.createdAt);
+  const modifiedMs = parseValidSessionTime(session.modifiedAt);
+  if (createdMs !== null && modifiedMs !== null) {
+    return session;
+  }
+  if (createdMs !== null) {
+    return { ...session, modifiedAt: session.createdAt };
+  }
+  if (modifiedMs !== null) {
+    return { ...session, createdAt: session.modifiedAt };
+  }
+  return session;
+}
+
+function shouldDropGhostSession(session: Session): boolean {
+  const hasUsage = session.tokens.input > 0
+    || session.tokens.output > 0
+    || session.tokens.cacheCreation > 0
+    || session.tokens.cacheRead > 0
+    || session.cost.total > 0;
+  if (hasUsage) {
+    return false;
+  }
+  return (session.tokenProvenance === undefined || session.tokenProvenance === "none")
+    && parseValidSessionTime(session.createdAt) === null
+    && parseValidSessionTime(session.modifiedAt) === null;
+}
+
+function parseValidSessionTime(value: string): number | null {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+  const year = new Date(parsed).getUTCFullYear();
+  if (year < 2000 || year > 2100) {
+    return null;
+  }
+  return parsed;
 }
 
 export function updateSessions(existing: Record<string, Session>, newSessions: Session[], machineId: string): Record<string, Session> {

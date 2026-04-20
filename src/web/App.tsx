@@ -635,7 +635,6 @@ function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter) 
   const seenIso: string[] = [];
   for (const session of sessions) {
     const iso = session.createdAt.slice(0, 10); // YYYY-MM-DD
-    seenIso.push(iso);
     const label = formatter(session.createdAt);
     const bucket = grouped.get(label) ?? { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0, costBySource: {} };
     bucket.input += session.tokens.input;
@@ -643,6 +642,9 @@ function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter) 
     bucket.cacheCreation += session.tokens.cacheCreation;
     bucket.cacheRead += session.tokens.cacheRead;
     bucket.cost += session.cost.total;
+    if (session.tokens.input > 0 || session.tokens.output > 0 || session.tokens.cacheCreation > 0 || session.tokens.cacheRead > 0 || session.cost.total > 0) {
+      seenIso.push(iso);
+    }
     const src = session.source;
     bucket.costBySource[src] = (bucket.costBySource[src] ?? 0) + session.cost.total;
     sourcesSeen.add(src);
