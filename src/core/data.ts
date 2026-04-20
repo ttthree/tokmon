@@ -47,8 +47,6 @@ export async function loadMachineData(machineId: string): Promise<MachineData> {
 }
 
 export async function saveMachineData(machineData: MachineData, name?: string): Promise<void> {
-  // Serialize concurrent writes per machineId so racing callers don't both try
-  // to rename the same .tmp (causes ENOENT for the loser).
   const id = machineData.machineId;
   const previous = saveMachineQueues.get(id) ?? Promise.resolve();
   const next = previous.then(
@@ -74,12 +72,8 @@ async function doSaveMachineData(machineData: MachineData, name?: string): Promi
     machineData.name = name;
   }
   const finalPath = getMachineDataPath(machineData.machineId);
-  // Per-process unique tmp path to survive concurrent writers across processes.
   const tmpPath = `${finalPath}.${process.pid}.${Date.now()}.tmp`;
   const payload = JSON.stringify(machineData, null, 2) + "\n";
-  // Atomic write: write to tempfile then rename. POSIX rename is atomic on
-  // the same filesystem, so Ctrl+C during the write can't leave the final
-  // file truncated. Worst case: a stray .tmp is left behind.
   await fs.writeFile(tmpPath, payload, "utf8");
   await fs.rename(tmpPath, finalPath);
 }
@@ -89,7 +83,7 @@ export function mergeSession(existing: Session | undefined, updated: Session): S
     return updated;
   }
   const preferred = preferSession(existing, updated);
-  const createdAt = existing.createdAt < updated.createdAt ? existing.createdAt : updated.createdAt;
+  const createdAt = pickEarlierCreatedAt(existing.createdAt, updated.createdAt);
   return {
     ...preferred,
     createdAt,
@@ -156,10 +150,15 @@ export function replaceCursor(machineData: MachineData, cursor: CursorState): Ma
   };
 }
 
+export function sanitizeLoadedMachineData(machine: MachineData): MachineData {
+  return normalizeLegacySources(machine);
+}
+
 export function normalizeLegacySources(machine: MachineData): MachineData {
   const fixed: Record<string, Session> = {};
   let migratedEurekaCount = 0;
   let collidedCount = 0;
+  let droppedGhostCount = 0;
 
   for (const session of Object.values(machine.sessions)) {
     const raw = session as Omit<Session, "source"> & { source: string };
@@ -169,20 +168,28 @@ export function normalizeLegacySources(machine: MachineData): MachineData {
         source: inferSourceFromEngine(raw.engine ?? ""),
         orchestrator: raw.orchestrator ?? { kind: "eureka" },
       };
+      if (shouldDropGhostSession(migrated)) {
+        droppedGhostCount++;
+        continue;
+      }
       const key = getSessionKey(machine.machineId, migrated);
       if (fixed[key]) collidedCount++;
-      fixed[key] = fixed[key] ? pickFresher(fixed[key], migrated) : migrated;
+      fixed[key] = fixed[key] ? pickFresher(fixed[key], migrated) : normalizeSessionTimestamps(migrated);
       migratedEurekaCount++;
       continue;
     }
 
     const direct = raw as Session;
+    if (shouldDropGhostSession(direct)) {
+      droppedGhostCount++;
+      continue;
+    }
     const key = getSessionKey(machine.machineId, direct);
     if (fixed[key]) collidedCount++;
-    fixed[key] = fixed[key] ? pickFresher(fixed[key], direct) : direct;
+    fixed[key] = fixed[key] ? pickFresher(fixed[key], direct) : normalizeSessionTimestamps(direct);
   }
 
-  if (migratedEurekaCount > 0 || collidedCount > 0) {
+  if (migratedEurekaCount > 0 || collidedCount > 0 || droppedGhostCount > 0) {
     void logDiag({
       event: "normalizeLegacySources",
       machineId: machine.machineId,
@@ -190,6 +197,7 @@ export function normalizeLegacySources(machine: MachineData): MachineData {
       outputCount: Object.keys(fixed).length,
       migratedEurekaCount,
       collidedCount,
+      droppedGhostCount,
     });
   }
 
@@ -225,7 +233,59 @@ function didLegacySourceMigrationChange(before: MachineData, after: MachineData)
     if (!migrated) return true;
     if (session.source !== migrated.source) return true;
     if (session.orchestrator?.kind !== migrated.orchestrator?.kind) return true;
+    if (session.createdAt !== migrated.createdAt) return true;
+    if (session.modifiedAt !== migrated.modifiedAt) return true;
   }
 
   return false;
+}
+
+function pickEarlierCreatedAt(left: string, right: string): string {
+  const leftMs = parseValidSessionTime(left);
+  const rightMs = parseValidSessionTime(right);
+  if (leftMs !== null && rightMs !== null) {
+    return leftMs <= rightMs ? left : right;
+  }
+  if (leftMs !== null) return left;
+  if (rightMs !== null) return right;
+  return left < right ? left : right;
+}
+
+function normalizeSessionTimestamps(session: Session): Session {
+  const createdMs = parseValidSessionTime(session.createdAt);
+  const modifiedMs = parseValidSessionTime(session.modifiedAt);
+  if (createdMs !== null && modifiedMs !== null) {
+    return session;
+  }
+  if (createdMs !== null) {
+    return { ...session, modifiedAt: session.createdAt };
+  }
+  if (modifiedMs !== null) {
+    return { ...session, createdAt: session.modifiedAt };
+  }
+  return session;
+}
+
+function shouldDropGhostSession(session: Session): boolean {
+  const hasUsage = totalTokens(session) > 0 || session.cost.total > 0;
+  if (hasUsage) {
+    return false;
+  }
+  const hasPlaceholderCreated = parseValidSessionTime(session.createdAt) === null;
+  const hasPlaceholderModified = parseValidSessionTime(session.modifiedAt) === null;
+  return (session.tokenProvenance === undefined || session.tokenProvenance === "none")
+    && hasPlaceholderCreated
+    && hasPlaceholderModified;
+}
+
+function parseValidSessionTime(value: string): number | null {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+  const year = new Date(parsed).getUTCFullYear();
+  if (year < 2000 || year > 2100) {
+    return null;
+  }
+  return parsed;
 }

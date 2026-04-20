@@ -299,10 +299,13 @@ export function createApp(): express.Express {
 
 function getStaticDir(): string {
   const normalized = __dirname.replace(/\\/g, "/");
-  const isCompiledDist = normalized.includes("/dist/");
-  return isCompiledDist
-    ? path.resolve(__dirname, "../web")
-    : path.resolve(__dirname, "../../dist/web");
+  if (normalized.includes("/dist/src/")) {
+    return path.resolve(__dirname, "../../web");
+  }
+  if (normalized.includes("/dist/")) {
+    return path.resolve(__dirname, "../web");
+  }
+  return path.resolve(__dirname, "../../dist/web");
 }
 
 async function findSession(machineId: string, source: string, id: string): Promise<Session | null> {

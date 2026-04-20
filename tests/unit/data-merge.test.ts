@@ -41,6 +41,26 @@ describe("mergeSession", () => {
       modifiedAt: "2026-04-18T12:06:00.000Z",
     });
   });
+
+  it("ignores placeholder epoch createdAt when merging with sane data", () => {
+    const ghost = makeSession({
+      createdAt: "1970-01-01T00:00:00.000Z",
+      modifiedAt: "1970-01-01T00:00:00.000Z",
+      tokenProvenance: "none",
+    });
+    const actual = makeSession({
+      createdAt: "2026-04-18T12:00:00.000Z",
+      modifiedAt: "2026-04-18T12:05:00.000Z",
+      tokenProvenance: "sdk-cc-jsonl",
+      tokens: { input: 120, output: 30, cacheCreation: 0, cacheRead: 0 },
+    });
+
+    expect(mergeSession(ghost, actual)).toMatchObject({
+      createdAt: "2026-04-18T12:00:00.000Z",
+      modifiedAt: "2026-04-18T12:05:00.000Z",
+      tokenProvenance: "sdk-cc-jsonl",
+    });
+  });
 });
 
 function makeSession(overrides: Partial<Session>): Session {

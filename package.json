@@ -1,6 +1,6 @@
 {
   "name": "@ttthree/tokmon",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Token usage monitor for AI coding agents — track costs, review sessions, optimize workflows",
   "type": "module",
   "license": "MIT",
