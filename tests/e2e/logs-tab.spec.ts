@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-import corporaRegistry from "../corpus/corpora.json" assert { type: "json" };
+import corporaRegistry from "../corpus/corpora.json" with { type: "json" };
 import { serveCorpus, type CorpusServer } from "./helpers/serve-corpus.js";
 
 const CORPUS_ID = corporaRegistry.corpora[0]?.id;

@@ -1,6 +1,8 @@
-export type Source = "claude-code" | "codex" | "copilot-cli" | "eureka" | "mars";
+export type Source = "claude-code" | "codex" | "copilot-cli";
 
 export type OrchestratorKind = "mars" | "eureka";
+
+export type SourceType = Source | OrchestratorKind;
 
 export interface OrchestratorInfo {
   kind: OrchestratorKind;
@@ -32,7 +34,6 @@ export type TokenProvenance =
   | "sdk-cc-jsonl"
   | "sdk-codex-rollout"
   | "telemetry"
-  | "telemetry-incomplete"
   | "none";
 
 export interface Session {
@@ -69,8 +70,6 @@ export interface FileCursor {
   byteOffset: number;
   lastUpdatedAt?: string;
   processedAt: string;
-  /** For Eureka cursors only: the sdkSessionId to re-register into claimedCcSessionIds on cursor hit. */
-  claimedSdkSessionId?: string;
 }
 
 export interface CursorState {
@@ -118,7 +117,7 @@ export interface PricingConfig {
 
 export interface SourceEntry {
   id: string;
-  type: Source;
+  type: SourceType;
   path: string;
   enabled: boolean;
   autoDetected: boolean;
@@ -249,7 +248,7 @@ export interface ParserContext {
 
 export interface Parser {
   source: Source;
-  parse(context: ParserContext): Promise<ParseResult>;
+  parse(context: ParserContext, extraRoots?: string[]): Promise<ParseResult>;
 }
 
 export interface ParsedSessionSeed {

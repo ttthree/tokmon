@@ -30,16 +30,6 @@ program
   });
 
 program
-  .command("collect", { hidden: true })
-  .description("Collect and enrich session data")
-  .option("--reset", "Reprocess all source data from scratch")
-  .action(async (options: { reset?: boolean }) => {
-    const result = await collectCommand(options);
-    const prefix = options.reset ? "reset complete," : "incremental update complete,";
-    console.log(`${prefix} ${result.sessionCount} sessions collected`);
-  });
-
-program
   .command("serve", { hidden: true })
   .description("Serve the local dashboard")
   .option("--port <port>", "Port to bind", (value) => Number(value), 3000)

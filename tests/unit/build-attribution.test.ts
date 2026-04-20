@@ -1,29 +1,21 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { claimedCcSessionIds } from "../../src/parsers/eureka.js";
 import { buildAttribution } from "../corpus/helpers/build-attribution.js";
 import type { Session } from "../../src/core/types.js";
 
-afterEach(() => {
-  claimedCcSessionIds.clear();
-});
-
 describe("buildAttribution", () => {
   it("builds attribution summary, linkage, and mars trees", () => {
-    claimedCcSessionIds.add("claimed-cc");
-    claimedCcSessionIds.add("orphan-sdk");
-
     const result = buildAttribution([
       makeSession({ id: "plain-cc", source: "claude-code", engine: "Claude Code" }),
-      makeSession({ id: "eureka-1", source: "eureka", engine: "Eureka + CC", tokens: { input: 10, output: 4, cacheCreation: 0, cacheRead: 2 } }),
-      makeSession({ id: "eureka-2", source: "eureka", engine: "Eureka + CC", tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 } }),
+      makeSession({ id: "eureka-1", source: "claude-code", engine: "Eureka + CC", orchestrator: { kind: "eureka" }, tokens: { input: 10, output: 4, cacheCreation: 0, cacheRead: 2 } }),
+      makeSession({ id: "eureka-2", source: "claude-code", engine: "Eureka + CC", orchestrator: { kind: "eureka" }, tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 } }),
       makeSession({ id: "mars-1", source: "claude-code", engine: "Mars + CC", costTotal: 3, orchestrator: { kind: "mars", taskId: "task-1", taskTitle: "Task One", marsSessionId: "m1" } }),
       makeSession({ id: "mars-2", source: "codex", engine: "Mars + Codex", costTotal: 2, orchestrator: { kind: "mars", taskId: "task-1", taskTitle: "Task One", marsSessionId: "m2" } }),
     ]);
 
     expect(result.summary).toEqual({
       totalSessions: 5,
-      perSource: { "claude-code": 2, codex: 1, eureka: 2 },
+      perSource: { "claude-code": 4, codex: 1 },
       perEngine: { "Claude Code": 1, "Eureka + CC": 2, "Mars + CC": 1, "Mars + Codex": 1 },
       marsSessionCount: 2,
     });
@@ -34,18 +26,15 @@ describe("buildAttribution", () => {
     expect(result.marsTrees).toEqual([
       { taskId: "task-1", taskTitle: "Task One", sessionIds: ["mars-1", "mars-2"], totalCost: 5, totalTokens: 200 },
     ]);
-    expect(result.claimedCcSessionIds).toEqual(["claimed-cc", "orphan-sdk"]);
   });
 
-  it("surfaces simulated double counting", () => {
-    claimedCcSessionIds.add("claimed-cc");
-
+  it("surfaces duplicate session keys", () => {
     const result = buildAttribution([
-      makeSession({ id: "claimed-cc", source: "claude-code", engine: "Claude Code" }),
-      makeSession({ id: "eureka-1", source: "eureka", engine: "Eureka + CC" }),
+      makeSession({ id: "dup", source: "claude-code", engine: "Claude Code" }),
+      makeSession({ id: "dup", source: "claude-code", engine: "Eureka + CC", orchestrator: { kind: "eureka" } }),
     ]);
 
-    expect(result.doubleCounting.ccIdsBothStandaloneAndClaimed).toEqual(["claimed-cc"]);
+    expect(result.doubleCounting.duplicateSessionKeys).toEqual(["claude-code:dup"]);
   });
 });
 

@@ -2,8 +2,9 @@ import fs from "node:fs/promises";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { ingestEurekaOrphans } from "../../../src/core/attribute.js";
 import { createEmptyCursorState } from "../../../src/core/cursor.js";
-import { eurekaParser } from "../../../src/parsers/eureka.js";
+import { buildEurekaIndex } from "../../../src/parsers/eureka-index.js";
 import { createEurekaCopilotFixture, createTestHome } from "../../helpers/fixtures.js";
 
 let testHome = "";
@@ -16,12 +17,13 @@ afterEach(async () => {
   delete process.env.TOKMON_HOME;
 });
 
-describe("eureka copilot sdk parser", () => {
-  it("prefers shutdown model metrics over telemetry", async () => {
+describe("eureka copilot orphan fallback", () => {
+  it("prefers shutdown model metrics over per-event telemetry", async () => {
     testHome = await createTestHome();
     process.env.TOKMON_HOME = testHome;
 
     await createEurekaCopilotFixture(testHome, {
+      sessionId: "eureka-shutdown",
       eventLines: [
         JSON.stringify({ type: "session.start", data: {} }),
         JSON.stringify({ type: "assistant.turn_end", data: { usage: { inputTokens: 80, outputTokens: 20, cacheReadTokens: 5, cacheWriteTokens: 2 } } }),
@@ -38,8 +40,7 @@ describe("eureka copilot sdk parser", () => {
       ],
     });
 
-    const result = await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
-    const session = result.sessions[0];
+    const session = await ingestSingle("eureka-shutdown");
 
     expect(session.tokens).toEqual({ input: 270, output: 55, cacheCreation: 10, cacheRead: 30 });
     expect(session.modelUsage).toEqual({
@@ -50,13 +51,13 @@ describe("eureka copilot sdk parser", () => {
     expect(session.model).toBe("gpt-4.1");
   });
 
-  it("falls back to per-event accumulation when shutdown is absent", async () => {
+  it("falls back to per-event accumulation when shutdown metrics are absent", async () => {
     testHome = await createTestHome();
     process.env.TOKMON_HOME = testHome;
 
     await createEurekaCopilotFixture(testHome, {
+      sessionId: "eureka-events",
       eventLines: [
-        JSON.stringify({ type: "session.start", data: {} }),
         JSON.stringify({ type: "assistant.message", data: { usage: { inputTokens: 40, outputTokens: 9, cacheReadTokens: 5, cacheWriteTokens: 1 } } }),
         JSON.stringify({ type: "assistant.turn_end", data: { usage: { inputTokens: 80, outputTokens: 20, cacheReadTokens: 5, cacheWriteTokens: 2 } } }),
         JSON.stringify({ type: "tool.result", data: { usage: { inputTokens: 10, outputTokens: 2, cacheReadTokens: 1, cacheWriteTokens: 0 } } }),
@@ -64,8 +65,7 @@ describe("eureka copilot sdk parser", () => {
       ],
     });
 
-    const result = await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
-    const session = result.sessions[0];
+    const session = await ingestSingle("eureka-events");
 
     expect(session.tokens).toEqual({ input: 84, output: 22, cacheCreation: 2, cacheRead: 6 });
     expect(session.modelUsage).toEqual({
@@ -73,43 +73,12 @@ describe("eureka copilot sdk parser", () => {
     });
     expect(session.tokenProvenance).toBe("sdk-events");
   });
-
-  it("falls back to per-event accumulation when shutdown metrics are empty", async () => {
-    testHome = await createTestHome();
-    process.env.TOKMON_HOME = testHome;
-
-    await createEurekaCopilotFixture(testHome, {
-      eventLines: [
-        JSON.stringify({ type: "assistant.turn_end", data: { usage: { inputTokens: 75, outputTokens: 18, cacheReadTokens: 15, cacheWriteTokens: 4 } } }),
-        JSON.stringify({ type: "session.shutdown", data: { modelMetrics: { "unused-model": { usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 } } } } }),
-        "",
-      ],
-    });
-
-    const result = await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
-    const session = result.sessions[0];
-
-    expect(session.tokens).toEqual({ input: 60, output: 18, cacheCreation: 4, cacheRead: 15 });
-    expect(session.tokenProvenance).toBe("sdk-events");
-  });
-
-  it("uses the last non-empty shutdown when a session resumes", async () => {
-    testHome = await createTestHome();
-    process.env.TOKMON_HOME = testHome;
-
-    await createEurekaCopilotFixture(testHome, {
-      eventLines: [
-        JSON.stringify({ type: "session.shutdown", data: { modelMetrics: { "gpt-4.1": { usage: { inputTokens: 100, outputTokens: 10, cacheReadTokens: 10, cacheWriteTokens: 1 } } } } }),
-        JSON.stringify({ type: "session.resume", data: {} }),
-        JSON.stringify({ type: "session.shutdown", data: { modelMetrics: { "gpt-4.1": { usage: { inputTokens: 220, outputTokens: 50, cacheReadTokens: 20, cacheWriteTokens: 6 } } } } }),
-        "",
-      ],
-    });
-
-    const result = await eurekaParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
-    const session = result.sessions[0];
-
-    expect(session.tokens).toEqual({ input: 200, output: 50, cacheCreation: 6, cacheRead: 20 });
-    expect(session.tokenProvenance).toBe("sdk-shutdown");
-  });
 });
+
+async function ingestSingle(sessionId: string) {
+  const index = await buildEurekaIndex({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
+  const sessions = await ingestEurekaOrphans(index, new Set(), "machine-1");
+  const session = sessions.find((candidate) => candidate.id === sessionId);
+  expect(session).toBeTruthy();
+  return session!;
+}

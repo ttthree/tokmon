@@ -44,15 +44,29 @@ export async function verifyCorpus(corpusRoot: string): Promise<void> {
     const parsed = await parseAllPure({ forceAllSources: true });
     const sourceSet = new Set(parsed.map((s) => s.source));
     const represented = new Set<Source>();
+    let expectsEureka = false;
+    let expectsMars = false;
     for (const key of Object.keys(manifest.sourceCounts ?? {})) {
       if (key.startsWith("claude-code")) represented.add("claude-code");
-      else if (key.startsWith("eureka")) represented.add("eureka");
-      else if (key === "codex" || key === "copilot-cli" || key === "mars") represented.add(key);
+      else if (key.startsWith("eureka-codex")) {
+        represented.add("codex");
+        expectsEureka = true;
+      } else if (key.startsWith("eureka")) {
+        represented.add("claude-code");
+        expectsEureka = true;
+      } else if (key === "codex" || key === "copilot-cli") represented.add(key);
+      else if (key === "mars" || key === "mars-trees") expectsMars = true;
     }
     for (const expected of represented) {
       if (!sourceSet.has(expected)) {
         throw new Error(`Parse-still-works check failed: missing source ${expected}`);
       }
+    }
+    if (expectsEureka && !parsed.some((session) => session.orchestrator?.kind === "eureka")) {
+      throw new Error("Parse-still-works check failed: missing eureka orchestrated sessions");
+    }
+    if (expectsMars && !parsed.some((session) => session.orchestrator?.kind === "mars")) {
+      throw new Error("Parse-still-works check failed: missing mars orchestrated sessions");
     }
   } finally {
     if (prevHome === undefined) delete process.env.TOKMON_HOME;

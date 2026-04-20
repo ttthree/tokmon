@@ -4,6 +4,44 @@ import { mergeSession } from "../../src/core/data.js";
 import type { Session } from "../../src/core/types.js";
 
 describe("mergeSession", () => {
+  it("keeps stronger token provenance over later weaker updates", () => {
+    const strong = makeSession({
+      tokenProvenance: "sdk-cc-jsonl",
+      tokens: { input: 120, output: 30, cacheCreation: 10, cacheRead: 5 },
+      modifiedAt: "2026-04-18T12:05:00.000Z",
+    });
+    const weak = makeSession({
+      tokenProvenance: "none",
+      tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
+      modifiedAt: "2026-04-18T12:10:00.000Z",
+    });
+
+    expect(mergeSession(strong, weak)).toMatchObject({
+      tokenProvenance: "sdk-cc-jsonl",
+      tokens: { input: 120, output: 30, cacheCreation: 10, cacheRead: 5 },
+      modifiedAt: "2026-04-18T12:05:00.000Z",
+    });
+  });
+
+  it("accepts stronger fallback provenance over weaker telemetry", () => {
+    const telemetry = makeSession({
+      tokenProvenance: "telemetry",
+      tokens: { input: 60, output: 12, cacheCreation: 4, cacheRead: 10 },
+      modifiedAt: "2026-04-18T12:05:00.000Z",
+    });
+    const shutdown = makeSession({
+      tokenProvenance: "sdk-shutdown",
+      tokens: { input: 200, output: 40, cacheCreation: 8, cacheRead: 20 },
+      modifiedAt: "2026-04-18T12:06:00.000Z",
+    });
+
+    expect(mergeSession(telemetry, shutdown)).toMatchObject({
+      tokenProvenance: "sdk-shutdown",
+      tokens: { input: 200, output: 40, cacheCreation: 8, cacheRead: 20 },
+      modifiedAt: "2026-04-18T12:06:00.000Z",
+    });
+  });
+
   it("ignores placeholder epoch createdAt when merging with sane data", () => {
     const ghost = makeSession({
       createdAt: "1970-01-01T00:00:00.000Z",

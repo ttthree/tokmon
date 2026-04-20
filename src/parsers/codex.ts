@@ -6,8 +6,6 @@ import Database from "better-sqlite3";
 import { getCodexDirectory } from "../core/config.js";
 import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
-import { marsRegistry } from "./mars.js";
-import { applyMarsMeta } from "./orchestrator.js";
 import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown } from "../core/types.js";
 
 interface CodexThreadRow {
@@ -44,11 +42,11 @@ interface CodexRolloutStats {
 
 export const codexParser: Parser = {
   source: "codex",
-  async parse(context: ParserContext): Promise<ParseResult> {
+  async parse(context: ParserContext, extraRoots: string[] = []): Promise<ParseResult> {
     const enabledCodex = (context.sources ?? []).filter((s) => s.enabled && s.type === "codex").map((s) => s.path);
     const roots = [
       ...(enabledCodex.length > 0 ? enabledCodex : [getCodexDirectory()]),
-      ...marsRegistry.codexRoots,
+      ...extraRoots,
     ];
     const sessionsByKey = new Map<string, Session>();
     const cursorUpdates: Record<string, FileCursor> = {};
@@ -90,11 +88,7 @@ export const codexParser: Parser = {
 
         const statsMap = await buildRolloutStatsMap(codexDir, rows.map((r) => r.id));
         for (const row of rows) {
-          let session = mapCodexThread(row, context.machineId, statsMap.get(row.id));
-          const marsMeta = marsRegistry.byAgentSessionId.codex.get(session.id);
-          if (marsMeta) {
-            session = applyMarsMeta(session, marsMeta, "codex");
-          }
+          const session = mapCodexThread(row, context.machineId, statsMap.get(row.id));
           const key = `${session.source}:${session.id}`;
           const existing = sessionsByKey.get(key);
           if (!existing || existing.modifiedAt < session.modifiedAt) {

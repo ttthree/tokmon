@@ -1,14 +1,13 @@
 {
   "summary": {
-    "totalSessions": 616,
+    "totalSessions": 613,
     "perSource": {
-      "claude-code": 37,
-      "codex": 564,
-      "copilot-cli": 3,
-      "eureka": 12
+      "claude-code": 39,
+      "codex": 571,
+      "copilot-cli": 3
     },
     "perEngine": {
-      "Claude Code": 37,
+      "Claude Code": 34,
       "Codex": 564,
       "Copilot CLI": 3,
       "Eureka + CC": 5,
@@ -151,12 +150,7 @@
     }
   ],
   "marsTrees": [],
-  "claimedCcSessionIds": [
-    "019d7f4b-1c69-7f92-a709-8ce156d211e1",
-    "cd21df07-98e1-423f-a7bf-f4ccb49a077b",
-    "fcd0ab13-60cf-415d-8e2d-cec1c14cfe84"
-  ],
   "doubleCounting": {
-    "ccIdsBothStandaloneAndClaimed": []
+    "duplicateSessionKeys": []
   }
 }
