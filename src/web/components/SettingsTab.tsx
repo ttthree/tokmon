@@ -28,8 +28,10 @@ export function SettingsTab() {
   // Working copies of mutable sections
   const [sources, setSources] = useState<SourceEntry[]>([]);
   const [excludeFoldersText, setExcludeFoldersText] = useState("");
+  const [refreshIntervalMinutes, setRefreshIntervalMinutes] = useState("5");
   const [githubRepo, setGithubRepo] = useState("");
   const [githubBranch, setGithubBranch] = useState("main");
+  const [githubSyncIntervalMinutes, setGithubSyncIntervalMinutes] = useState("60");
   const [projectsJson, setProjectsJson] = useState("{}");
   const [projectsJsonError, setProjectsJsonError] = useState<string | null>(null);
   const [machineName, setMachineName] = useState("");
@@ -44,8 +46,10 @@ export function SettingsTab() {
         setConfig(cfg);
         setSources(cfg.sources);
         setExcludeFoldersText(cfg.excludeFolders.join("\n"));
+        setRefreshIntervalMinutes(String(cfg.refresh.intervalMinutes || 5));
         setGithubRepo(cfg.github.repo);
         setGithubBranch(cfg.github.branch || "main");
+        setGithubSyncIntervalMinutes(String(cfg.github.syncIntervalMinutes || 60));
         setProjectsJson(JSON.stringify(cfg.projects, null, 2));
         setMachineName(cfg.machine?.name ?? "");
       })
@@ -95,13 +99,20 @@ export function SettingsTab() {
       const updated = await saveSettings({
         sources,
         excludeFolders,
-        github: { repo: githubRepo.trim(), branch: githubBranch.trim() || "main" },
+        refresh: { intervalMinutes: parseIntervalMinutes(refreshIntervalMinutes, 5) },
+        github: {
+          repo: githubRepo.trim(),
+          branch: githubBranch.trim() || "main",
+          syncIntervalMinutes: parseIntervalMinutes(githubSyncIntervalMinutes, 60),
+        },
         projects,
         machine: { name: machineName.trim() || undefined },
       });
       setConfig(updated);
       setSources(updated.sources);
+      setRefreshIntervalMinutes(String(updated.refresh.intervalMinutes || 5));
       setMachineName(updated.machine?.name ?? "");
+      setGithubSyncIntervalMinutes(String(updated.github.syncIntervalMinutes || 60));
     } catch (err) {
       setLoadError((err as Error).message);
     } finally {
@@ -238,6 +249,23 @@ export function SettingsTab() {
         />
       </Panel>
 
+      <Panel title="Background refresh" description="Control how often tokmon recollects local data while the dashboard is running.">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--text-secondary)" }}>
+            Refresh interval (minutes)
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={refreshIntervalMinutes}
+              onChange={(e) => setRefreshIntervalMinutes(e.target.value)}
+              className="rounded border px-2 py-1 text-sm"
+              style={inputStyle}
+            />
+          </label>
+        </div>
+      </Panel>
+
       <Panel title="Projects" description="JSON map of project name → { folders: [], description?: '' }.">
         <textarea
           value={projectsJson}
@@ -251,14 +279,14 @@ export function SettingsTab() {
         ) : null}
       </Panel>
 
-      <Panel title="GitHub sync" description="Optional: push anonymized data to a private GitHub repo for cross-machine sync.">
-        <div className="grid gap-3 sm:grid-cols-2">
+      <Panel title="GitHub sync" description="Optional: push anonymized data to a private GitHub repo for cross-machine sync. Accepts owner/name, HTTPS URLs, or SSH remotes.">
+        <div className="grid gap-3 sm:grid-cols-3">
           <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--text-secondary)" }}>
-            Repo (owner/name)
+            Repo (owner/name or remote)
             <input
               value={githubRepo}
               onChange={(e) => setGithubRepo(e.target.value)}
-              placeholder="myuser/tokmon-data"
+              placeholder="myuser/tokmon-data or git@gh:myuser/tokmon-data"
               className="rounded border px-2 py-1 text-sm"
               style={inputStyle}
             />
@@ -268,6 +296,18 @@ export function SettingsTab() {
             <input
               value={githubBranch}
               onChange={(e) => setGithubBranch(e.target.value)}
+              className="rounded border px-2 py-1 text-sm"
+              style={inputStyle}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--text-secondary)" }}>
+            Sync interval (minutes)
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={githubSyncIntervalMinutes}
+              onChange={(e) => setGithubSyncIntervalMinutes(e.target.value)}
               className="rounded border px-2 py-1 text-sm"
               style={inputStyle}
             />
@@ -316,6 +356,11 @@ function formatEvent(e: CollectSSEEvent): string {
 
 function typeLabel(t: SourceType): string {
   return SOURCE_TYPES.find((s) => s.id === t)?.label ?? t;
+}
+
+function parseIntervalMinutes(value: string, fallback: number): number {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 1 ? parsed : fallback;
 }
 
 function Panel({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {

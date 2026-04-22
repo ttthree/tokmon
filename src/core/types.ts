@@ -127,6 +127,11 @@ export interface SourceEntry {
 export interface GitHubConfig {
   repo: string;
   branch: string;
+  syncIntervalMinutes: number;
+}
+
+export interface RefreshConfig {
+  intervalMinutes: number;
 }
 
 export interface MachineConfig {
@@ -137,6 +142,7 @@ export interface MachineConfig {
 export interface AppConfig extends ProjectConfig {
   machineId?: string;
   machine?: MachineConfig;
+  refresh: RefreshConfig;
   github: GitHubConfig;
   privacy: PrivacyConfig;
   pricing: PricingConfig;

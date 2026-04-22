@@ -4,7 +4,7 @@ import { isSyncConfigured, loadConfig } from "../../core/config.js";
 import type { AppConfig } from "../../core/types.js";
 import { aggregateData } from "../../core/aggregate.js";
 import { serve } from "../../server/index.js";
-import { sync } from "../../sync/github.js";
+import { syncIfDue } from "../../sync/github.js";
 import { collectCommand } from "./collect.js";
 
 export interface RunOptions {
@@ -42,8 +42,12 @@ export async function run(options: RunOptions): Promise<void> {
   const config = await loadConfig();
   if (isSyncConfigured(config)) {
     try {
-      const result = await step("Sync with GitHub", () => sync());
-      console.log(`  → pulled ${result.pulled}, pushed=${result.pushed}`);
+      const result = await step("Sync with GitHub", () => syncIfDue(config.github));
+      if (result) {
+        console.log(`  → pulled ${result.pulled}, pushed=${result.pushed}`);
+      } else {
+        console.log(`  → skipped (runs every ${config.github.syncIntervalMinutes}m)`);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.log(`⚠ GitHub sync failed: ${message}`);
@@ -80,14 +84,14 @@ export function startBackgroundRefresh(config: AppConfig): NodeJS.Timeout {
     try {
       await collectCommand();
       if (isSyncConfigured(config)) {
-        await sync();
+        await syncIfDue(config.github);
       }
     } catch {
       // Background refresh failures are intentionally silent.
     } finally {
       refreshRunning = false;
     }
-  }, 5 * 60 * 1000);
+  }, config.refresh.intervalMinutes * 60 * 1000);
 }
 
 export function openBrowser(url: string): void {

@@ -4,7 +4,7 @@ const collectCommand = vi.fn();
 const loadConfig = vi.fn();
 const isSyncConfigured = vi.fn();
 const serve = vi.fn();
-const sync = vi.fn();
+const syncIfDue = vi.fn();
 const exec = vi.fn();
 
 vi.mock("../../src/cli/commands/collect.js", () => ({ collectCommand }));
@@ -13,17 +13,17 @@ vi.mock("../../src/core/config.js", async () => {
   return { ...actual, loadConfig, isSyncConfigured };
 });
 vi.mock("../../src/server/index.js", () => ({ serve }));
-vi.mock("../../src/sync/github.js", () => ({ sync }));
+vi.mock("../../src/sync/github.js", () => ({ syncIfDue }));
 vi.mock("node:child_process", () => ({ exec }));
 
 describe("run", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     collectCommand.mockResolvedValue({ sessionCount: 3, durationMs: 2100 });
-    loadConfig.mockResolvedValue({ github: { repo: "owner/repo", branch: "main" } });
+    loadConfig.mockResolvedValue({ refresh: { intervalMinutes: 5 }, github: { repo: "owner/repo", branch: "main", syncIntervalMinutes: 60 } });
     isSyncConfigured.mockReturnValue(true);
     serve.mockResolvedValue(3000);
-    sync.mockResolvedValue({ pulled: 2, pushed: true });
+    syncIfDue.mockResolvedValue({ pulled: 2, pushed: true });
     exec.mockImplementation((_command: string, callback?: () => void) => {
       callback?.();
       return {};
@@ -44,7 +44,7 @@ describe("run", () => {
       order.push("collect");
       return { sessionCount: 3, durationMs: 2100 };
     });
-    sync.mockImplementation(async () => {
+    syncIfDue.mockImplementation(async () => {
       order.push("sync");
       return { pulled: 2, pushed: true };
     });
@@ -73,18 +73,27 @@ describe("run", () => {
     const { run } = await import("../../src/cli/commands/run.js");
     await run({ port: 3000, open: false, reset: false });
 
-    expect(sync).not.toHaveBeenCalled();
+    expect(syncIfDue).not.toHaveBeenCalled();
     expect(serve).toHaveBeenCalledWith(3000, { autoFallback: true });
   });
 
   it("treats sync failures as non-fatal", async () => {
-    sync.mockRejectedValue(new Error("bad credentials"));
+    syncIfDue.mockRejectedValue(new Error("bad credentials"));
 
     const { run } = await import("../../src/cli/commands/run.js");
     await expect(run({ port: 3000, open: false, reset: false })).resolves.toBeUndefined();
 
     expect(serve).toHaveBeenCalledWith(3000, { autoFallback: true });
     expect(console.log).toHaveBeenCalledWith("⚠ GitHub sync failed: bad credentials");
+  });
+
+  it("logs when GitHub sync is skipped because it is not due", async () => {
+    syncIfDue.mockResolvedValue(null);
+
+    const { run } = await import("../../src/cli/commands/run.js");
+    await run({ port: 3000, open: false, reset: false });
+
+    expect(console.log).toHaveBeenCalledWith("  → skipped (runs every 60m)");
   });
 
   it("treats collect failures as fatal", async () => {
@@ -96,8 +105,10 @@ describe("run", () => {
 
   it("prevents overlapping background refresh runs", async () => {
     let intervalHandler: (() => Promise<void>) | undefined;
-    vi.spyOn(global, "setInterval").mockImplementation((handler) => {
+    let intervalMs: number | undefined;
+    vi.spyOn(global, "setInterval").mockImplementation((handler, ms) => {
       intervalHandler = handler as () => Promise<void>;
+      intervalMs = ms as number;
       return 0 as unknown as NodeJS.Timeout;
     });
 
@@ -110,7 +121,9 @@ describe("run", () => {
     );
 
     const runModule = await import("../../src/cli/commands/run.js");
-    runModule.startBackgroundRefresh({ github: { repo: "owner/repo", branch: "main" } } as never);
+    runModule.startBackgroundRefresh({ refresh: { intervalMinutes: 7 }, github: { repo: "owner/repo", branch: "main", syncIntervalMinutes: 60 } } as never);
+
+    expect(intervalMs).toBe(7 * 60 * 1000);
 
     const firstRun = intervalHandler!();
     const secondRun = intervalHandler!();

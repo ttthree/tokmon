@@ -74,7 +74,11 @@ tokmon sync --init                              # bootstrap
 tokmon sync                                     # incremental
 ```
 
-Requires the `gh` CLI authenticated and `git` installed.
+`github.repo` accepts `owner/repo`, HTTPS clone URLs, or SSH remotes such as `git@github.com:owner/repo.git` and `git@gh:owner/repo`.
+
+Requires `git` plus working Git credentials, such as a credential helper for HTTPS or an SSH key/config.
+
+The sync branch is treated as a latest-state snapshot, not an audit log: each successful `tokmon sync` rewrites the branch to a single current snapshot commit and uses `--force-with-lease` to avoid blind overwrites when another machine pushed first.
 
 ### Native module note
 

@@ -5,9 +5,13 @@ import fs from "node:fs/promises";
 import type { AppConfig, MachineData, SourceEntry, SourceType } from "./types.js";
 
 export const DEFAULT_CONFIG: AppConfig = {
+  refresh: {
+    intervalMinutes: 5,
+  },
   github: {
     repo: "",
     branch: "main",
+    syncIntervalMinutes: 60,
   },
   privacy: {
     sync: {
@@ -53,6 +57,10 @@ export function getRemoteMachinesDirectory(): string {
 
 export function getPricingDirectory(): string {
   return path.join(getTokmonDirectory(), "pricing");
+}
+
+export function getGitHubSyncStatePath(): string {
+  return path.join(getTokmonDirectory(), "github-sync-state.json");
 }
 
 export function getMachineDataPath(machineId: string): string {
@@ -137,6 +145,7 @@ export async function loadConfig(): Promise<AppConfig> {
     const raw = (text ? JSON.parse(text) : {}) as Partial<AppConfig>;
     config = mergeConfig(DEFAULT_CONFIG, raw);
   }
+  config = normalizeConfig(config);
 
   const detected = await detectAvailableSources();
   config.sources = mergeAutoDetectedSources(config.sources, detected);
@@ -210,6 +219,10 @@ function mergeConfig(base: AppConfig, override: Partial<AppConfig>): AppConfig {
   return {
     ...base,
     ...override,
+    refresh: {
+      ...base.refresh,
+      ...override.refresh,
+    },
     github: {
       ...base.github,
       ...override.github,
@@ -235,6 +248,28 @@ function mergeConfig(base: AppConfig, override: Partial<AppConfig>): AppConfig {
       ...override.machine,
     },
   };
+}
+
+function normalizeConfig(config: AppConfig): AppConfig {
+  return {
+    ...config,
+    refresh: {
+      ...config.refresh,
+      intervalMinutes: normalizePositiveInteger(config.refresh.intervalMinutes, DEFAULT_CONFIG.refresh.intervalMinutes),
+    },
+    github: {
+      ...config.github,
+      syncIntervalMinutes: normalizePositiveInteger(config.github.syncIntervalMinutes, DEFAULT_CONFIG.github.syncIntervalMinutes),
+    },
+  };
+}
+
+function normalizePositiveInteger(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+  const rounded = Math.round(value);
+  return rounded >= 1 ? rounded : fallback;
 }
 
 interface DetectedCandidate {

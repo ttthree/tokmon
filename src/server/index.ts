@@ -211,6 +211,7 @@ export function createApp(): express.Express {
       const body = (req.body ?? {}) as Partial<AppConfig>;
       const updated: AppConfig = {
         ...current,
+        refresh: { ...current.refresh, ...body.refresh },
         github: { ...current.github, ...body.github },
         privacy: body.privacy ?? current.privacy,
         projects: body.projects ?? current.projects,
