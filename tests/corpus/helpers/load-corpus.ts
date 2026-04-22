@@ -46,7 +46,11 @@ export async function withCorpusEnv<T>(corpus: LoadedCorpus, fn: () => Promise<T
 
   await prior;
   const prevHome = process.env.TOKMON_HOME;
+  const prevDisableConfigSave = process.env.TOKMON_DISABLE_CONFIG_SAVE;
+  const prevDisableDiag = process.env.TOKMON_DISABLE_DIAG_LOG;
   process.env.TOKMON_HOME = corpus.homeDir;
+  process.env.TOKMON_DISABLE_CONFIG_SAVE = "1";
+  process.env.TOKMON_DISABLE_DIAG_LOG = "1";
   // Mtimes are restored once per run by tests/corpus/global-setup.ts to
   // avoid concurrent fs.utimes calls across vitest workers (which race
   // on Windows).
@@ -55,6 +59,10 @@ export async function withCorpusEnv<T>(corpus: LoadedCorpus, fn: () => Promise<T
   } finally {
     if (prevHome === undefined) delete process.env.TOKMON_HOME;
     else process.env.TOKMON_HOME = prevHome;
+    if (prevDisableConfigSave === undefined) delete process.env.TOKMON_DISABLE_CONFIG_SAVE;
+    else process.env.TOKMON_DISABLE_CONFIG_SAVE = prevDisableConfigSave;
+    if (prevDisableDiag === undefined) delete process.env.TOKMON_DISABLE_DIAG_LOG;
+    else process.env.TOKMON_DISABLE_DIAG_LOG = prevDisableDiag;
     release();
   }
 }

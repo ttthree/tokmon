@@ -49,6 +49,8 @@
     "corpus:build-edge": "tsx tests/corpus/build-edge/build-edge.ts --out tests/corpus/snapshots/2026-04-edge",
     "corpus:regenerate-golden": "tsx tests/corpus/regenerate-golden.ts --corpus tests/corpus/snapshots/2026-04-default",
     "corpus:verify": "tsx src/cli/index.ts corpus verify tests/corpus/snapshots/2026-04-default",
+    "corpus:verify:edge": "tsx src/cli/index.ts corpus verify tests/corpus/snapshots/2026-04-edge",
+    "corpus:verify:all": "npm run corpus:verify && npm run corpus:verify:edge",
     "test": "npm run test:unit && npm run test:corpus",
     "test:corpus": "vitest run tests/corpus",
     "test:unit": "vitest run tests/unit tests/e2e",

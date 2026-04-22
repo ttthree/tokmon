@@ -39,7 +39,11 @@ export async function verifyCorpus(corpusRoot: string): Promise<void> {
 
   const manifest = JSON.parse(await fs.readFile(path.join(root, "manifest.json"), "utf8")) as { sourceCounts?: Record<string, number> };
   const prevHome = process.env.TOKMON_HOME;
+  const prevDisableConfigSave = process.env.TOKMON_DISABLE_CONFIG_SAVE;
+  const prevDisableDiag = process.env.TOKMON_DISABLE_DIAG_LOG;
   process.env.TOKMON_HOME = path.join(root, "home");
+  process.env.TOKMON_DISABLE_CONFIG_SAVE = "1";
+  process.env.TOKMON_DISABLE_DIAG_LOG = "1";
   try {
     const parsed = await parseAllPure({ forceAllSources: true });
     const sourceSet = new Set(parsed.map((s) => s.source));
@@ -55,7 +59,7 @@ export async function verifyCorpus(corpusRoot: string): Promise<void> {
         represented.add("claude-code");
         expectsEureka = true;
       } else if (key === "codex" || key === "copilot-cli") represented.add(key);
-      else if (key === "mars" || key === "mars-trees") expectsMars = true;
+      else if (key === "mars") expectsMars = true;
     }
     for (const expected of represented) {
       if (!sourceSet.has(expected)) {
@@ -71,6 +75,10 @@ export async function verifyCorpus(corpusRoot: string): Promise<void> {
   } finally {
     if (prevHome === undefined) delete process.env.TOKMON_HOME;
     else process.env.TOKMON_HOME = prevHome;
+    if (prevDisableConfigSave === undefined) delete process.env.TOKMON_DISABLE_CONFIG_SAVE;
+    else process.env.TOKMON_DISABLE_CONFIG_SAVE = prevDisableConfigSave;
+    if (prevDisableDiag === undefined) delete process.env.TOKMON_DISABLE_DIAG_LOG;
+    else process.env.TOKMON_DISABLE_DIAG_LOG = prevDisableDiag;
   }
 }
 

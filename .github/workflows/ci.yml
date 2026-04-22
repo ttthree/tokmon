@@ -30,6 +30,7 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: "npm"
       - run: npm ci
+      - run: npm run corpus:verify:all
       - run: npm run build
       - run: npm run test:unit
       - run: npm run test:corpus

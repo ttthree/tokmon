@@ -149,7 +149,9 @@ export async function loadConfig(): Promise<AppConfig> {
 
   const detected = await detectAvailableSources();
   config.sources = mergeAutoDetectedSources(config.sources, detected);
-  await saveConfig(config);
+  if (process.env.TOKMON_DISABLE_CONFIG_SAVE !== "1") {
+    await saveConfig(config);
+  }
   return config;
 }
 
