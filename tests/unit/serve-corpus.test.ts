@@ -1,3 +1,6 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+
 import { afterAll, describe, expect, it } from "vitest";
 
 import corporaRegistry from "../corpus/corpora.json" with { type: "json" };
@@ -24,5 +27,8 @@ describe("serveCorpus helper", () => {
 
     const body = await response.json() as { totals?: { sessions?: number } };
     expect(typeof body?.totals?.sessions).toBe("number");
+
+    const machineFiles = await fs.readdir(path.join(server.homePath, ".tokmon", "machines"));
+    expect(machineFiles.some((file) => file.endsWith(".json"))).toBe(true);
   }, 90_000);
 });

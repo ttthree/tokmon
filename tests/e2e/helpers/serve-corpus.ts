@@ -15,6 +15,41 @@ export interface CorpusServer {
 
 const READY_REGEX = /(http:\/\/localhost:\d+)/;
 
+async function runCollect(homePath: string): Promise<void> {
+  const targetTokmonDir = path.join(homePath, ".tokmon");
+  await fs.rm(path.join(targetTokmonDir, "machines"), { recursive: true, force: true });
+  await fs.mkdir(path.join(targetTokmonDir, "machines"), { recursive: true });
+
+  const child = spawn(
+    "node",
+    ["--import", "tsx", "-e", 'import { collectCommand } from "./src/cli/commands/collect.ts"; await collectCommand({ reset: true, silent: true });'],
+    {
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        TOKMON_HOME: homePath,
+        TOKMON_PRICING_DIR: path.join(targetTokmonDir, "pricing"),
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  ) as unknown as ChildProcessWithoutNullStreams;
+
+  let stdoutBuf = "";
+  let stderrBuf = "";
+  child.stdout.on("data", (chunk: Buffer | string) => {
+    stdoutBuf += chunk.toString();
+  });
+  child.stderr.on("data", (chunk: Buffer | string) => {
+    stderrBuf += chunk.toString();
+  });
+
+  await waitForExit(child);
+  const code = child.exitCode;
+  if (code !== 0) {
+    throw new Error(`tokmon collect failed with code ${code}.\nstdout:\n${stdoutBuf}\nstderr:\n${stderrBuf}`);
+  }
+}
+
 async function pathExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);
@@ -142,6 +177,7 @@ export async function serveCorpus(corpusId: string, opts: { timeoutMs?: number }
   const config = await buildDeterministicConfig(homePath, corpusId);
   await fs.writeFile(path.join(targetTokmonDir, "config.json"), JSON.stringify(config, null, 2) + "\n", "utf8");
   await fs.rm(path.join(targetTokmonDir, "config.json.tmp"), { force: true }).catch(() => undefined);
+  await runCollect(homePath);
 
   const port = await pickEphemeralPort();
   const child = spawn(
