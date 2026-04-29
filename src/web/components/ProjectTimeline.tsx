@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import type { Session } from "../../core/types.js";
+import { getSessionUsageEvents } from "../../core/usage-events.js";
 import { useTheme } from "../theme/ThemeProvider.js";
 
 interface ProjectTimelineProps {
@@ -53,9 +54,12 @@ export function ProjectTimeline({
     let minMs = Number.POSITIVE_INFINITY;
     let maxMs = Number.NEGATIVE_INFINITY;
     for (const s of visibleSessions) {
-      const t = new Date(s.createdAt).getTime();
-      if (t < minMs) minMs = t;
-      if (t > maxMs) maxMs = t;
+      for (const event of getSessionUsageEvents(s)) {
+        const t = new Date(event.at).getTime();
+        if (!Number.isFinite(t)) continue;
+        if (t < minMs) minMs = t;
+        if (t > maxMs) maxMs = t;
+      }
     }
 
     // Build continuous day list (so gaps are visible)
@@ -73,21 +77,31 @@ export function ProjectTimeline({
     // Aggregate per-project per-day
     type DayCell = { cost: number; sessions: number; tokens: number };
     const perRow = new Map<string, Map<string, DayCell>>();
+    const seenSessions = new Map<string, Set<string>>();
     let maxDayCost = 0;
     for (const s of visibleSessions) {
-      const d = new Date(s.createdAt);
-      const key = dayKey(d);
-      let row = perRow.get(s.project);
-      if (!row) {
-        row = new Map();
-        perRow.set(s.project, row);
+      for (const event of getSessionUsageEvents(s)) {
+        const d = new Date(event.at);
+        if (Number.isNaN(d.getTime())) continue;
+        const key = dayKey(d);
+        let row = perRow.get(s.project);
+        if (!row) {
+          row = new Map();
+          perRow.set(s.project, row);
+        }
+        const cell = row.get(key) ?? { cost: 0, sessions: 0, tokens: 0 };
+        cell.cost += event.cost?.total ?? 0;
+        cell.tokens += event.tokens.input + event.tokens.output + event.tokens.cacheCreation + event.tokens.cacheRead;
+        const seenKey = `${s.project}:${key}`;
+        const seen = seenSessions.get(seenKey) ?? new Set<string>();
+        if (!seen.has(s.id)) {
+          cell.sessions += 1;
+          seen.add(s.id);
+          seenSessions.set(seenKey, seen);
+        }
+        row.set(key, cell);
+        if (cell.cost > maxDayCost) maxDayCost = cell.cost;
       }
-      const cell = row.get(key) ?? { cost: 0, sessions: 0, tokens: 0 };
-      cell.cost += s.cost.total;
-      cell.sessions += 1;
-      cell.tokens += s.tokens.input + s.tokens.output + s.tokens.cacheCreation + s.tokens.cacheRead;
-      row.set(key, cell);
-      if (cell.cost > maxDayCost) maxDayCost = cell.cost;
     }
 
     const rows = topProjects.map((p, idx) => ({

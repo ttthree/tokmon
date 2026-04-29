@@ -37,6 +37,26 @@
         "cacheRead": 40
       }
     },
+    "usageEvents": [
+      {
+        "at": 3720,
+        "model": "claude-sonnet-4-20250514",
+        "tokens": {
+          "input": 120,
+          "output": 30,
+          "cacheCreation": 0,
+          "cacheRead": 40
+        },
+        "requestId": "cc-sdk-normal:2",
+        "cost": {
+          "input": 0.00036,
+          "output": 0.00045,
+          "cacheCreation": 0,
+          "cacheRead": 0.000012,
+          "total": 0.0008219999999999999
+        }
+      }
+    ],
     "tokenProvenance": "sdk-cc-jsonl",
     "orchestrator": {
       "kind": "eureka"
@@ -71,6 +91,34 @@
       "total": 0
     },
     "toolBreakdown": {},
+    "modelUsage": {
+      "claude-sonnet-4-20250514": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      }
+    },
+    "usageEvents": [
+      {
+        "at": 4200,
+        "model": "claude-sonnet-4-20250514",
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cacheCreation": 0,
+          "cacheRead": 0
+        },
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheCreation": 0,
+          "cacheRead": 0,
+          "total": 0
+        },
+        "requestId": "eureka-cc-orphan:legacy"
+      }
+    ],
     "tokenProvenance": "none",
     "orchestrator": {
       "kind": "eureka"
@@ -100,9 +148,9 @@
     },
     "cost": {
       "input": 0.000171,
-      "output": 0.000195,
+      "output": 0.00019500000000000002,
       "cacheCreation": 0,
-      "cacheRead": 0.0000032999999999999997,
+      "cacheRead": 0.0000033,
       "total": 0.00036930000000000003
     },
     "toolBreakdown": {},
@@ -120,6 +168,44 @@
         "cacheRead": 1
       }
     },
+    "usageEvents": [
+      {
+        "at": 5520,
+        "model": "claude-sonnet-4-20250514",
+        "tokens": {
+          "input": 50,
+          "output": 10,
+          "cacheCreation": 0,
+          "cacheRead": 10
+        },
+        "requestId": "cc-sdk-subagent:2",
+        "cost": {
+          "input": 0.00015000000000000001,
+          "output": 0.00015000000000000001,
+          "cacheCreation": 0,
+          "cacheRead": 0.000003,
+          "total": 0.00030300000000000005
+        }
+      },
+      {
+        "at": 5580,
+        "model": "claude-haiku-4-5-20251001",
+        "tokens": {
+          "input": 7,
+          "output": 3,
+          "cacheCreation": 0,
+          "cacheRead": 1
+        },
+        "requestId": "cc-sdk-subagent:2",
+        "cost": {
+          "input": 0.000021,
+          "output": 0.000045,
+          "cacheCreation": 0,
+          "cacheRead": 3e-7,
+          "total": 0.0000663
+        }
+      }
+    ],
     "tokenProvenance": "sdk-cc-jsonl",
     "orchestrator": {
       "kind": "eureka"
@@ -163,6 +249,26 @@
         "cacheRead": 0
       }
     },
+    "usageEvents": [
+      {
+        "at": 1260,
+        "model": "claude-sonnet-4-20250514",
+        "tokens": {
+          "input": 40,
+          "output": 5,
+          "cacheCreation": 0,
+          "cacheRead": 0
+        },
+        "requestId": "malformed-cc:2",
+        "cost": {
+          "input": 0.00012000000000000002,
+          "output": 0.00007500000000000001,
+          "cacheCreation": 0,
+          "cacheRead": 0,
+          "total": 0.00019500000000000002
+        }
+      }
+    ],
     "tokenProvenance": "sdk-cc-jsonl"
   },
   {
@@ -202,6 +308,26 @@
         "cacheRead": 15
       }
     },
+    "usageEvents": [
+      {
+        "at": 10860,
+        "model": "claude-sonnet-4-20250514",
+        "tokens": {
+          "input": 70,
+          "output": 9,
+          "cacheCreation": 0,
+          "cacheRead": 15
+        },
+        "requestId": "mars-claude-1:2",
+        "cost": {
+          "input": 0.00020999999999999998,
+          "output": 0.000135,
+          "cacheCreation": 0,
+          "cacheRead": 0.0000045,
+          "total": 0.0003495
+        }
+      }
+    ],
     "tokenProvenance": "sdk-cc-jsonl",
     "orchestrator": {
       "kind": "mars",
@@ -250,6 +376,26 @@
         "cacheRead": 20
       }
     },
+    "usageEvents": [
+      {
+        "at": 11040,
+        "model": "claude-opus-4-6-1m",
+        "tokens": {
+          "input": 90,
+          "output": 11,
+          "cacheCreation": 0,
+          "cacheRead": 20
+        },
+        "requestId": "mars-claude-2:2",
+        "cost": {
+          "input": 0.00027,
+          "output": 0.000165,
+          "cacheCreation": 0,
+          "cacheRead": 0.000006,
+          "total": 0.000441
+        }
+      }
+    ],
     "tokenProvenance": "sdk-cc-jsonl",
     "orchestrator": {
       "kind": "mars",
@@ -284,7 +430,7 @@
     },
     "cost": {
       "input": 0.00012000000000000002,
-      "output": 0.00009,
+      "output": 0.00008999999999999999,
       "cacheCreation": 0,
       "cacheRead": 0.0000024,
       "total": 0.0002124
@@ -304,6 +450,44 @@
         "cacheRead": 5
       }
     },
+    "usageEvents": [
+      {
+        "at": 660,
+        "model": "claude-haiku-4-5-20251001",
+        "tokens": {
+          "input": 10,
+          "output": 2,
+          "cacheCreation": 0,
+          "cacheRead": 3
+        },
+        "requestId": "multi-model-cc:2",
+        "cost": {
+          "input": 0.000030000000000000004,
+          "output": 0.000029999999999999997,
+          "cacheCreation": 0,
+          "cacheRead": 9e-7,
+          "total": 0.0000609
+        }
+      },
+      {
+        "at": 780,
+        "model": "claude-opus-4-6-1m",
+        "tokens": {
+          "input": 30,
+          "output": 4,
+          "cacheCreation": 0,
+          "cacheRead": 5
+        },
+        "requestId": "multi-model-cc:3",
+        "cost": {
+          "input": 0.00009,
+          "output": 0.000059999999999999995,
+          "cacheCreation": 0,
+          "cacheRead": 0.0000015,
+          "total": 0.00015150000000000002
+        }
+      }
+    ],
     "tokenProvenance": "sdk-cc-jsonl"
   },
   {
@@ -344,6 +528,26 @@
         "cacheRead": 50
       }
     },
+    "usageEvents": [
+      {
+        "at": 60,
+        "model": "claude-sonnet-4-20250514",
+        "tokens": {
+          "input": 100,
+          "output": 20,
+          "cacheCreation": 0,
+          "cacheRead": 50
+        },
+        "requestId": "plain-cc-1:2",
+        "cost": {
+          "input": 0.00030000000000000003,
+          "output": 0.00030000000000000003,
+          "cacheCreation": 0,
+          "cacheRead": 0.000015,
+          "total": 0.0006150000000000001
+        }
+      }
+    ],
     "tokenProvenance": "sdk-cc-jsonl"
   },
   {
@@ -376,6 +580,34 @@
       "total": 0
     },
     "toolBreakdown": {},
+    "modelUsage": {
+      "gpt-4.1": {
+        "input": 0,
+        "output": 0,
+        "cacheCreation": 0,
+        "cacheRead": 0
+      }
+    },
+    "usageEvents": [
+      {
+        "at": 7200,
+        "model": "gpt-4.1",
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cacheCreation": 0,
+          "cacheRead": 0
+        },
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheCreation": 0,
+          "cacheRead": 0,
+          "total": 0
+        },
+        "requestId": "codex-no-usage:legacy"
+      }
+    ],
     "tokenProvenance": "sdk-codex-rollout"
   },
   {
@@ -415,6 +647,26 @@
         "cacheRead": 50
       }
     },
+    "usageEvents": [
+      {
+        "at": 4860,
+        "model": "gpt-5.4",
+        "tokens": {
+          "input": 150,
+          "output": 20,
+          "cacheCreation": 0,
+          "cacheRead": 50
+        },
+        "requestId": "rollout-2026-04-18T01-21-00-019dedgecodex000000000000000001.jsonl:2",
+        "cost": {
+          "input": 0.0003,
+          "output": 0.00016,
+          "cacheCreation": 0,
+          "cacheRead": 0.000025,
+          "total": 0.000485
+        }
+      }
+    ],
     "tokenProvenance": "sdk-codex-rollout",
     "orchestrator": {
       "kind": "eureka"

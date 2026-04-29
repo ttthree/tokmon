@@ -4,13 +4,14 @@ import path from "node:path";
 import { getCraftAgentClaudeDirectory } from "../core/config.js";
 import { encodeClaudeProjectPath } from "../core/source-resolver.js";
 import { streamJsonl } from "./util/jsonl-stream.js";
-import type { TokenBreakdown, TokenProvenance } from "../core/types.js";
+import type { TokenBreakdown, TokenProvenance, UsageEvent } from "../core/types.js";
 import type { EurekaIndexEntry } from "./eureka-index.js";
 
 interface SdkTokenResult {
   tokens: TokenBreakdown;
   models: string[];
   modelUsage: Record<string, TokenBreakdown>;
+  usageEvents?: UsageEvent[];
   provenance: TokenProvenance;
 }
 
@@ -35,6 +36,7 @@ interface CopilotSdkUsage {
 }
 
 type CopilotModelMetrics = Record<string, { usage?: CopilotSdkUsage }>;
+type CcEnvelope = { type?: string; timestamp?: string; model?: string; usage?: CcUsage; message?: { id?: string; model?: string; usage?: CcUsage } };
 
 export async function readEurekaFallbackTokens(entry: EurekaIndexEntry): Promise<SdkTokenResult | null> {
   if (!entry.sdkSessionId) return null;
@@ -74,9 +76,10 @@ async function readCcSessionTokens(sdkSessionId: string, sdkCwd?: string): Promi
   const tokens = emptyBreakdown();
   const models = new Set<string>();
   const modelUsage: Record<string, TokenBreakdown> = {};
+  const usageEvents: UsageEvent[] = [];
   let found = false;
 
-  if (await accumulateCcJsonl(mainFile, tokens, models, modelUsage)) {
+  if (await accumulateCcJsonl(mainFile, tokens, models, modelUsage, usageEvents, sdkSessionId)) {
     found = true;
   }
   const subDir = path.join(ccDir, sdkSessionId, "subagents");
@@ -84,13 +87,13 @@ async function readCcSessionTokens(sdkSessionId: string, sdkCwd?: string): Promi
     const subs = await fs.readdir(subDir);
     for (const sub of subs) {
       if (!sub.endsWith(".jsonl")) continue;
-      if (await accumulateCcJsonl(path.join(subDir, sub), tokens, models, modelUsage)) {
+      if (await accumulateCcJsonl(path.join(subDir, sub), tokens, models, modelUsage, usageEvents, `${sdkSessionId}:${sub}`)) {
         found = true;
       }
     }
   } catch {}
 
-  return found ? { tokens, models: [...models], modelUsage, provenance: "sdk-cc-jsonl" } : null;
+  return found ? { tokens, models: [...models], modelUsage, usageEvents, provenance: "sdk-cc-jsonl" } : null;
 }
 
 async function readEmbeddedSdkSessionTokens(sessionPath: string, sdkSessionId: string, fallbackModel?: string): Promise<SdkTokenResult | null> {
@@ -118,13 +121,15 @@ async function extractCodexTurnModelUsage(filePath: string, fallbackModel?: stri
   const tokens = emptyBreakdown();
   const models = new Set<string>();
   const modelUsage: Record<string, TokenBreakdown> = {};
+  const usageEvents: UsageEvent[] = [];
   let currentModel = fallbackModel;
   let previousUsage: CodexTokenUsage | null = null;
   let foundUsage = false;
+  const fallbackTimestamp = new Date((await fs.stat(filePath).catch(() => ({ mtimeMs: 0 }))).mtimeMs).toISOString();
 
-  const stats = await streamJsonl(filePath, (obj) => {
+  const stats = await streamJsonl(filePath, (obj, lineNo) => {
     if (!obj || typeof obj !== "object") return;
-    const parsed = obj as { type?: string; payload?: { model?: unknown; info?: { total_token_usage?: CodexTokenUsage } } };
+    const parsed = obj as { type?: string; timestamp?: string; payload?: { model?: unknown; info?: { total_token_usage?: CodexTokenUsage } } };
     if (parsed.type === "turn_context") {
       const turnModel = typeof parsed.payload?.model === "string" ? parsed.payload.model : undefined;
       if (turnModel) {
@@ -147,6 +152,12 @@ async function extractCodexTurnModelUsage(filePath: string, fallbackModel?: stri
     models.add(attributionModel);
     const usage = modelUsage[attributionModel] ?? (modelUsage[attributionModel] = emptyBreakdown());
     addBreakdown(usage, currentTokens);
+    usageEvents.push({
+      at: parsed.timestamp && !Number.isNaN(Date.parse(parsed.timestamp)) ? new Date(Date.parse(parsed.timestamp)).toISOString() : fallbackTimestamp,
+      model: attributionModel,
+      tokens: currentTokens,
+      requestId: `${path.basename(filePath)}:${lineNo}`,
+    });
   });
 
   if (!stats || !foundUsage) return null;
@@ -154,12 +165,13 @@ async function extractCodexTurnModelUsage(filePath: string, fallbackModel?: stri
     models.add(fallbackModel);
     modelUsage[fallbackModel] = { ...tokens };
   }
-  return { tokens, models: [...models], modelUsage, provenance: "sdk-codex-rollout" };
+  return { tokens, models: [...models], modelUsage, usageEvents, provenance: "sdk-codex-rollout" };
 }
 
 async function readCopilotSdkSessionTokens(eventsPath: string, fallbackModel?: string): Promise<SdkTokenResult | null> {
   const aggregate = emptyBreakdown();
   const modelUsage: Record<string, TokenBreakdown> = {};
+  const usageEvents: UsageEvent[] = [];
   let lastShutdown: SdkTokenResult | null = null;
   const turnEndUsage = emptyBreakdown();
   const messageUsage = emptyBreakdown();
@@ -169,7 +181,7 @@ async function readCopilotSdkSessionTokens(eventsPath: string, fallbackModel?: s
 
   const stats = await streamJsonl(eventsPath, (obj) => {
     if (!obj || typeof obj !== "object") return;
-    const event = obj as { type?: string; data?: { usage?: CopilotSdkUsage; modelMetrics?: CopilotModelMetrics } };
+    const event = obj as { type?: string; timestamp?: string; data?: { usage?: CopilotSdkUsage; modelMetrics?: CopilotModelMetrics; model?: string } };
     if (event.type === "session.shutdown") {
       const shutdownResult = shutdownMetricsToResult(event.data?.modelMetrics);
       if (shutdownResult) lastShutdown = shutdownResult;
@@ -187,6 +199,10 @@ async function readCopilotSdkSessionTokens(eventsPath: string, fallbackModel?: s
     } else {
       addBreakdown(otherUsage, usage);
     }
+    if (event.timestamp && !Number.isNaN(Date.parse(event.timestamp))) {
+      const model = stringOrUndefined(event.data?.model) ?? fallbackModel ?? "unknown";
+      usageEvents.push({ at: new Date(Date.parse(event.timestamp)).toISOString(), model, tokens: usage, requestId: `${event.type}:${usageEvents.length + 1}` });
+    }
   });
 
   if (!stats) return null;
@@ -197,7 +213,7 @@ async function readCopilotSdkSessionTokens(eventsPath: string, fallbackModel?: s
   addBreakdown(aggregate, sawTurnEndUsage ? turnEndUsage : messageUsage);
   const models = fallbackModel ? [fallbackModel] : [];
   if (fallbackModel) modelUsage[fallbackModel] = { ...aggregate };
-  return { tokens: aggregate, modelUsage, models, provenance: "sdk-events" };
+  return { tokens: aggregate, modelUsage, models, usageEvents, provenance: "sdk-events" };
 }
 
 function diffCodexUsage(current: CodexTokenUsage, previous: CodexTokenUsage): CodexTokenUsage | null {
@@ -228,18 +244,42 @@ async function walkDir(dir: string, ext: string): Promise<string[]> {
   return results;
 }
 
-async function accumulateCcJsonl(filePath: string, tokens: TokenBreakdown, models: Set<string>, modelUsage: Record<string, TokenBreakdown>): Promise<boolean> {
+async function accumulateCcJsonl(
+  filePath: string,
+  tokens: TokenBreakdown,
+  models: Set<string>,
+  modelUsage: Record<string, TokenBreakdown>,
+  usageEvents: UsageEvent[],
+  requestPrefix: string,
+): Promise<boolean> {
   let found = false;
-  const stats = await streamJsonl(filePath, (obj) => {
+  const fallbackTimestamp = new Date((await fs.stat(filePath).catch(() => ({ mtimeMs: 0 }))).mtimeMs).toISOString();
+  const seenUsageKeys = new Set<string>();
+  const stats = await streamJsonl(filePath, (obj, lineNo) => {
     if (!obj || typeof obj !== "object") return;
-    const envelope = obj as { type?: string; model?: string; usage?: CcUsage; message?: { model?: string; usage?: CcUsage } };
+    const envelope = obj as CcEnvelope;
     if (envelope.type !== "assistant") return;
     const model = stringOrUndefined(envelope.message?.model ?? envelope.model);
     if (model && !model.startsWith("<")) models.add(model);
     const usage = ccUsageToBreakdown(envelope.message?.usage ?? envelope.usage);
     if (!hasAnyBreakdown(usage)) return;
+    const dedupeKey = envelope.message?.id
+      ? `${envelope.message.id}:${model ?? "unknown"}:${usage.input}:${usage.output}:${usage.cacheCreation}:${usage.cacheRead}`
+      : undefined;
+    if (dedupeKey && seenUsageKeys.has(dedupeKey)) return;
+    if (dedupeKey) seenUsageKeys.add(dedupeKey);
     found = true;
     addBreakdown(tokens, usage);
+    const eventModel = model ?? "unknown";
+    const eventTimestamp = envelope.timestamp && !Number.isNaN(Date.parse(envelope.timestamp))
+      ? new Date(Date.parse(envelope.timestamp)).toISOString()
+      : fallbackTimestamp;
+    usageEvents.push({
+      at: eventTimestamp,
+      model: eventModel,
+      tokens: usage,
+      requestId: stringOrUndefined(envelope.message?.id) ?? `${requestPrefix}:${lineNo}`,
+    });
     if (!model) return;
     const bucket = modelUsage[model] ?? (modelUsage[model] = emptyBreakdown());
     addBreakdown(bucket, usage);

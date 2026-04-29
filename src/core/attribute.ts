@@ -61,6 +61,7 @@ export async function ingestEurekaOrphans(
       cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
       toolBreakdown: {},
       modelUsage: fallback && Object.keys(fallback.modelUsage).length > 0 ? fallback.modelUsage : undefined,
+      usageEvents: fallback?.usageEvents,
       tokenProvenance: fallback?.provenance ?? (entry.telemetryTokens && hasAnyBreakdown(entry.telemetryTokens) ? entry.telemetryProvenance ?? "telemetry" : "none"),
       orchestrator: { kind: "eureka" },
     });
@@ -97,6 +98,7 @@ async function maybeUpgradeMatchedEurekaSession(session: Session, entry: EurekaI
     tokens: fallback.tokens,
     model: pickModel(entry, fallback),
     modelUsage: Object.keys(fallback.modelUsage).length > 0 ? fallback.modelUsage : session.modelUsage,
+    usageEvents: fallback.usageEvents ?? session.usageEvents,
     tokenProvenance: fallback.provenance,
     modifiedAt: entry.lastTimestamp ?? session.modifiedAt,
   };

@@ -6,7 +6,7 @@ import Database from "better-sqlite3";
 import { getCodexDirectory } from "../core/config.js";
 import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
-import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown } from "../core/types.js";
+import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown, UsageEvent } from "../core/types.js";
 
 interface CodexThreadRow {
   id: string;
@@ -30,6 +30,9 @@ interface CodexTokenUsage {
 
 interface CodexRolloutStats {
   usage?: CodexTokenUsage;
+  tokens: TokenBreakdown;
+  modelUsage: Record<string, TokenBreakdown>;
+  usageEvents: UsageEvent[];
   turns: number;
   messageCount: number;
   toolCallCount: number;
@@ -159,14 +162,21 @@ async function readRolloutStats(filePath: string): Promise<CodexRolloutStats | n
       messageCount: 0,
       toolCallCount: 0,
       toolBreakdown: {},
+      tokens: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 },
+      modelUsage: {},
+      usageEvents: [],
       eventTimestampsMs: [],
     };
 
     // Track function_call → function_call_output pairing by call_id.
     // Codex re-emits function_call entries across turns; count each unique call_id once.
     const seenCallIds = new Set<string>();
+    let currentModel: string | undefined;
+    let previousUsage: CodexTokenUsage | null = null;
+    let lineNo = 0;
 
     for (const line of raw.split(/\r?\n/)) {
+      lineNo += 1;
       if (!line.trim()) continue;
       let parsed: CodexRolloutLine;
       try {
@@ -184,11 +194,30 @@ async function readRolloutStats(filePath: string): Promise<CodexRolloutStats | n
       const payload = parsed.payload as CodexRolloutPayload | undefined;
       if (!payload) continue;
 
+      if (type === "turn_context") {
+        currentModel = typeof payload.model === "string" && payload.model.trim() ? payload.model : currentModel;
+      }
+
       if (type === "event_msg") {
         if (payload.type === "token_count") {
           const usage = payload.info?.total_token_usage;
           if (usage && typeof usage.input_tokens === "number") {
             stats.usage = usage;
+            const delta = previousUsage ? diffCodexUsage(usage, previousUsage) : usage;
+            previousUsage = usage;
+            if (delta) {
+              const tokens = codexUsageToBreakdown(delta);
+              addTokens(stats.tokens, tokens);
+              const model = currentModel ?? "unknown";
+              const bucket = stats.modelUsage[model] ?? (stats.modelUsage[model] = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 });
+              addTokens(bucket, tokens);
+              stats.usageEvents.push({
+                at: Number.isFinite(ts) ? new Date(ts).toISOString() : "",
+                model,
+                tokens,
+                requestId: `${path.basename(filePath)}:${lineNo}`,
+              });
+            }
           }
         } else if (payload.type === "user_message" && typeof payload.message === "string") {
           stats.turns += 1;
@@ -231,6 +260,7 @@ interface CodexRolloutLine {
 
 interface CodexRolloutPayload {
   type?: string;
+  model?: string;
   message?: string;
   info?: { total_token_usage?: CodexTokenUsage };
   name?: string;
@@ -286,15 +316,13 @@ function mapCodexThread(row: CodexThreadRow, machineId: string, stats?: CodexRol
       ? `codex (${row.model_provider})`
       : "unknown";
 
-  const usage = stats?.usage;
-  const tokens: TokenBreakdown = usage
-    ? {
-        input: numberOrZero(usage.input_tokens) - numberOrZero(usage.cached_input_tokens),
-        output: numberOrZero(usage.output_tokens),
-        cacheCreation: 0,
-        cacheRead: numberOrZero(usage.cached_input_tokens),
-      }
-    : { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
+  const tokens: TokenBreakdown = stats?.tokens ?? { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
+  const usageEvents = (stats?.usageEvents ?? []).map((event) => ({
+    ...event,
+    at: event.at || modifiedAt,
+    model: event.model === "unknown" ? model : event.model,
+  }));
+  const modelUsage = rebuildModelUsage(usageEvents.length > 0 ? usageEvents : [], stats?.modelUsage, model);
 
   // Active duration = sum of inter-event gaps capped at the idle threshold.
   // Wall-clock (lastEvent - firstEvent) inflates when sessions are left open
@@ -323,8 +351,47 @@ function mapCodexThread(row: CodexThreadRow, machineId: string, stats?: CodexRol
     tokens,
     cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
     toolBreakdown: stats?.toolBreakdown ?? {},
+    modelUsage: Object.keys(modelUsage).length > 0 ? modelUsage : undefined,
+    usageEvents,
     tokenProvenance: "sdk-codex-rollout",
   };
+}
+
+function rebuildModelUsage(events: UsageEvent[], fallbackUsage: Record<string, TokenBreakdown> | undefined, fallbackModel: string): Record<string, TokenBreakdown> {
+  const modelUsage: Record<string, TokenBreakdown> = {};
+  for (const event of events) {
+    const model = event.model || fallbackModel || "unknown";
+    const bucket = modelUsage[model] ?? (modelUsage[model] = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 });
+    addTokens(bucket, event.tokens);
+  }
+  if (Object.keys(modelUsage).length > 0) return modelUsage;
+  return fallbackUsage ?? {};
+}
+
+function codexUsageToBreakdown(usage: CodexTokenUsage): TokenBreakdown {
+  const cacheRead = numberOrZero(usage.cached_input_tokens);
+  return {
+    input: Math.max(0, numberOrZero(usage.input_tokens) - cacheRead),
+    output: numberOrZero(usage.output_tokens),
+    cacheCreation: 0,
+    cacheRead,
+  };
+}
+
+function diffCodexUsage(current: CodexTokenUsage, previous: CodexTokenUsage): CodexTokenUsage | null {
+  const input_tokens = numberOrZero(current.input_tokens) - numberOrZero(previous.input_tokens);
+  const cached_input_tokens = numberOrZero(current.cached_input_tokens) - numberOrZero(previous.cached_input_tokens);
+  const output_tokens = numberOrZero(current.output_tokens) - numberOrZero(previous.output_tokens);
+  if (input_tokens < 0 || cached_input_tokens < 0 || output_tokens < 0) return null;
+  if (input_tokens === 0 && cached_input_tokens === 0 && output_tokens === 0) return null;
+  return { input_tokens, cached_input_tokens, output_tokens };
+}
+
+function addTokens(target: TokenBreakdown, delta: TokenBreakdown): void {
+  target.input += delta.input;
+  target.output += delta.output;
+  target.cacheCreation += delta.cacheCreation;
+  target.cacheRead += delta.cacheRead;
 }
 
 async function safeStat(target: string): Promise<Awaited<ReturnType<typeof fs.stat>> | null> {

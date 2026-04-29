@@ -36,8 +36,14 @@
     {
       "key": "claude-sonnet-4-20250514",
       "label": "claude-sonnet-4-20250514",
-      "cost": 0.0023508,
+      "cost": 0.0022845,
       "sessions": 6
+    },
+    {
+      "key": "claude-opus-4-6-1m",
+      "label": "claude-opus-4-6-1m",
+      "cost": 0.0005925,
+      "sessions": 2
     },
     {
       "key": "gpt-5.4",
@@ -46,16 +52,10 @@
       "sessions": 1
     },
     {
-      "key": "claude-opus-4-6-1m",
-      "label": "claude-opus-4-6-1m",
-      "cost": 0.000441,
-      "sessions": 1
-    },
-    {
       "key": "claude-haiku-4-5-20251001",
       "label": "claude-haiku-4-5-20251001",
-      "cost": 0.0002124,
-      "sessions": 1
+      "cost": 0.0001272,
+      "sessions": 2
     },
     {
       "key": "gpt-4.1",
@@ -343,7 +343,13 @@
         {
           "key": "claude-sonnet-4-20250514",
           "label": "claude-sonnet-4-20250514",
-          "cost": 0.0003693,
+          "cost": 0.000303,
+          "sessions": 1
+        },
+        {
+          "key": "claude-haiku-4-5-20251001",
+          "label": "claude-haiku-4-5-20251001",
+          "cost": 0.0000663,
           "sessions": 1
         }
       ],
@@ -367,7 +373,7 @@
       "avgTurnsPerSession": 1,
       "activeDays": 1,
       "topSource": "claude-code",
-      "topModel": "claude-haiku-4-5-20251001",
+      "topModel": "claude-opus-4-6-1m",
       "topMachine": "machine",
       "tokenBreakdown": {
         "input": 40,
@@ -392,9 +398,15 @@
       ],
       "modelBreakdown": [
         {
+          "key": "claude-opus-4-6-1m",
+          "label": "claude-opus-4-6-1m",
+          "cost": 0.0001515,
+          "sessions": 1
+        },
+        {
           "key": "claude-haiku-4-5-20251001",
           "label": "claude-haiku-4-5-20251001",
-          "cost": 0.0002124,
+          "cost": 0.0000609,
           "sessions": 1
         }
       ],
@@ -575,8 +587,8 @@
     ],
     "topModels": [
       "claude-sonnet-4-20250514",
-      "gpt-5.4",
       "claude-opus-4-6-1m",
+      "gpt-5.4",
       "claude-haiku-4-5-20251001",
       "gpt-4.1"
     ]

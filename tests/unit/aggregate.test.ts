@@ -78,6 +78,25 @@ describe("aggregate helpers", () => {
     expect(computeActiveDays(sessions)).toBe(2);
   });
 
+  it("computes active days from usage event dates", () => {
+    const sessions = [
+      makeSession({
+        id: "cross-day",
+        createdAt: "2026-04-10T00:00:00.000Z",
+        usageEvents: [
+          { at: localIso(2026, 4, 10, 23, 50), model: "model-a", tokens: { input: 1, output: 1, cacheCreation: 0, cacheRead: 0 }, cost: { input: 1, output: 0, cacheCreation: 0, cacheRead: 0, total: 1 } },
+          { at: localIso(2026, 4, 11, 0, 5), model: "model-b", tokens: { input: 2, output: 2, cacheCreation: 0, cacheRead: 0 }, cost: { input: 2, output: 0, cacheCreation: 0, cacheRead: 0, total: 2 } },
+        ],
+      }),
+    ];
+
+    expect(computeActiveDays(sessions)).toBe(2);
+    expect(buildBreakdownItems(sessions, "model")).toEqual([
+      { key: "model-b", label: "model-b", cost: 2, sessions: 1 },
+      { key: "model-a", label: "model-a", cost: 1, sessions: 1 },
+    ]);
+  });
+
   it("computes top source, top model, and top machine from deterministic breakdowns", () => {
     const summary = computeProjectSummary("alpha", [
       makeSession({ id: "1", project: "alpha", source: "codex", model: "gpt-4.1", machineId: "m2", costTotal: 7 }),
@@ -204,6 +223,36 @@ describe("aggregateData", () => {
     expect(noneOnly.sessions).toHaveLength(1);
     expect(noneOnly.sessions[0].id).toBe("none");
   });
+
+  it("returns windowed sessions for date range API aggregation", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+    const machineId = "local-machine";
+    const machinePath = path.join(testHome, ".tokmon", "machines", `${machineId}.json`);
+    await fs.mkdir(path.dirname(machinePath), { recursive: true });
+    const sessions = {
+      [`${machineId}:claude-code:cross-day`]: makeSession({
+        id: "cross-day",
+        machineId,
+        createdAt: "2026-04-01T00:00:00.000Z",
+        usageEvents: [
+          { at: "2026-04-04T01:00:00.000Z", model: "model-a", tokens: { input: 10, output: 1, cacheCreation: 0, cacheRead: 0 }, cost: { input: 1, output: 0, cacheCreation: 0, cacheRead: 0, total: 1 } },
+          { at: "2026-04-11T01:00:00.000Z", model: "model-b", tokens: { input: 20, output: 2, cacheCreation: 0, cacheRead: 0 }, cost: { input: 2, output: 0, cacheCreation: 0, cacheRead: 0, total: 2 } },
+        ],
+      }),
+    };
+    await fs.writeFile(machinePath, JSON.stringify({ machineId, hostname: "h", os: "darwin-arm64", lastUpdatedAt: new Date().toISOString(), sessions, _cursor: { version: 1, parserSchemaVersion: 2, updatedAt: new Date(0).toISOString(), files: {} } }), "utf8");
+    await fs.writeFile(path.join(testHome, ".tokmon", ".machine-id"), `${machineId}\n`, "utf8");
+
+    const data = await aggregateData({ days: 7 });
+
+    expect(data.sessions).toHaveLength(1);
+    expect(data.sessions[0].tokens.input).toBe(20);
+    expect(data.sessions[0].cost.total).toBe(2);
+    expect(data.sessions[0].usageEvents).toHaveLength(1);
+    expect(data.sessions[0].modelUsage).toEqual({ "model-b": { input: 20, output: 2, cacheCreation: 0, cacheRead: 0 } });
+    expect(data.totals.cost.total).toBe(2);
+  });
 });
 
 function makeSession(overrides: (Partial<Session> & Pick<Session, "id"> & { costTotal?: number })): Session {
@@ -233,6 +282,12 @@ function makeSession(overrides: (Partial<Session> & Pick<Session, "id"> & { cost
       total: costTotal,
     },
     toolBreakdown: overrides.toolBreakdown ?? { Read: 1 },
+    modelUsage: overrides.modelUsage,
+    usageEvents: overrides.usageEvents,
     orchestrator: overrides.orchestrator,
   };
+}
+
+function localIso(year: number, month: number, day: number, hour: number, minute = 0): string {
+  return new Date(year, month - 1, day, hour, minute).toISOString();
 }

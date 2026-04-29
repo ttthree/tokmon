@@ -56,6 +56,8 @@ describe("ingestEurekaOrphans provenance matrix", () => {
     expect(session.tokenProvenance).toBe("sdk-codex-rollout");
     expect(session.tokens).toEqual({ input: 1300, output: 90, cacheCreation: 0, cacheRead: 300 });
     expect(session.model).toBe("gpt-5.4");
+    expect(session.usageEvents).toHaveLength(2);
+    expect(session.usageEvents?.map((event) => event.at)).toEqual(["2026-04-12T01:25:23.000Z", "2026-04-12T01:30:02.000Z"]);
   });
 });
 

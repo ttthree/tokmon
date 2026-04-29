@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import type { ProjectSummary, Session } from "../../core/types.js";
+import { getSessionUsageEvents } from "../../core/usage-events.js";
 import { useTheme } from "../theme/ThemeProvider.js";
 
 interface ProjectActivityTableProps {
@@ -75,9 +76,12 @@ export function ProjectActivityTable({
     let minMs = Number.POSITIVE_INFINITY;
     let maxMs = Number.NEGATIVE_INFINITY;
     for (const s of visibleSessions) {
-      const t = new Date(s.createdAt).getTime();
-      if (t < minMs) minMs = t;
-      if (t > maxMs) maxMs = t;
+      for (const event of getSessionUsageEvents(s)) {
+        const t = new Date(event.at).getTime();
+        if (!Number.isFinite(t)) continue;
+        if (t < minMs) minMs = t;
+        if (t > maxMs) maxMs = t;
+      }
     }
 
     const dayList: string[] = [];
@@ -90,19 +94,30 @@ export function ProjectActivityTable({
     }
 
     const rowsHeat = new Map<string, Map<string, { cost: number; sessions: number }>>();
+    const seenSessions = new Map<string, Set<string>>();
     let maxDayCost = 0;
     for (const s of visibleSessions) {
-      const key = dayKey(new Date(s.createdAt));
-      let row = rowsHeat.get(s.project);
-      if (!row) {
-        row = new Map();
-        rowsHeat.set(s.project, row);
+      for (const event of getSessionUsageEvents(s)) {
+        const date = new Date(event.at);
+        if (Number.isNaN(date.getTime())) continue;
+        const key = dayKey(date);
+        let row = rowsHeat.get(s.project);
+        if (!row) {
+          row = new Map();
+          rowsHeat.set(s.project, row);
+        }
+        const cell = row.get(key) ?? { cost: 0, sessions: 0 };
+        cell.cost += event.cost?.total ?? 0;
+        const seenKey = `${s.project}:${key}`;
+        const seen = seenSessions.get(seenKey) ?? new Set<string>();
+        if (!seen.has(s.id)) {
+          cell.sessions += 1;
+          seen.add(s.id);
+          seenSessions.set(seenKey, seen);
+        }
+        row.set(key, cell);
+        if (cell.cost > maxDayCost) maxDayCost = cell.cost;
       }
-      const cell = row.get(key) ?? { cost: 0, sessions: 0 };
-      cell.cost += s.cost.total;
-      cell.sessions += 1;
-      row.set(key, cell);
-      if (cell.cost > maxDayCost) maxDayCost = cell.cost;
     }
 
     const totalWidth = dayList.length * (CELL_SIZE + CELL_GAP);

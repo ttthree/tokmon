@@ -1,5 +1,7 @@
 import { defineConfig } from "vitest/config";
 
+process.env.TZ = "Asia/Shanghai";
+
 export default defineConfig({
   test: {
     environment: "node",

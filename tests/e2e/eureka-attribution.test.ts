@@ -37,8 +37,8 @@ describe("eureka attribution e2e", () => {
       server = app.listen(0, () => resolve());
     });
 
-    const all = await requestJson("/api/data?days=7");
-    const eurekaOnly = await requestJson("/api/data?days=7&orchestrator=eureka");
+    const all = await requestJson("/api/data");
+    const eurekaOnly = await requestJson("/api/data?orchestrator=eureka");
 
     const session = all.body.sessions.find((item: { id: string }) => item.id === "eureka-e2e");
     expect(session).toMatchObject({

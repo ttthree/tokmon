@@ -26,6 +26,33 @@ describe("claude parser", () => {
     expect(result.sessions[0].model).toBe("claude-sonnet-4-20250514");
     expect(result.sessions[0].toolBreakdown.Read).toBe(1);
     expect(result.sessions[0].tokens.cacheRead).toBe(10000);
+    expect(result.sessions[0].usageEvents).toHaveLength(1);
+    expect(result.sessions[0].usageEvents?.[0].model).toBe("claude-sonnet-4-20250514");
+  });
+
+  it("dedupes repeated assistant message usage with identical message id", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+    await createClaudeFixture(testHome, { sessionId: "dup-session", inputTokens: 100, outputTokens: 10, cacheCreationTokens: 0, cacheReadTokens: 5 });
+    const projectDir = `${testHome}/.claude/projects/${encodeURIComponent("unused")}`;
+    const session = await claudeCodeParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
+    const sessionPath = session.cursorUpdates ? Object.keys(session.cursorUpdates).find((p) => p.endsWith("dup-session.jsonl")) : undefined;
+    expect(sessionPath).toBeTruthy();
+    const duplicateLine = JSON.stringify({
+      type: "assistant",
+      sessionId: "dup-session",
+      timestamp: "2026-04-01T00:00:01.000Z",
+      message: { id: "assistant-1", role: "assistant", model: "claude-sonnet-4-20250514", usage: { input_tokens: 100, output_tokens: 10, cache_creation_input_tokens: 0, cache_read_input_tokens: 5 }, content: [{ type: "text", text: "again" }] },
+    });
+    const original = await fs.readFile(sessionPath!, "utf8");
+    const normalized = original.replace('"message":{"role":"assistant"', '"message":{"id":"assistant-1","role":"assistant"');
+    await fs.writeFile(sessionPath!, `${normalized.trim()}\n${duplicateLine}\n`, "utf8");
+
+    const result = await claudeCodeParser.parse({ machineId: "machine-1", existingCursor: createEmptyCursorState() });
+
+    expect(result.sessions[0].tokens.input).toBe(100);
+    expect(result.sessions[0].tokens.output).toBe(10);
+    expect(result.sessions[0].usageEvents).toHaveLength(1);
   });
 
   it("maps subagent sessions to Eureka workingDirectory via parent index", async () => {

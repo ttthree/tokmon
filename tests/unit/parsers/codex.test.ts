@@ -46,5 +46,11 @@ describe("codex parser", () => {
     expect(session.tokens.output).toBe(80);
     expect(session.tokens.cacheRead).toBe(400);
     expect(session.tokens.input).toBe(800); // 1200 - 400
+    expect(session.usageEvents).toHaveLength(1);
+    expect(session.usageEvents?.[0]).toMatchObject({
+      at: "2026-04-05T10:00:21.000Z",
+      model: "gpt-4.1",
+      tokens: { input: 800, output: 80, cacheCreation: 0, cacheRead: 400 },
+    });
   });
 });
