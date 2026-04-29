@@ -84,8 +84,8 @@ describe("aggregate helpers", () => {
         id: "cross-day",
         createdAt: "2026-04-10T00:00:00.000Z",
         usageEvents: [
-          { at: "2026-04-10T15:50:00.000Z", model: "model-a", tokens: { input: 1, output: 1, cacheCreation: 0, cacheRead: 0 }, cost: { input: 1, output: 0, cacheCreation: 0, cacheRead: 0, total: 1 } },
-          { at: "2026-04-10T16:05:00.000Z", model: "model-b", tokens: { input: 2, output: 2, cacheCreation: 0, cacheRead: 0 }, cost: { input: 2, output: 0, cacheCreation: 0, cacheRead: 0, total: 2 } },
+          { at: localIso(2026, 4, 10, 23, 50), model: "model-a", tokens: { input: 1, output: 1, cacheCreation: 0, cacheRead: 0 }, cost: { input: 1, output: 0, cacheCreation: 0, cacheRead: 0, total: 1 } },
+          { at: localIso(2026, 4, 11, 0, 5), model: "model-b", tokens: { input: 2, output: 2, cacheCreation: 0, cacheRead: 0 }, cost: { input: 2, output: 0, cacheCreation: 0, cacheRead: 0, total: 2 } },
         ],
       }),
     ];
@@ -286,4 +286,8 @@ function makeSession(overrides: (Partial<Session> & Pick<Session, "id"> & { cost
     usageEvents: overrides.usageEvents,
     orchestrator: overrides.orchestrator,
   };
+}
+
+function localIso(year: number, month: number, day: number, hour: number, minute = 0): string {
+  return new Date(year, month - 1, day, hour, minute).toISOString();
 }

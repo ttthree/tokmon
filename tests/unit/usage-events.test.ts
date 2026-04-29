@@ -19,7 +19,7 @@ describe("usage event helpers", () => {
 
   it("filters with inclusive start and exclusive end", () => {
     const events = makeEvents();
-    expect(filterUsageEventsByWindow(events, new Date("2026-04-10T12:00:00.000Z"), new Date("2026-04-11T00:00:00.000Z"))
+    expect(filterUsageEventsByWindow(events, localDate(2026, 4, 10, 12), localDate(2026, 4, 11, 0))
       .map((event) => event.requestId)).toEqual(["b"]);
   });
 
@@ -39,22 +39,30 @@ describe("usage event helpers", () => {
 
   it("returns windowed session clones with recomputed totals and model usage", () => {
     const session = makeSession({ id: "cross-day", usageEvents: makeEvents() });
-    const windowed = windowSessionUsage(session, new Date("2026-04-11T00:00:00.000Z"), new Date("2026-04-12T00:00:00.000Z"));
+    const windowed = windowSessionUsage(session, localDate(2026, 4, 11, 0), localDate(2026, 4, 12, 0));
 
     expect(windowed?.usageEvents?.map((event) => event.requestId)).toEqual(["c"]);
     expect(windowed?.tokens).toEqual({ input: 10, output: 2, cacheCreation: 1, cacheRead: 3 });
     expect(windowed?.cost.total).toBe(3.6);
     expect(windowed?.modelUsage).toEqual({ "model-b": { input: 10, output: 2, cacheCreation: 1, cacheRead: 3 } });
-    expect(windowSessionUsage(session, new Date("2026-04-12T00:00:00.000Z"), new Date("2026-04-13T00:00:00.000Z"))).toBeNull();
+    expect(windowSessionUsage(session, localDate(2026, 4, 12, 0), localDate(2026, 4, 13, 0))).toBeNull();
   });
 });
 
 function makeEvents(): UsageEvent[] {
   return [
-    event("a", "2026-04-10T09:00:00.000Z", "model-a"),
-    event("b", "2026-04-10T12:00:00.000Z", "model-a"),
-    event("c", "2026-04-11T01:00:00.000Z", "model-b"),
+    event("a", localIso(2026, 4, 10, 9), "model-a"),
+    event("b", localIso(2026, 4, 10, 12), "model-a"),
+    event("c", localIso(2026, 4, 11, 1), "model-b"),
   ];
+}
+
+function localDate(year: number, month: number, day: number, hour: number): Date {
+  return new Date(year, month - 1, day, hour);
+}
+
+function localIso(year: number, month: number, day: number, hour: number): string {
+  return localDate(year, month, day, hour).toISOString();
 }
 
 function event(requestId: string, at: string, model: string): UsageEvent {
