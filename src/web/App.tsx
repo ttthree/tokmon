@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { CostBreakdown, DataResponse, OrchestratorKind, ProjectSummary, Session, Source, TokenBreakdown } from "../core/types.js";
 import { fetchDashboardData, fetchMachineIdentity, triggerCollect } from "./api.js";
+import { getSessionUsageEvents, localDayKey } from "../core/usage-events.js";
 import { ActiveFiltersBar } from "./components/ActiveFiltersBar.js";
 import { BreakdownChart } from "./components/BreakdownChart.js";
 import { BurnClock } from "./components/BurnClock.js";
@@ -669,21 +670,23 @@ function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter, 
   const stackKeysSeen = new Set<string>();
   const seenIso: string[] = [];
   for (const session of sessions) {
-    const iso = session.createdAt.slice(0, 10);
-    const label = formatter(session.createdAt);
-    const bucket = grouped.get(label) ?? { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0, costBySource: {} };
-    bucket.input += session.tokens.input;
-    bucket.output += session.tokens.output;
-    bucket.cacheCreation += session.tokens.cacheCreation;
-    bucket.cacheRead += session.tokens.cacheRead;
-    bucket.cost += session.cost.total;
-    if (session.tokens.input > 0 || session.tokens.output > 0 || session.tokens.cacheCreation > 0 || session.tokens.cacheRead > 0 || session.cost.total > 0) {
-      seenIso.push(iso);
+    for (const event of getSessionUsageEvents(session)) {
+      const iso = event.at.slice(0, 10);
+      const label = formatter(event.at);
+      const bucket = grouped.get(label) ?? { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0, costBySource: {} };
+      bucket.input += event.tokens.input;
+      bucket.output += event.tokens.output;
+      bucket.cacheCreation += event.tokens.cacheCreation;
+      bucket.cacheRead += event.tokens.cacheRead;
+      bucket.cost += event.cost?.total ?? 0;
+      if (event.tokens.input > 0 || event.tokens.output > 0 || event.tokens.cacheCreation > 0 || event.tokens.cacheRead > 0 || (event.cost?.total ?? 0) > 0) {
+        seenIso.push(iso);
+      }
+      const key = stackBy === "source" ? session.source : session.orchestrator?.kind ?? "none";
+      bucket.costBySource[key] = (bucket.costBySource[key] ?? 0) + (event.cost?.total ?? 0);
+      stackKeysSeen.add(key);
+      grouped.set(label, bucket);
     }
-    const key = stackBy === "source" ? session.source : session.orchestrator?.kind ?? "none";
-    bucket.costBySource[key] = (bucket.costBySource[key] ?? 0) + session.cost.total;
-    stackKeysSeen.add(key);
-    grouped.set(label, bucket);
   }
 
   const labels = buildContinuousLabels(range, seenIso, isMonthly);
@@ -747,25 +750,9 @@ function buildProjectData(projects: ProjectSummary[]) {
 function buildModelData(sessions: DataResponse["sessions"]) {
   const grouped = new Map<string, number>();
   for (const session of sessions) {
-    if (session.modelUsage && Object.keys(session.modelUsage).length > 0) {
-      // Distribute session cost proportionally across models by total tokens
-      const totalTokens = Object.values(session.modelUsage).reduce(
-        (sum, u) => sum + u.input + u.output + u.cacheCreation + u.cacheRead, 0,
-      );
-      if (totalTokens > 0) {
-        for (const [model, usage] of Object.entries(session.modelUsage)) {
-          const modelTokens = usage.input + usage.output + usage.cacheCreation + usage.cacheRead;
-          const share = modelTokens / totalTokens;
-          const name = shortenModelName(model);
-          grouped.set(name, (grouped.get(name) ?? 0) + session.cost.total * share);
-        }
-        continue;
-      }
-    }
-    // Fallback: attribute all cost to session.model (skip "unknown")
-    const model = shortenModelName(session.model);
-    if (model !== "unknown") {
-      grouped.set(model, (grouped.get(model) ?? 0) + session.cost.total);
+    for (const event of getSessionUsageEvents(session)) {
+      const model = shortenModelName(event.model || session.model);
+      if (model !== "unknown") grouped.set(model, (grouped.get(model) ?? 0) + (event.cost?.total ?? 0));
     }
   }
   return [...grouped.entries()]
@@ -1202,7 +1189,10 @@ function buildFilteredProjects(sessions: Session[], machineNames?: Map<string, s
       for (const s of projectSessions) {
         totalCost += s.cost.total;
         totalTurns += s.turns;
-        days.add(s.createdAt.slice(0, 10));
+        for (const event of getSessionUsageEvents(s)) {
+          const date = new Date(event.at);
+          if (!Number.isNaN(date.getTime())) days.add(localDayKey(date));
+        }
         tokenBreakdown.input += s.tokens.input;
         tokenBreakdown.output += s.tokens.output;
         tokenBreakdown.cacheCreation += s.tokens.cacheCreation;
@@ -1219,13 +1209,18 @@ function buildFilteredProjects(sessions: Session[], machineNames?: Map<string, s
         src.sessions += 1;
         sourceMap.set(s.source, src);
 
-        // Model breakdown
-        const model = s.model;
-        if (model !== "unknown") {
-          const m = modelMap.get(model) ?? { cost: 0, sessions: 0 };
-          m.cost += s.cost.total;
-          m.sessions += 1;
-          modelMap.set(model, m);
+        const seenModels = new Set<string>();
+        for (const event of getSessionUsageEvents(s)) {
+          const model = event.model || s.model;
+          if (model !== "unknown") {
+            const m = modelMap.get(model) ?? { cost: 0, sessions: 0 };
+            m.cost += event.cost?.total ?? 0;
+            if (!seenModels.has(model)) {
+              m.sessions += 1;
+              seenModels.add(model);
+            }
+            modelMap.set(model, m);
+          }
         }
 
         // Machine breakdown

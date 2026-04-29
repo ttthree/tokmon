@@ -4,6 +4,7 @@ import path from "node:path";
 import { getMachineId, getMachineName } from "./machine.js";
 import { getRemoteMachinesDirectory, loadMachineDataFromPathSafe } from "./config.js";
 import { loadMachineData } from "./data.js";
+import { getSessionUsageEvents, localDayKey, windowSessionUsage } from "./usage-events.js";
 import type {
   BreakdownItem,
   CostBreakdown,
@@ -49,7 +50,13 @@ export async function aggregateData(filters: DataFilters = {}): Promise<DataResp
 }
 
 export function applyFilters(sessions: Session[], filters: DataFilters = {}): Session[] {
-  return sessions.filter((session) => matchesFilters(session, filters));
+  const window = getComparisonWindow(filters);
+  return sessions.flatMap((session) => {
+    if (!matchesNonTimeFilters(session, filters)) return [];
+    if (!window) return [session];
+    const windowed = windowSessionUsage(session, window.currentStart, window.currentEnd);
+    return windowed ? [windowed] : [];
+  });
 }
 
 export function applyComparisonFilters(sessions: Session[], filters: DataFilters = {}, now = Date.now()): Session[] {
@@ -58,7 +65,11 @@ export function applyComparisonFilters(sessions: Session[], filters: DataFilters
     return [];
   }
 
-  return sessions.filter((session) => matchesFilters(session, filters, comparisonWindow.previousStart, comparisonWindow.previousEnd));
+  return sessions.flatMap((session) => {
+    if (!matchesNonTimeFilters(session, filters)) return [];
+    const windowed = windowSessionUsage(session, comparisonWindow.previousStart, comparisonWindow.previousEnd);
+    return windowed ? [windowed] : [];
+  });
 }
 
 export function buildProjectSummaries(
@@ -118,7 +129,14 @@ export function computeProjectSummary(
 }
 
 export function computeActiveDays(sessions: Session[]): number {
-  return new Set(sessions.map((session) => session.createdAt.slice(0, 10))).size;
+  const days = new Set<string>();
+  for (const session of sessions) {
+    for (const event of getSessionUsageEvents(session)) {
+      const date = new Date(event.at);
+      if (!Number.isNaN(date.getTime())) days.add(localDayKey(date));
+    }
+  }
+  return days.size;
 }
 
 export function buildBreakdownItems(
@@ -129,6 +147,21 @@ export function buildBreakdownItems(
   const grouped = new Map<string, BreakdownItem>();
 
   for (const session of sessions) {
+    if (dimension === "model") {
+      const seenModels = new Set<string>();
+      for (const event of getSessionUsageEvents(session)) {
+        const model = event.model || "unknown";
+        if (model === "unknown") continue;
+        const item = grouped.get(model) ?? { key: model, label: model, cost: 0, sessions: 0 };
+        item.cost += event.cost?.total ?? 0;
+        if (!seenModels.has(model)) {
+          item.sessions += 1;
+          seenModels.add(model);
+        }
+        grouped.set(model, item);
+      }
+      continue;
+    }
     const { key, label } = getBreakdownIdentity(session, dimension, machineNameById);
     const item = grouped.get(key) ?? { key, label, cost: 0, sessions: 0 };
     item.cost += session.cost.total;
@@ -198,24 +231,7 @@ export function getComparisonWindow(filters: DataFilters = {}, now = Date.now())
   return null;
 }
 
-function matchesFilters(session: Session, filters: DataFilters, rangeStart?: Date, rangeEnd?: Date): boolean {
-  const createdAt = new Date(session.createdAt);
-
-  if (rangeStart && createdAt < rangeStart) {
-    return false;
-  }
-
-  if (rangeEnd && createdAt >= rangeEnd) {
-    return false;
-  }
-
-  if (!rangeStart && !rangeEnd) {
-    const currentWindow = getComparisonWindow(filters);
-    if (currentWindow && (createdAt < currentWindow.currentStart || createdAt >= currentWindow.currentEnd)) {
-      return false;
-    }
-  }
-
+function matchesNonTimeFilters(session: Session, filters: DataFilters): boolean {
   if (filters.project && session.project !== filters.project) {
     return false;
   }

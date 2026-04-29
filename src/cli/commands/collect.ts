@@ -1,5 +1,5 @@
 import { attributeOrchestrator, ingestEurekaOrphans } from "../../core/attribute.js";
-import { mergeCursorState } from "../../core/cursor.js";
+import { createEmptyCursorState, isParserCursorSchemaCurrent, mergeCursorState } from "../../core/cursor.js";
 import { updateSessions, loadMachineData, saveMachineData } from "../../core/data.js";
 import { logDiag } from "../../core/diag-log.js";
 import { enrichSession, enrichSessionsBatched } from "../../core/enrich.js";
@@ -76,8 +76,10 @@ export async function collectCommand(options: CollectOptions = {}): Promise<Coll
 
   const machineData = await loadMachineData(machineId);
   if (options.reset) {
-    machineData._cursor = { version: 1, updatedAt: new Date(0).toISOString(), files: {} };
+    machineData._cursor = createEmptyCursorState();
     machineData.sessions = {};
+  } else if (!isParserCursorSchemaCurrent(machineData._cursor)) {
+    machineData._cursor = createEmptyCursorState();
   }
 
   const beforeSnapshot = snapshotOrchestrators(machineData.sessions);

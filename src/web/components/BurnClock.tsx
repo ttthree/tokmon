@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import type { Session } from "../../core/types.js";
+import { getSessionUsageEvents } from "../../core/usage-events.js";
 import { formatCompact } from "../format.js";
 import { useTheme } from "../theme/ThemeProvider.js";
 
@@ -34,20 +35,27 @@ export function BurnClock({ sessions, formatCurrency }: BurnClockProps) {
     let weekendTotal = 0;
     let sessionCount = 0;
     for (const s of sessions) {
-      const d = new Date(s.createdAt);
-      const dow = d.getDay();
-      const h = d.getHours();
-      let v = 0;
-      switch (metric) {
-        case "cost": v = s.cost.total; break;
-        case "input": v = s.tokens.input; break;
-        case "output": v = s.tokens.output; break;
-        case "cacheRead": v = s.tokens.cacheRead; break;
+      const counted = new Set<string>();
+      for (const event of getSessionUsageEvents(s)) {
+        const d = new Date(event.at);
+        if (Number.isNaN(d.getTime())) continue;
+        const dow = d.getDay();
+        const h = d.getHours();
+        let v = 0;
+        switch (metric) {
+          case "cost": v = event.cost?.total ?? 0; break;
+          case "input": v = event.tokens.input; break;
+          case "output": v = event.tokens.output; break;
+          case "cacheRead": v = event.tokens.cacheRead; break;
+        }
+        cells[dow][h].value += v;
+        if (!counted.has(`${dow}:${h}`)) {
+          cells[dow][h].count += 1;
+          counted.add(`${dow}:${h}`);
+        }
+        total += v;
+        if (dow === 0 || dow === 6) weekendTotal += v;
       }
-      cells[dow][h].value += v;
-      cells[dow][h].count += 1;
-      total += v;
-      if (dow === 0 || dow === 6) weekendTotal += v;
       sessionCount += 1;
     }
     let max = 0;

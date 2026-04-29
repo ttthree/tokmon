@@ -28,6 +28,14 @@ export interface CostBreakdown {
   total: number;
 }
 
+export interface UsageEvent {
+  at: string;
+  model: string;
+  tokens: TokenBreakdown;
+  cost?: CostBreakdown;
+  requestId?: string;
+}
+
 export type TokenProvenance =
   | "sdk-shutdown"
   | "sdk-events"
@@ -58,6 +66,7 @@ export interface Session {
   toolBreakdown: Record<string, number>;
   /** Per-model token breakdown from individual API calls. Used for "Cost by Model" aggregation. */
   modelUsage?: Record<string, TokenBreakdown>;
+  usageEvents?: UsageEvent[];
   tokenProvenance?: TokenProvenance;
   orchestrator?: OrchestratorInfo;
 }
@@ -74,6 +83,7 @@ export interface FileCursor {
 
 export interface CursorState {
   version: 1;
+  parserSchemaVersion?: number;
   updatedAt: string;
   files: Record<string, FileCursor>;
 }

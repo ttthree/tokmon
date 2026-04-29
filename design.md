@@ -1,481 +1,254 @@
-# Design: Align Eureka Source with Mars (Orchestrator-as-Dimension)
+# Design: Attribute Token Consumption by Request Time
 
-## Goal
+## Goals
 
-Make `source` and `orchestrator` two **independent, orthogonal** dimensions throughout tokmon's data model and UI.
-
-Currently, `source` mixes two concepts:
-- **Underlying agent** (claude-code, codex, copilot-cli) — what actually consumed tokens
-- **Orchestrator** (eureka, mars) — what spawned/coordinated the agent
-
-Eureka and Mars are both orchestrators that spawn cc/codex/copilot child sessions. Their cost data ultimately comes from the **same underlying agent log files**. The only difference today: Eureka parser overwrites `source = "eureka"`, while Mars parser tags `orchestrator: { kind: "mars" }` and preserves the underlying source.
-
-After this change:
-- `source` is exclusively the underlying agent (what executed)
-- `orchestrator` is the optional coordination layer (who launched it)
-- UI exposes both as separate filters/views
+Token and cost time series should reflect when model requests actually happened, not when the containing session started. Long-running sessions currently cause a past day to keep growing as new requests are appended. This design adds request-level usage events while preserving session-level views and backwards compatibility with existing machine data.
 
 ## Scope
 
 ### In scope
-1. Schema: shrink `Source` type, normalize Eureka session attribution
-2. Parsers: Eureka parser sets `source` based on actual SDK branch
-3. Aggregation: filters work on both dimensions
-4. UI: separate Source + Orchestrator dropdowns; chart "stack by" toggle (source vs orchestrator)
-5. Backward compatibility: API accepts old `source=eureka` query, server translates to `orchestrator=eureka`
-6. Tests: parser unit tests, aggregation correctness, UI behavior
-7. Migration note: cursor cache is preserved; only schema-affected fields are recomputed via existing enrichment path. No forced re-parse needed.
+
+- Add a request-level usage event model to persisted `Session` data.
+- Populate usage events from Claude Code and Codex logs, including Eureka fallback paths that read embedded SDK logs.
+- Calculate cost at the usage-event level, then sum event costs back to the session.
+- Add core aggregation helpers that can bucket usage by event time and filter session usage to a time window.
+- Update dashboard time-series views to bucket token/cost values by request time.
+- Keep existing session tables, project totals, source/orchestrator filters, and compatibility with older data files.
+- Add unit and E2E/integration tests for cross-day long sessions and legacy fallback behavior.
 
 ### Out of scope
-- Recharts color palette overhaul (keep existing colors; just reassign which series gets which color when needed)
-- Mars task title rollups (already exists in `aggregate.ts`; not touched)
-- Persistence migration: see Backward Compatibility & Migration section below — load-time normalization rewrites both `Session.source` and the storage key.
 
-## Architecture
+- Changing the meaning of `Session.createdAt` or `Session.modifiedAt`.
+- Splitting a stored session into multiple sessions.
+- Re-parsing historical data automatically outside the normal collect flow.
+- Using Eureka headers or telemetry for Anthropic token data.
+- Reworking the chart visual design or adding new UI controls.
 
-### Type changes (`src/core/types.ts`)
+## Problem
 
-The current `Source` type conflates three roles:
-1. **Session attribution** — what underlying agent consumed tokens
-2. **Source registration** — what kind of data source the user has configured (in `config.sources[]`)
-3. **Parser identity** — what kind of parser this is (`Parser.source`, used for collect progress / SSE labels)
+The current aggregate path uses `session.createdAt` for date filters and chart buckets:
 
-We split into two narrower types and keep a third for the registration/parser surface:
+- `src/core/aggregate.ts` filters ranges by `createdAt`.
+- `src/web/App.tsx` builds chart buckets from `createdAt`.
+- `ProjectTimeline`, `ProjectActivityTable`, and `BurnClock` also bucket by `createdAt`.
 
-```ts
-// BEFORE
-export type Source = "claude-code" | "codex" | "copilot-cli" | "eureka" | "mars";
+For sessions that remain open over many hours or days, each new assistant request increases the total cost attributed to the session's first day. This is especially visible on daily charts where yesterday's cost can keep rising today.
 
-// AFTER
-/** Underlying agent that consumed tokens. Used on Session.source. */
-export type Source = "claude-code" | "codex" | "copilot-cli";
+## Data Model
 
-/** Orchestrator that coordinated the agent (optional). Unchanged. */
-export type OrchestratorKind = "mars" | "eureka";
-
-/** Type of registered data source / parser identity. Includes orchestrators
-    because Mars and Eureka are real `SourceEntry`s in user config and have
-    their own parsers (marsParser, eurekaParser). */
-export type SourceType = Source | OrchestratorKind;
-//        = "claude-code" | "codex" | "copilot-cli" | "eureka" | "mars"
-```
-
-Field assignments:
-- `SourceEntry.type: SourceType` — registers cc/codex/copilot/eureka/mars
-- `Parser.source: SourceType` — covers all parsers including `eurekaParser` and `marsParser`
-- `Session.source: Source` — ONLY the underlying agent (no eureka, no mars)
-
-This keeps Mars/Eureka as first-class registered sources and parsers, while constraining session-level attribution to the underlying agent.
-
-### Eureka parser (`src/parsers/eureka.ts`)
-
-The parser already branches on `runtimeProvider` / `engine`:
-- `runtimeProvider.includes("copilot")` → calls `readSdkSessionTokens` (copilot events.jsonl)
-- `engine.includes("codex") || runtimeProvider.includes("codex")` → calls `readSdkSessionTokens` (codex rollout)
-- else → calls `readCcSessionTokens` (claude-code jsonl)
-
-We'll capture the chosen branch in a local variable and use it to set `Session.source`:
+Add a usage event type to `src/core/types.ts`:
 
 ```ts
-let underlyingSource: Source;
-if (runtimeProvider.includes("copilot")) {
-  underlyingSource = "copilot-cli";
-  // ... existing copilot reading code
-} else if (engine.includes("codex") || runtimeProvider.includes("codex")) {
-  underlyingSource = "codex";
-  // ... existing codex reading code
-} else {
-  underlyingSource = "claude-code";
-  // ... existing cc reading code
+export interface UsageEvent {
+  at: string;
+  model: string;
+  tokens: TokenBreakdown;
+  cost?: CostBreakdown;
+  requestId?: string;
 }
 
-// later:
-const session: Session = {
-  // ...
-  source: underlyingSource,            // was: "eureka"
-  orchestrator: { kind: "eureka" },    // unchanged
-  // ...
-};
-```
-
-**Edge case:** when `meta.sdkSessionId` is missing, we have no underlying agent log. Use a best-effort inference from `runtimeProvider`/`engine` (the same hints we use to choose the SDK reader), and only fall back to `"claude-code"` as the last resort. Mark `tokenProvenance: "none"` regardless. This keeps source filters meaningful even when token data is absent.
-
-```ts
-function inferSourceFromHints(runtimeProvider?: string, engine?: string): Source {
-  const rp = (runtimeProvider ?? "").toLowerCase();
-  const en = (engine ?? "").toLowerCase();
-  if (rp.includes("copilot")) return "copilot-cli";
-  if (en.includes("codex") || rp.includes("codex")) return "codex";
-  return "claude-code";
+export interface Session {
+  // existing fields unchanged
+  usageEvents?: UsageEvent[];
 }
 ```
 
-### Source resolver (`src/core/source-resolver.ts`)
+Rules:
 
-Currently uses `session.source === "eureka"` to decide which path to look up. Switch to `session.orchestrator?.kind === "eureka"`.
+- `usageEvents` is optional for backwards compatibility.
+- `at` is the timestamp of the individual request/usage record.
+- `model` is the model used for that request, or the session fallback model when unavailable.
+- `tokens` uses tokmon's existing net-input semantics: input excludes cached input; cache read/write are separate.
+- `cost` is populated during enrichment, not by parsers.
+- `requestId` is optional and used only for parser-local dedupe/debugging; it must not contain prompt text or file paths.
+- Session-level `tokens`, `cost`, and `modelUsage` remain available for existing UI and summaries.
 
-### Aggregation (`src/core/aggregate.ts`)
+## Parser Design
 
-Already supports `orchestrator` filter. Just verify:
-- `orchestrator: "none"` → sessions with no orchestrator field
-- `orchestrator: "eureka"` → sessions with `orchestrator.kind === "eureka"`
-- `orchestrator: "mars"` → sessions with `orchestrator.kind === "mars"`
+### Claude Code parser
 
-No code change needed here, but **add tests**: ensure source filter (`type: Source`) and orchestrator filter combine correctly.
+In `src/parsers/claude-code.ts`, create a usage event for every `assistant` line with non-zero usage:
 
-### Server (`src/server/index.ts`)
+- Event timestamp: `envelope.timestamp` when parseable.
+- Fallback timestamp: session file `entry.modified`/mtime only if the request timestamp is missing.
+- Event model: per-line `message.model`/`model` from `extractEnvelopeModel`; fallback to `unknown` if unavailable.
+- Event tokens: existing `usageToBreakdown` result.
+- Event request id: `message.id` when present, otherwise a stable file/line fallback such as `${sessionId}:${lineNo}`.
 
-Add backward-compat for old `source=eureka` and `source=mars` queries:
+Deduplication: Claude Code 2.1.114 can repeat the same assistant `message.id` with identical usage while splitting content. Maintain a parser-local set keyed by `message.id + model + token breakdown`; if the same key appears again in the same JSONL file, count it only once for `tokens`, `modelUsage`, and `usageEvents`. If a repeated `message.id` has different token values, keep it as a separate event because it may represent a distinct request/retry.
+
+The parser continues to aggregate `tokens` and `modelUsage` as today, but derives them from the same per-line values as the events.
+
+### Codex parser
+
+Codex rollout logs emit `total_token_usage` as cumulative totals. In `src/parsers/codex.ts`:
+
+- Track the current model from `turn_context` payloads, as Eureka fallback already does.
+- For each `token_count` event, diff the current `total_token_usage` against the previous total.
+- Convert the delta with existing Codex semantics: `input = input_tokens - cached_input_tokens`, `cacheRead = cached_input_tokens`.
+- Emit one usage event at that `token_count` line's top-level `timestamp`.
+- Event model: current `turn_context.payload.model`; fallback to the thread model built from SQLite row fields; final fallback `unknown`.
+- Event request id: `${threadId}:${lineNo}` or equivalent stable file/line id.
+- Preserve final aggregate tokens as the sum of deltas.
+
+If a rollout lacks per-line timestamps, fall back to the thread `updated_at` only for events that have usage.
+
+### Eureka fallback readers
+
+In `src/parsers/eureka-fallback.ts`, extend `SdkTokenResult` with `usageEvents?: UsageEvent[]` and populate events in:
+
+- `accumulateCcJsonl` for Claude Code SDK JSONL files.
+- `extractCodexTurnModelUsage` for embedded Codex rollouts.
+- `readCopilotSdkSessionTokens` when event-level usage is present.
+
+Fallback contract:
+
+- Embedded Claude Code: same event timestamp/model/requestId/dedupe rules as the primary Claude parser.
+- Embedded Codex: same cumulative-delta rules as the primary Codex parser, using top-level line `timestamp` and current `turn_context.payload.model`.
+- Copilot SDK event usage: use the event line's top-level `timestamp` if present; otherwise omit event-level attribution and keep aggregate tokens only. Model is the explicit model metric key when available, else the fallback model passed into the reader.
+- Shutdown-only Copilot metrics have no request timestamp, so emit no request-level events and allow enrichment to synthesize a legacy session-level fallback event.
+
+### Eureka attribution layer
+
+In `src/core/attribute.ts`, copy fallback `usageEvents` onto the attributed Eureka session when available. Orphan/zero-token sessions may omit `usageEvents`.
+
+## Enrichment and Cost
+
+Add helpers in `src/core/usage-events.ts`:
 
 ```ts
-// In query parsing
-const rawSource = req.query.source;
-let source = rawSource;
-let orchestrator = req.query.orchestrator;
-if (rawSource === "eureka" || rawSource === "mars") {
-  // Legacy: treat as orchestrator filter
-  orchestrator = rawSource;
-  source = undefined;
+export function getSessionUsageEvents(session: Session): UsageEvent[];
+export function sumUsageEvents(events: UsageEvent[]): { tokens: TokenBreakdown; cost: CostBreakdown };
+export function filterUsageEventsByWindow(events: UsageEvent[], start?: Date, end?: Date): UsageEvent[];
+export function bucketUsageEventsByDay(events: UsageEvent[]): Map<string, UsageBucket>;
+```
+
+`getSessionUsageEvents` returns real events when present. Otherwise it returns a single synthetic event using `session.createdAt`, `session.model`, `session.tokens`, and `session.cost`. This keeps legacy data working.
+
+Helper contracts:
+
+```ts
+interface UsageBucket {
+  tokens: TokenBreakdown;
+  cost: CostBreakdown;
+  sessions: Set<string>;
+}
+
+interface WindowedSessionUsage {
+  events: UsageEvent[];
+  tokens: TokenBreakdown;
+  cost: CostBreakdown;
+  modelUsage: Record<string, TokenBreakdown>;
 }
 ```
 
-Note: the server today doesn't actually filter by `source` (filtering happens client-side in App.tsx). So this compat shim is mostly defensive for future API consumers.
+`getSessionUsageForWindow(session, start?, end?)` returns a `WindowedSessionUsage`; `windowSessionUsage(session, start?, end?)` returns a shallow `Session` clone or `null` when the date window has no matching events.
 
-### UI (`src/web/App.tsx`)
+Update `src/core/enrich.ts`:
 
-#### Filter state
-Replace single `sourceFilter: AgentFilter` with two independent filters:
+1. Build events from `session.usageEvents` or synthesize one from the session aggregate.
+2. For every event, call `calculateSessionCost(new Date(event.at), event.tokens, event.model, session.source)`.
+3. Sum event costs into `session.cost`.
+4. Sum event tokens into `session.tokens` so parser aggregates and event aggregates stay consistent.
+5. Rebuild `modelUsage` from events when real events exist.
 
-```ts
-type SourceFilter = "all" | Source;                    // claude-code/codex/copilot-cli
-type OrchestratorFilter = "all" | "none" | OrchestratorKind;  // none = direct (no orchestrator)
+This keeps all parser costs at zero and preserves the existing pricing source of truth.
 
-const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
-const [orchestratorFilter, setOrchestratorFilter] = useState<OrchestratorFilter>("all");
-```
+## Aggregation Design
 
-#### Filter logic
-```ts
-const sourceSessions = useMemo(() => {
-  let result = data?.sessions ?? [];
-  if (sourceFilter !== "all") result = result.filter(s => s.source === sourceFilter);
-  if (orchestratorFilter !== "all") {
-    if (orchestratorFilter === "none") result = result.filter(s => !s.orchestrator);
-    else result = result.filter(s => s.orchestrator?.kind === orchestratorFilter);
-  }
-  if (machineFilter !== "all") result = result.filter(s => s.machineId === machineFilter);
-  return result;
-}, [data, sourceFilter, orchestratorFilter, machineFilter]);
-```
+Keep session filtering by project, source, machine, and orchestrator unchanged. Change time-window filters to use usage events:
 
-#### Chart stacking toggle
-`buildChartData` takes a new `stackBy: "source" | "orchestrator"` parameter:
+- A session matches a time range if at least one usage event falls within `[start, end)`.
+- For aggregate totals inside a time range, count only events in the range.
+- When `aggregateData()` is called with a date range, return **windowed session clones** in `DataResponse.sessions`: session metadata stays intact, but `usageEvents`, `tokens`, `cost`, and `modelUsage` are restricted/recomputed to the selected event window. This prevents web-only filters and charts from accidentally using out-of-range events from a long session.
+- When no date range is active, return full sessions with full usage events.
+- For `sessions` count in totals and project summaries, count distinct sessions with in-range usage.
+- For `turns` and `durationSeconds`, keep session-level values for included sessions; do not attempt partial turn/duration attribution.
+- For active days, use usage event dates, not session start dates.
+- For breakdowns by source, model, machine, and orchestrator, sum in-range event cost but count distinct sessions per group.
 
-```ts
-function buildChartData(sessions, stackBy: "source" | "orchestrator" = "source") {
-  // group key per row:
-  const key = stackBy === "source"
-    ? session.source
-    : (session.orchestrator?.kind ?? "direct");
-  // ...
-}
-```
+Implementation approach:
 
-Add a small UI control near the chart title to toggle.
+- Add `getSessionUsageForWindow(session, start?, end?)` helper returning events plus summed tokens/cost.
+- Add `windowSessionUsage(session, start?, end?)` helper that returns `null` when no event matches, otherwise returns a shallow session clone with windowed `usageEvents`, `tokens`, `cost`, and `modelUsage`.
+- Update `applyFilters` and `applyComparisonFilters` to call `windowSessionUsage` after non-time filters; downstream `computeTotals`, `computeActiveDays`, `buildBreakdownItems`, and `computeProjectSummary` can then operate on already-windowed sessions.
+- Preserve all-range behavior for legacy sessions through synthetic fallback events.
 
-#### Filter dropdowns
-Two dropdowns (icons + labels):
-- Source: `All / Claude Code / Codex / Copilot CLI`
-- Orchestrator: `All / Direct / Eureka / Mars`
+Persistence/merge note: `src/core/data.ts` session merge paths must preserve `usageEvents` from the fresher/highest-provenance session. Existing timestamp/source migrations should leave `usageEvents` untouched.
 
-Only show options that exist in current data (mirror the existing `availableSources` derivation).
+Cursor/migration policy: adding `usageEvents` is a schema-level parser output change. Add a parser schema version constant, for example in `src/core/cursor.ts` or parser context, and include it in cursor validation. When the version changes, existing file cursors are considered stale so normal `tokmon collect` re-reads unchanged parser files and backfills `usageEvents`. This avoids requiring a manual cache clear and keeps old machine data compatible until collect runs.
 
-**Reset / dependent state:**
-- Both `sourceFilter` and `orchestratorFilter` participate in the `useEffect` that validates `selectedProject` against the filtered project set (App.tsx:206-211). Apply the same pattern: on either filter change, if the currently selected project no longer exists in `sourceProjects`, clear it.
-- `modelFilter` follows the same pattern.
+## Web Dashboard Design
 
-**ActiveFiltersBar chips:**
-- Today renders a single "Agent: <label>" chip. Replace with up to two chips: "Source: <label>" and "Orchestrator: <label>" (only render the chip when the corresponding filter is not `"all"`).
-- Each chip clears its own filter on dismiss.
+Update chart builders to consume request-time events:
 
-**"Cost by Agent" panel:**
-- Keep grouping by `source` for now (panel name is "Cost by Agent" but it actually shows underlying agent — that's fine).
-- The panel's selectedName highlight reads from `sourceFilter` (not `orchestratorFilter`).
-- Out-of-scope follow-up: add a parallel "Cost by Orchestrator" panel.
+- `buildChartData`: iterate each session's already-windowed usage events and bucket by `event.at`; stack cost by source/orchestrator from the parent session.
+- `buildModelData`: sum event `cost.total` by `event.model`; fallback through synthetic events.
+- `BurnClock`: bucket selected metric by event weekday/hour.
+- `ProjectTimeline`: bucket project daily heatmap by usage event day; session count is the number of distinct sessions with usage that day.
+- `ProjectActivityTable`: same daily event bucketing as `ProjectTimeline`.
+- Client-side source/orchestrator/machine/project/model/search filters should recompute totals/projects from the windowed sessions returned by the API, not from original full-session totals.
+- Model breakdown semantics: cost is summed from event `cost.total` by event model. Session counts in model breakdowns count distinct parent sessions per model, so one multi-model session may contribute to multiple model groups.
 
-#### Color assignment
-The existing color palette has 4 slots used for sources. With shrinking from 5 to 3 sources we'll have one extra color available — repurpose for orchestrator stacking:
+Session table ordering and display continue to use session `createdAt`/`modifiedAt`; this task changes consumption attribution, not session identity.
 
-- **Source stacking colors**: `claude-code = #18181b`, `codex = #3f3f46`, `copilot-cli = #71717a` (existing zinc ramp)
-- **Orchestrator stacking colors**: `direct = #71717a`, `eureka = #2563eb`, `mars = #dc2626` (existing eureka blue + new mars red)
+## Backwards Compatibility and Migration
 
-### Other surfaces
-
-- `buildAgentData` / "Cost by Agent" panel: keep grouping by `source` for now (it already shows the correct underlying agent). Optionally add an "by orchestrator" toggle in a follow-up — out of scope here.
-- `buildSessionsSubtitle`: include both filters when active.
-- `AGENT_FILTER_LABELS`: split into `SOURCE_LABELS` and `ORCHESTRATOR_LABELS`.
-
-## File Structure / Files Touched
-
-| File | Change |
-|------|--------|
-| `src/core/types.ts` | Shrink `Source` to underlying agents; add `SourceType = Source \| OrchestratorKind`; widen `SourceEntry.type` and `Parser.source` to `SourceType` |
-| `src/parsers/eureka.ts` | Capture branch into `underlyingSource`; set on Session.source; `inferSourceFromHints` for missing-sdk fallback; keep `orchestrator: { kind: "eureka" }` |
-| `src/core/source-resolver.ts` | Switch eureka path lookup from `source === "eureka"` to `orchestrator?.kind === "eureka"` |
-| `src/core/data.ts` | Add `normalizeLegacySources(machine)` + `inferSourceFromEngine` + `pickFresher`; persist after migration if any keys changed |
-| `src/core/config.ts` (`loadMachineDataFromPath`) | Call `normalizeLegacySources` on load |
-| `src/server/index.ts` | (a) Switch message replay dispatch from `session.source === "eureka"` to `session.orchestrator?.kind === "eureka"`; (b) add legacy `?source=eureka/mars` → `?orchestrator=...` shim |
-| `src/web/App.tsx` | Two filters (sourceFilter + orchestratorFilter); independent reset logic; pass `stackBy` to TokenChart; ActiveFiltersBar wiring |
-| `src/web/components/ActiveFiltersBar.tsx` | Render up to two chips (source + orchestrator) instead of one "Agent" chip |
-| `src/web/App.tsx` `buildChartData` | Add `stackBy: "source" \| "orchestrator"` parameter |
-| `src/web/components/TokenChart.tsx` | (only if needed for legend label changes — likely no change) |
-| `tests/unit/eureka.test.ts`, `eureka-token-provenance.test.ts`, `eureka-copilot-sdk.test.ts`, `build-attribution.test.ts`, `session-messages-api.test.ts`, `aggregate.test.ts`, `source-resolver.test.ts` | Update assertions: `source === "eureka"` → `orchestrator.kind === "eureka"` and verify underlying `source` per branch |
-| `tests/unit/eureka-parser.test.ts` (NEW) | Source attribution per SDK branch + missing-sdk fallback (4+ cases) |
-| `tests/unit/legacy-source-migration.test.ts` (NEW) | Migration / key rewrite / collision / idempotent (4 cases) |
-| `tests/unit/server-message-dispatch.test.ts` (NEW) or extend `session-messages-api.test.ts` | Replay parser dispatch by orchestrator + source (3 cases) |
-| `tests/unit/server-legacy-query.test.ts` (NEW) | Legacy `?source=eureka/mars` query shim (2 cases) |
-| `tests/e2e/eureka-attribution.test.ts` (NEW) | Full collect→API pipeline E2E |
-| `tests/e2e/legacy-data-load.test.ts` (NEW) | Load+migrate+save+reload idempotency E2E |
-
-## Backward Compatibility & Migration
-
-### Persisted data (`~/.tokmon/machines/<machine>.json`)
-
-**Critical context:** Sessions are stored in `MachineData.sessions` keyed by `${machineId}:${session.source}:${session.id}` (see `src/core/data.ts` `getSessionKey`). The Eureka parser uses cursor-based incremental parsing — unchanged sessions are NOT re-emitted on subsequent collects (`src/parsers/eureka.ts` skips files when inode/size/mtime match).
-
-This means **two problems** if we just change `Session.source` going forward:
-1. Old records with key `<m>:eureka:<id>` will never be overwritten by new ones with key `<m>:claude-code:<id>` → duplicates
-2. Old records may never be re-emitted at all (cursor hit) → they keep `source: "eureka"` forever
-
-**Solution: load-time normalization with key rewrite.**
-
-In `loadMachineDataFromPath` (or a new helper called after load), normalize legacy entries:
-
-```ts
-function normalizeLegacySources(machine: MachineData): MachineData {
-  const fixed: Record<string, Session> = {};
-  for (const [oldKey, session] of Object.entries(machine.sessions)) {
-    const s = session as Session & { source: string };
-    if (s.source === "eureka") {
-      // Infer underlying agent from existing engine label.
-      const newSource = inferSourceFromEngine(s.engine ?? "");
-      const migrated: Session = {
-        ...s,
-        source: newSource,
-        orchestrator: s.orchestrator ?? { kind: "eureka" },
-      };
-      const newKey = getSessionKey(machine.machineId, migrated);
-      // If a real new-key entry already exists (re-collect happened first),
-      // merge: prefer the entry with non-zero cost / newer modifiedAt; tag
-      // both as orchestrator: eureka.
-      if (fixed[newKey]) {
-        fixed[newKey] = pickFresher(fixed[newKey], migrated);
-      } else {
-        fixed[newKey] = migrated;
-      }
-    } else {
-      // Non-eureka entries: pass through, but if a parallel migrated entry
-      // arrived first, keep the fresher record.
-      const key = getSessionKey(machine.machineId, s);
-      fixed[key] = fixed[key] ? pickFresher(fixed[key], s) : s;
-    }
-  }
-  return { ...machine, sessions: fixed };
-}
-
-function inferSourceFromEngine(engine: string): Source {
-  const e = engine.toLowerCase();
-  if (e.includes("copilot")) return "copilot-cli";
-  if (e.includes("codex")) return "codex";
-  return "claude-code"; // includes "Eureka + CC" and unknown
-}
-
-function pickFresher(a: Session, b: Session): Session {
-  // Prefer non-zero cost; then newer modifiedAt; then b (latest write).
-  const aCost = a.cost.total, bCost = b.cost.total;
-  if (aCost > 0 && bCost === 0) return a;
-  if (bCost > 0 && aCost === 0) return b;
-  return new Date(b.modifiedAt).getTime() >= new Date(a.modifiedAt).getTime() ? b : a;
-}
-```
-
-**Idempotent.** On the next save, the rewritten `MachineData.sessions` has only new-style keys; subsequent loads find no `source: "eureka"` to migrate.
-
-**Save trigger.** The migration runs on every load, but the migrated structure is only persisted when something else triggers a `saveMachineData` call (next collect, manual save, etc.). For one-time forced migration we add a `saveMachineData(migratedData)` call in `loadMachineData` whenever the migration actually changed any keys, gated by an env flag or just unconditional if the migration touched anything.
-
-### Message replay parser dispatch (`src/server/index.ts`)
-
-Currently dispatches based on `session.source`:
-
-```ts
-session.source === "eureka" ? parseEurekaMessagesDetailed : ...
-```
-
-After migration `session.source` is no longer `"eureka"`. Switch dispatch to use `orchestrator?.kind === "eureka"` (preserves existing UX — Eureka sessions still replay from `session.jsonl`). Keep the existing branch-specific invocation pattern to avoid type-erasing the parser signature differences (`parseCopilotCliMessagesDetailed(path, id)` vs others):
-
-```ts
-let result;
-if (session.source === "copilot-cli") {
-  result = await parseCopilotCliMessagesDetailed(sourcePath, session.id);
-} else if (session.orchestrator?.kind === "eureka") {
-  result = await parseEurekaMessagesDetailed(sourcePath);
-} else if (session.source === "codex") {
-  result = await parseCodexMessagesDetailed(sourcePath);
-} else {
-  result = await parseClaudeCodeMessagesDetailed(sourcePath);
-}
-```
-
-(For Mars-orchestrated sessions, `session.source` is the underlying agent and the existing dispatch correctly picks the cc/codex/copilot parser — no change needed for Mars replay.)
-
-### `SourceEntry.type` config compatibility
-
-`SourceEntry.type` widens from `Source` to `SourceType` (which still includes `"eureka"` and `"mars"`). Existing user config files with `type: "eureka"` or `type: "mars"` continue to validate. No config migration needed.
-
-### `Parser.source` widening
-
-`eurekaParser.source = "eureka"` and `marsParser.source = "mars"` are still valid because `Parser.source: SourceType`. SSE labels and progress events are unaffected.
-
-### API queries
-
-Legacy `?source=eureka` and `?source=mars` queries: server translates to `?orchestrator=...` before passing to `aggregateData`:
-
-```ts
-const rawSource = req.query.source as string | undefined;
-const legacyOrchestrator = rawSource === "eureka" || rawSource === "mars" ? rawSource : undefined;
-const orchestrator = req.query.orchestrator as string | undefined ?? legacyOrchestrator;
-```
-
-(Note: today the server does not actually pass a `source` filter to `aggregateData` — filtering happens client-side. This shim is defensive for future API consumers and to keep documented query params working. If both are present, explicit `orchestrator=` takes precedence over the legacy `source=` shim.)
-
-### Web UI URL state
-
-If the existing UI persists `sourceFilter` in URL/localStorage with values `eureka` or `mars`, translate them into the new dual-filter state on hydration:
-- `eureka` → `sourceFilter: "all", orchestratorFilter: "eureka"`
-- `mars` → `sourceFilter: "all", orchestratorFilter: "mars"`
+- Existing machine JSON without `usageEvents` remains valid.
+- Dashboard and aggregate helpers synthesize one event per legacy session.
+- New collection runs persist real `usageEvents` for sources that can provide request timestamps.
+- Privacy redaction should retain `usageEvents` because they contain only timestamps, model IDs, tokens, and calculated costs; no prompts or file paths.
+- If future sync size becomes an issue, `usageEvents` can be compacted by day/model/source later, but this design keeps raw request granularity for correctness.
 
 ## Edge Cases
 
-1. **Eureka session with no `sdkSessionId`** → no underlying agent log; `source` is inferred via `inferSourceFromHints(runtimeProvider, engine)` (copilot/codex/cc), defaulting to `"claude-code"`. `tokenProvenance = "none"`.
-2. **Eureka + Mars combined** (Mars-orchestrated session writing into Eureka workspace): currently impossible per architecture (Mars is its own orchestrator). If it ever happens, `orchestrator.kind` would be one or the other — no merging needed.
-3. **Mars session without orchestrator metadata** (broken or partial parse): `source` stays as cc/codex/copilot, `orchestrator` undefined → falls under "direct" in orchestrator filter.
-4. **User registers a source as `type: "mars"` or `"eureka"`**: allowed — `SourceType` includes both because `marsParser` and `eurekaParser` are real parsers and config entries. Only `Session.source` is constrained.
-5. **Chart with only one orchestrator value present**: legend still shows it, but stacking with one series degenerates to a flat bar — that's fine.
-6. **Backward compat collision**: if a future API consumer sends `source=eureka&orchestrator=mars`, the explicit `orchestrator=mars` wins. This is more intuitive than letting the legacy shim override an explicit filter.
-
-## Test Strategy
-
-### Unit tests (Vitest)
-
-#### `tests/unit/eureka-parser.test.ts` (new)
-- **Parser sets source = "claude-code" for Eureka session backed by CC jsonl**
-  - Fixture: workspace dir with a session whose `sdkSessionId` resolves to a CC jsonl
-  - Assert: `session.source === "claude-code"` and `session.orchestrator.kind === "eureka"`
-- **Parser sets source = "copilot-cli" for Eureka session backed by Copilot events**
-  - Fixture: workspace with `runtimeProvider: "copilot-cli"`
-- **Parser sets source = "codex" for Eureka session backed by Codex rollout**
-- **Parser infers source from runtimeProvider when sdkSessionId missing** (3 sub-cases: copilot/codex/cc), with `tokenProvenance: "none"` and `orchestrator.kind === "eureka"`
-- **CC parser still skips eureka-claimed sessionIds** (regression check for dedup)
-
-#### `tests/unit/aggregate.test.ts` (extend)
-- **Filter by orchestrator + source combine correctly**
-  - Mixed dataset with cc-direct, cc-eureka, cc-mars, codex-eureka
-  - Filter `source: "claude-code", orchestrator: "eureka"` → only cc-eureka sessions
-  - Filter `source: "claude-code", orchestrator: "none"` → only cc-direct
-  - Filter `source: "all", orchestrator: "mars"` → cc-mars
-- **Sum invariant**: total of all sessions = sum across any single dimension's groups
-
-#### `tests/unit/source-resolver.test.ts` (extend existing)
-- Old assertion: eureka path resolution by source. Update to check it works via `orchestrator.kind === "eureka"`.
-
-#### `tests/unit/legacy-source-migration.test.ts` (new)
-- **Legacy machine data with `source: "eureka"` is normalized on load**
-  - Old session keyed `m1:eureka:abc` → migrated to `m1:claude-code:abc` (or copilot-cli/codex per engine label) with `orchestrator: { kind: "eureka" }`
-  - Assert: old key absent, new key present, `Session.source` matches inferred underlying
-- **Engine inference: cc / codex / copilot / unknown → claude-code**
-- **Idempotent**: running migration on already-migrated data is a no-op
-- **Collision handling**: pre-existing new-style key + legacy key for same `id` → merged via `pickFresher`, only one entry survives, takes non-zero cost / newer modifiedAt
-- **Mars sessions untouched**: legacy data with `source: "claude-code", orchestrator: { kind: "mars" }` passes through unchanged
-
-#### `tests/unit/server-message-dispatch.test.ts` (new) or extend `tests/unit/session-messages-api.test.ts`
-- **Eureka session (post-migration: source=claude-code, orchestrator=eureka) routes to parseEurekaMessagesDetailed**
-- **Mars session (source=claude-code, orchestrator=mars) routes to parseClaudeCodeMessagesDetailed**
-- **Direct claude-code session routes to parseClaudeCodeMessagesDetailed**
-
-#### `tests/unit/server-legacy-query.test.ts` (new)
-- **Legacy `?source=eureka` rewrites to `?orchestrator=eureka` and returns same data**
-- **Legacy `?source=mars` rewrites to `?orchestrator=mars`**
-
-### E2E tests
-
-#### `tests/e2e/eureka-attribution.test.ts` (new)
-- **Full collect → API → chart data pipeline**
-  - Set up a fake `~/.tokmon/machines` directory with a real eureka workspace fixture
-  - Run `collectCommand`
-  - Hit `/api/data?days=7`
-  - Assert: response has eureka sessions with `source: "claude-code"` (not "eureka") and `orchestrator.kind === "eureka"`
-  - Assert: aggregating by source shows cost in claude-code bucket; aggregating by orchestrator shows cost in eureka bucket; totals match
-
-#### `tests/e2e/legacy-data-load.test.ts` (new)
-- **Old machine data file with `source: "eureka"` is loaded, migrated, and persisted**
-  - Seed `~/.tokmon/machines/<machineId>.json` with legacy entries
-  - Trigger load via `loadMachineData`
-  - Assert: in-memory `MachineData.sessions` keys all use new-style format
-  - Save and reload → keys still new-style (idempotent)
-
-#### Browser-level UI smoke (Playwright, optional / manual)
-- Default view: source stacking shows cc/codex/copilot bars (no eureka segment)
-- Toggle "stack by orchestrator": shows direct/eureka/mars segments
-- Source filter + Orchestrator filter combine without conflict
-- ActiveFiltersBar shows two chips when both filters non-default
-
-### Existing corpus / fixture tests
-- All existing tests (`tsc -b` clean + 151 tests pass) must continue passing.
-- Pay specific attention to: `eureka.test.ts`, `eureka-token-provenance.test.ts`, `eureka-copilot-sdk.test.ts`, `build-attribution.test.ts`, `session-messages-api.test.ts`, `aggregate.test.ts`, `source-resolver.test.ts`. Update assertions where they hardcode `source === "eureka"` to instead check `orchestrator.kind === "eureka"`.
-
-### Edge case tests
-- Empty data (no sessions) → both filters show only "All" option
-- Only orchestrator-less sessions → orchestrator filter shows "All" + "Direct"
-- Source `"eureka"` query param → server translates and result matches `?orchestrator=eureka`
+- Missing event timestamp: fallback to the best available session/file timestamp; do not drop token usage.
+- Duplicate or zero Codex deltas: ignore zero/negative deltas to avoid double counting.
+- Model changes within a session: event model preserves per-request attribution.
+- Long session crossing midnight: events before and after midnight land on different days.
+- Timezone: existing UI date formatting uses local `Date`; helpers should follow current behavior and not introduce UTC-only bucketing unless already used.
+- Pricing snapshots: event-level cost uses each event's date, so sessions spanning pricing snapshot changes are calculated accurately.
 
 ## Acceptance Criteria
 
-1. ✅ `Session.source` only emits `claude-code` / `codex` / `copilot-cli` after this change
-2. ✅ Eureka sessions have `orchestrator: { kind: "eureka" }` and a meaningful `source` (not "eureka")
-3. ✅ "All agents" view stacked chart shows Eureka cost distributed across cc/codex/copilot segments (no longer a separate eureka segment)
-4. ✅ New "by orchestrator" stacking toggle shows direct/eureka/mars segments
-5. ✅ Source dropdown shows only underlying agent options; Orchestrator dropdown is independent
-6. ✅ Legacy `?source=eureka` API query still works (returns same data as `?orchestrator=eureka`)
-7. ✅ All 151 existing tests pass
-8. ✅ New tests pass: parser source attribution (4 cases), filter combinations (3 cases), legacy normalization (1 case), E2E pipeline (1 case)
-9. ✅ `tsc -b` clean
-10. ✅ No double-counting (cc parser still skips eureka-claimed sessionIds)
+- A long session with requests on two days shows cost on both days rather than all cost on the session start day.
+- Date range filters include only request usage inside the selected range.
+- Session totals still equal the sum of all request events for that session.
+- Cost by model uses request-level event cost, not proportional session-cost allocation.
+- Existing legacy data with no `usageEvents` still renders and totals correctly.
+- Eureka sessions backed by Claude Code or Codex logs inherit underlying request-time events.
+- `npm run test:unit`, `npm run build`, and `npm link` pass before completion.
 
-## Risks & Mitigations
+## Test Strategy
 
-| Risk | Mitigation |
-|------|------------|
-| Type narrowing breaks 15+ call sites | TS compiler surfaces them all; mechanical fix per site |
-| User confusion: "Where did Eureka go in my chart?" | Default UI behavior: show source stacking; add changelog entry; orchestrator toggle visible |
-| Legacy persisted data with old `source: "eureka"` | Normalize on load (one-time, idempotent) |
-| Cursor cache stale | Migration handles it: load-time normalization rewrites legacy keys + Session.source even when cursor prevents re-emission |
-| Color palette feels off (one fewer source color) | Repurpose freed slot for orchestrator dimension |
+### Unit tests
 
-## Implementation Order
+- `usage-events` helper tests:
+  - synthesizes fallback event for legacy sessions.
+  - filters events with inclusive start and exclusive end.
+  - sums tokens and costs across events.
+  - buckets events by local day.
+- `enrichSession` tests:
+  - calculates and sums event-level costs.
+  - rebuilds aggregate tokens and model usage from events.
+  - preserves fallback behavior for sessions without events.
+- `aggregate` tests:
+  - a cross-day session contributes cost/tokens to the correct range.
+  - active days come from usage events.
+  - source/model/machine breakdowns count distinct sessions but sum in-range event cost.
+- Parser tests:
+  - Claude Code parser emits one usage event per assistant usage line.
+  - Codex parser diffs cumulative `total_token_usage` into per-request events.
+  - Eureka fallback copies SDK usage events into attributed sessions.
 
-1. **Types** (`types.ts`) — shrink `Source`, add `SourceType`. Compile errors will guide subsequent steps.
-2. **Eureka parser** — capture branch into `underlyingSource`, set on session.
-3. **Source resolver** — switch to `orchestrator?.kind`.
-4. **Aggregate / server** — verify filters; add legacy shim.
-5. **Migration normalizer** — defensive load-time fix-up.
-6. **UI: filters** — split into Source + Orchestrator dropdowns.
-7. **UI: chart stacking toggle** — `buildChartData(sessions, stackBy)`.
-8. **Tests** — write unit + E2E per Test Strategy.
-9. **Run all tests, `tsc -b`, smoke-test in browser**.
+### E2E / integration tests
 
-## Out-of-Scope Follow-ups (not done here)
+- Add or extend an E2E test that builds a temporary corpus with one long-running session starting on day 1 and a later request on day 2. After collect/aggregate, verify daily chart/project activity data attributes day-2 request cost to day 2.
+- Add a legacy-data-load test case where sessions have no `usageEvents`; verify dashboard/API totals remain unchanged.
 
-- "Cost by Orchestrator" panel (parallel to "Cost by Agent")
-- URL state persistence for the new filters
-- Mars task title drilldown in Source view
-- Update `engine` label rules now that source/orchestrator are separate
+### Manual verification
+
+1. Run `tokmon collect` on a real machine with at least one long-running session.
+2. Run `tokmon serve` and open the dashboard.
+3. Select a recent date range and inspect the cost chart and project heatmap.
+4. Confirm costs appear on the days/hours when requests occurred, while the session table still shows the original session start time.

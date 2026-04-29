@@ -4,6 +4,25 @@ All notable changes to `@ttthree/tokmon` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.6] – 2026-04-29
+
+### Added
+- Request-time `usageEvents` attribution for Claude Code, Codex, and
+  Eureka fallback token sources, enabling long sessions to be counted on
+  the days their model requests actually occurred.
+
+### Changed
+- Dashboard date filters, timelines, burn clock, project activity, and
+  model-cost breakdowns now use request-level usage events instead of
+  session start time.
+- Corpus golden snapshots now include request-level token/cost events and
+  updated aggregate totals.
+
+### Fixed
+- Parser cursor schema invalidation now forces unchanged files to be
+  re-read after request-level attribution changes, backfilling event data
+  without manual cache clearing.
+
 ## [0.2.1] – 2026-04-18
 
 ### Fixed

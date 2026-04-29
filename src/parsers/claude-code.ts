@@ -6,7 +6,7 @@ import { getClaudeDirectory, getCraftAgentClaudeDirectory } from "../core/config
 import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
 import { streamJsonl } from "./util/jsonl-stream.js";
-import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown } from "../core/types.js";
+import type { FileCursor, ParseResult, Parser, ParserContext, Session, TokenBreakdown, UsageEvent } from "../core/types.js";
 
 interface ClaudeSessionIndexEntry {
   sessionId: string;
@@ -33,7 +33,8 @@ interface ClaudeMessageEnvelope {
   };
   content?: Array<{ type?: string; name?: string }>;
   model?: string;
-  message?: {
+    message?: {
+    id?: string;
     role?: string;
     model?: string;
     usage?: {
@@ -165,6 +166,7 @@ function mergeClaudeSessions(existing: Session, incoming: Session): Session {
     },
     toolBreakdown: mergeBreakdown(existing.toolBreakdown, incoming.toolBreakdown),
     modelUsage: mergedModelUsage,
+    usageEvents: [...(existing.usageEvents ?? []), ...(incoming.usageEvents ?? [])],
   };
 }
 
@@ -431,13 +433,15 @@ async function parseClaudeSessionFile(sessionFile: string, entry: ClaudeSessionI
   const tokens: TokenBreakdown = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 };
   const modelUsage: Record<string, TokenBreakdown> = {};
   const toolBreakdown: Record<string, number> = {};
+  const usageEvents: UsageEvent[] = [];
+  const seenUsageKeys = new Set<string>();
   let toolCallCount = 0;
   let turns = 0;
   let messageCount = 0;
   let model = "unknown";
   const eventTimestampsMs: number[] = [];
 
-  await streamJsonl(sessionFile, (obj) => {
+  await streamJsonl(sessionFile, (obj, lineNo) => {
     if (!obj || typeof obj !== "object") return;
     const envelope = obj as ClaudeMessageEnvelope;
 
@@ -465,10 +469,26 @@ async function parseClaudeSessionFile(sessionFile: string, entry: ClaudeSessionI
     }
 
     const lineTokens = usageToBreakdown(envelope.message?.usage ?? envelope.usage);
+    const requestId = stringOrUndefined(envelope.message?.id) ?? `${entry.sessionId}:${lineNo}`;
+    const dedupeKey = envelope.message?.id
+      ? `${envelope.message.id}:${lineModel ?? "unknown"}:${lineTokens.input}:${lineTokens.output}:${lineTokens.cacheCreation}:${lineTokens.cacheRead}`
+      : undefined;
+    if (dedupeKey && seenUsageKeys.has(dedupeKey)) {
+      return;
+    }
+    if (dedupeKey) seenUsageKeys.add(dedupeKey);
     addTokens(tokens, lineTokens);
     if (lineModel && hasAnyTokens(lineTokens)) {
       const usage = modelUsage[lineModel] ?? (modelUsage[lineModel] = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 });
       addTokens(usage, lineTokens);
+    }
+    if (hasAnyTokens(lineTokens)) {
+      usageEvents.push({
+        at: Number.isFinite(timestampMs) ? new Date(timestampMs).toISOString() : toIso(entry.modified, entry.fileMtime),
+        model: lineModel ?? "unknown",
+        tokens: lineTokens,
+        requestId,
+      });
     }
 
     for (const toolName of extractToolUses(envelope)) {
@@ -500,6 +520,7 @@ async function parseClaudeSessionFile(sessionFile: string, entry: ClaudeSessionI
     cost: { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, total: 0 },
     toolBreakdown,
     modelUsage: Object.keys(modelUsage).length > 0 ? modelUsage : undefined,
+    usageEvents,
     tokenProvenance: "sdk-cc-jsonl",
   };
 }
