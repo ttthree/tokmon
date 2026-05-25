@@ -71,12 +71,16 @@ export function getClaudeDirectory(): string {
   return path.join(getHomeDirectory(), ".claude");
 }
 
-export function getCraftAgentClaudeDirectory(): string {
-  return path.join(getHomeDirectory(), ".craft-agent", ".claude");
+export function getEurekaClaudeDirectories(): string[] {
+  const home = getHomeDirectory();
+  return [
+    path.join(home, ".craft-agent", ".claude"),
+    path.join(home, ".eureka", ".claude"),
+  ];
 }
 
 export function getAllClaudeDirectories(): string[] {
-  return [getClaudeDirectory(), getCraftAgentClaudeDirectory()];
+  return [getClaudeDirectory(), ...getEurekaClaudeDirectories()];
 }
 
 export function getCodexDirectory(): string {

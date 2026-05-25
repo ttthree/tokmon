@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { getClaudeDirectory, getCraftAgentClaudeDirectory } from "../core/config.js";
+import { getClaudeDirectory, getEurekaClaudeDirectories } from "../core/config.js";
 import { computeActiveDurationSeconds } from "../core/duration.js";
 import { normalizeProjectPath } from "../core/project.js";
 import { streamJsonl } from "./util/jsonl-stream.js";
@@ -63,13 +63,13 @@ export const claudeCodeParser: Parser = {
     const enabledClaude = (context.sources ?? [])
       .filter((s) => s.enabled && s.type === "claude-code")
       .map((s) => s.path);
-    const craftAgentClaude = getCraftAgentClaudeDirectory();
+    const craftAgentClaudeDirs = getEurekaClaudeDirectories();
     const directories = [
       ...(enabledClaude.length > 0
         ? enabledClaude
         : [
             getClaudeDirectory(),
-            craftAgentClaude,
+            ...craftAgentClaudeDirs,
           ]),
       ...extraRoots,
     ];
@@ -385,20 +385,24 @@ function ensureAbsolute(projectPath: string): string {
   return "/" + projectPath;
 }
 
-function getHomeCraftAgentWorkspacesDir(): string {
+function getHomeEurekaWorkspacesDirs(): string[] {
   const home = process.env.TOKMON_HOME ?? os.homedir();
-  return path.join(home, ".craft-agent", "workspaces");
+  return [
+    path.join(home, ".craft-agent", "workspaces"),
+    path.join(home, ".eureka", "workspaces"),
+  ];
 }
 
 async function findEurekaSessionDirById(sessionId: string): Promise<string | null> {
-  const workspacesDir = getHomeCraftAgentWorkspacesDir();
-  const workspaces = await fs.readdir(workspacesDir, { withFileTypes: true }).catch(() => []);
-  for (const workspace of workspaces) {
-    if (!workspace.isDirectory()) continue;
-    const candidate = path.join(workspacesDir, workspace.name, "sessions", sessionId);
-    const stat = await safeStat(candidate);
-    if (stat?.isDirectory()) {
-      return candidate;
+  for (const workspacesDir of getHomeEurekaWorkspacesDirs()) {
+    const workspaces = await fs.readdir(workspacesDir, { withFileTypes: true }).catch(() => []);
+    for (const workspace of workspaces) {
+      if (!workspace.isDirectory()) continue;
+      const candidate = path.join(workspacesDir, workspace.name, "sessions", sessionId);
+      const stat = await safeStat(candidate);
+      if (stat?.isDirectory()) {
+        return candidate;
+      }
     }
   }
   return null;

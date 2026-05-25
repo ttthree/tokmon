@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { getCraftAgentClaudeDirectory, getHomeDirectory } from "../core/config.js";
+import { getEurekaClaudeDirectories, getHomeDirectory } from "../core/config.js";
 import { inferUnderlyingSource } from "../core/orchestrator.js";
 import { encodeClaudeProjectPath } from "../core/source-resolver.js";
 import type { ParserContext, Source, TokenBreakdown, TokenProvenance } from "../core/types.js";
@@ -169,11 +169,14 @@ async function hasSdkArtifacts(entry: EurekaIndexEntry): Promise<boolean> {
   if (entry.underlyingSource === "claude-code") {
     const encoded = entry.sdkCwd ? encodeClaudeProjectPath(entry.sdkCwd) : null;
     if (!encoded) return false;
-    const mainFile = path.join(getCraftAgentClaudeDirectory(), "projects", encoded, `${entry.sdkSessionId}.jsonl`);
-    if (await safeStat(mainFile)) return true;
-    const subDir = path.join(getCraftAgentClaudeDirectory(), "projects", encoded, entry.sdkSessionId, "subagents");
-    const subStat = await safeStat(subDir);
-    return Boolean(subStat?.isDirectory());
+    for (const claudeDir of getEurekaClaudeDirectories()) {
+      const mainFile = path.join(claudeDir, "projects", encoded, `${entry.sdkSessionId}.jsonl`);
+      if (await safeStat(mainFile)) return true;
+      const subDir = path.join(claudeDir, "projects", encoded, entry.sdkSessionId, "subagents");
+      const subStat = await safeStat(subDir);
+      if (subStat?.isDirectory()) return true;
+    }
+    return false;
   }
   if (entry.underlyingSource === "codex") {
     const codexDir = path.join(entry.sessionPath, ".codex-home", "sessions");

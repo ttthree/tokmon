@@ -4,6 +4,13 @@ All notable changes to `@ttthree/tokmon` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.7] – 2026-05-25
+
+### Fixed
+- Eureka sessions showing zero cost after the `.craft-agent` → `.eureka`
+  directory rebrand. SDK JSONL lookup now searches both
+  `~/.craft-agent/.claude` and `~/.eureka/.claude`.
+
 ## [0.2.6] – 2026-04-29
 
 ### Added

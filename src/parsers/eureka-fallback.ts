@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { getCraftAgentClaudeDirectory } from "../core/config.js";
+import { getEurekaClaudeDirectories } from "../core/config.js";
 import { encodeClaudeProjectPath } from "../core/source-resolver.js";
 import { streamJsonl } from "./util/jsonl-stream.js";
 import type { TokenBreakdown, TokenProvenance, UsageEvent } from "../core/types.js";
@@ -71,27 +71,29 @@ async function readCcSessionTokens(sdkSessionId: string, sdkCwd?: string): Promi
   if (!sdkCwd) return null;
   const encodedCwd = encodeClaudeProjectPath(sdkCwd);
   if (!encodedCwd) return null;
-  const ccDir = path.join(getCraftAgentClaudeDirectory(), "projects", encodedCwd);
-  const mainFile = path.join(ccDir, `${sdkSessionId}.jsonl`);
   const tokens = emptyBreakdown();
   const models = new Set<string>();
   const modelUsage: Record<string, TokenBreakdown> = {};
   const usageEvents: UsageEvent[] = [];
   let found = false;
 
-  if (await accumulateCcJsonl(mainFile, tokens, models, modelUsage, usageEvents, sdkSessionId)) {
-    found = true;
-  }
-  const subDir = path.join(ccDir, sdkSessionId, "subagents");
-  try {
-    const subs = await fs.readdir(subDir);
-    for (const sub of subs) {
-      if (!sub.endsWith(".jsonl")) continue;
-      if (await accumulateCcJsonl(path.join(subDir, sub), tokens, models, modelUsage, usageEvents, `${sdkSessionId}:${sub}`)) {
-        found = true;
-      }
+  for (const claudeDir of getEurekaClaudeDirectories()) {
+    const ccDir = path.join(claudeDir, "projects", encodedCwd);
+    const mainFile = path.join(ccDir, `${sdkSessionId}.jsonl`);
+    if (await accumulateCcJsonl(mainFile, tokens, models, modelUsage, usageEvents, sdkSessionId)) {
+      found = true;
     }
-  } catch {}
+    const subDir = path.join(ccDir, sdkSessionId, "subagents");
+    try {
+      const subs = await fs.readdir(subDir);
+      for (const sub of subs) {
+        if (!sub.endsWith(".jsonl")) continue;
+        if (await accumulateCcJsonl(path.join(subDir, sub), tokens, models, modelUsage, usageEvents, `${sdkSessionId}:${sub}`)) {
+          found = true;
+        }
+      }
+    } catch {}
+  }
 
   return found ? { tokens, models: [...models], modelUsage, usageEvents, provenance: "sdk-cc-jsonl" } : null;
 }

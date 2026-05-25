@@ -80,7 +80,7 @@ async function discoverClaude(entries: SourceEntry[], claimed: Set<string>): Pro
   for (const entry of entries) {
     const root = path.join(entry.path, "projects");
     const files = await walkFiles(root, (f) => f.endsWith(".jsonl"));
-    const craft = entry.path.includes(`${path.sep}.craft-agent${path.sep}.claude`);
+    const craft = entry.path.includes(`${path.sep}.craft-agent${path.sep}.claude`) || entry.path.includes(`${path.sep}.eureka${path.sep}.claude`);
     for (const file of files) {
       const sid = path.basename(file, ".jsonl");
       if (craft && (claimed.has(sid) || claimed.has(path.basename(path.dirname(path.dirname(file)))))) continue;
@@ -158,11 +158,13 @@ async function discoverEurekaLinkedFiles(sessionRoot: string, sourceCategory: So
 
   if (!sdkCwd) return linked;
   const encoded = sdkCwd.replace(/[/.]/g, "-");
-  const ccDir = path.join(getHomeDirectory(), ".craft-agent", ".claude", "projects", encoded);
-  const mainFile = path.join(ccDir, `${sdkSessionId}.jsonl`);
-  if (await statFile(mainFile)) linked.push(mainFile);
-  const subagents = await walkFiles(path.join(ccDir, sdkSessionId, "subagents"), (f) => f.endsWith(".jsonl"));
-  linked.push(...subagents);
+  for (const base of [".craft-agent", ".eureka"]) {
+    const ccDir = path.join(getHomeDirectory(), base, ".claude", "projects", encoded);
+    const mainFile = path.join(ccDir, `${sdkSessionId}.jsonl`);
+    if (await statFile(mainFile)) linked.push(mainFile);
+    const subagents = await walkFiles(path.join(ccDir, sdkSessionId, "subagents"), (f) => f.endsWith(".jsonl"));
+    linked.push(...subagents);
+  }
   return linked;
 }
 
