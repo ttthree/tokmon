@@ -443,6 +443,74 @@ export async function createEurekaCopilotFixture(testHome: string, options?: {
   await fs.writeFile(path.join(sdkDir, "events.jsonl"), eventLines.join("\n"), "utf8");
 }
 
+
+export async function createEurekaPiFixture(testHome: string, options?: {
+  sessionId?: string;
+  headerModel?: string;
+  workingDirectory?: string;
+  eventLines?: string[];
+}): Promise<void> {
+  const sessionId = options?.sessionId ?? "260709-fresh-whale";
+  const headerModel = options?.headerModel ?? "gpt-5.5";
+  const workingDirectory = options?.workingDirectory ?? path.join(testHome, "work", "pi-lab");
+  const sessionDir = path.join(testHome, ".craft-agent", "workspaces", "workspace-1", "sessions", sessionId);
+  const piDir = path.join(sessionDir, ".pi");
+
+  await fs.mkdir(piDir, { recursive: true });
+  await fs.writeFile(
+    path.join(sessionDir, "session.jsonl"),
+    [
+      JSON.stringify({
+        id: sessionId,
+        createdAt: Date.parse("2026-07-09T07:43:48.102Z"),
+        lastUsedAt: Date.parse("2026-07-09T07:50:27.523Z"),
+        name: "PI SDK task",
+        engine: "pi",
+        model: headerModel,
+        runtimeProvider: "pi_coding_agent",
+        type: "task",
+        messageCount: 4,
+        userMessageCount: 1,
+        workingDirectory,
+        sdkSessionId: sessionId,
+        sdkCwd: workingDirectory,
+        tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0, contextTokens: 0, costUsd: 0 },
+      }),
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+
+  const eventLines = options?.eventLines ?? [
+    JSON.stringify({ type: "session", version: 3, id: sessionId, timestamp: "2026-07-09T07:43:48.102Z", cwd: workingDirectory }),
+    JSON.stringify({ type: "model_change", id: "model-1", timestamp: "2026-07-09T07:43:48.132Z", provider: "github-copilot", modelId: headerModel }),
+    JSON.stringify({
+      type: "message",
+      id: "assistant-1",
+      timestamp: "2026-07-09T07:43:52.406Z",
+      message: { role: "assistant", content: [] },
+      api: "openai-responses",
+      provider: "github-copilot",
+      model: headerModel,
+      usage: { input: 6659, output: 211, cacheRead: 2560, cacheWrite: 0, totalTokens: 9430 },
+      responseId: "response-1",
+    }),
+    JSON.stringify({
+      type: "message",
+      id: "assistant-2",
+      timestamp: "2026-07-09T07:50:17.824Z",
+      message: { role: "assistant", content: [] },
+      api: "openai-responses",
+      provider: "github-copilot",
+      model: headerModel,
+      usage: { input: 643, output: 343, cacheRead: 71168, cacheWrite: 0, totalTokens: 72154 },
+      responseId: "response-2",
+    }),
+    "",
+  ];
+  await fs.writeFile(path.join(piDir, `2026-07-09T07-43-48-102Z_${sessionId}.jsonl`), eventLines.join("\n"), "utf8");
+}
+
 export async function createClaudeCraftAgentsSubagentFixture(testHome: string, options?: {
   parentSessionId?: string;
   subagentId?: string;

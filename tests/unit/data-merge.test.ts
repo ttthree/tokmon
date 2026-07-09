@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mergeSession } from "../../src/core/data.js";
+import { mergeSession, updateSessions } from "../../src/core/data.js";
 import type { Session } from "../../src/core/types.js";
 
 describe("mergeSession", () => {
@@ -60,6 +60,63 @@ describe("mergeSession", () => {
       modifiedAt: "2026-04-18T12:05:00.000Z",
       tokenProvenance: "sdk-cc-jsonl",
     });
+  });
+});
+
+describe("updateSessions", () => {
+  it("removes stale same-machine Eureka keys when an orchestrated session changes source", () => {
+    const existing = {
+      "machine-1:copilot-cli:eureka-pi": makeSession({
+        id: "eureka-pi",
+        machineId: "machine-1",
+        source: "copilot-cli",
+        engine: "Eureka + Copilot",
+        orchestrator: { kind: "eureka" },
+      }),
+      "machine-2:copilot-cli:eureka-pi": makeSession({
+        id: "eureka-pi",
+        machineId: "machine-2",
+        source: "copilot-cli",
+        engine: "Eureka + Copilot",
+        orchestrator: { kind: "eureka" },
+      }),
+    };
+
+    const updated = updateSessions(existing, [makeSession({
+      id: "eureka-pi",
+      machineId: "machine-1",
+      source: "pi-agent",
+      engine: "Eureka + Pi",
+      orchestrator: { kind: "eureka" },
+      tokenProvenance: "sdk-pi-jsonl",
+    })], "machine-1");
+
+    expect(Object.keys(updated).sort()).toEqual([
+      "machine-1:pi-agent:eureka-pi",
+      "machine-2:copilot-cli:eureka-pi",
+    ]);
+    expect(updated["machine-1:pi-agent:eureka-pi"].source).toBe("pi-agent");
+  });
+
+  it("does not remove non-orchestrated sessions that happen to share an id", () => {
+    const existing = {
+      "machine-1:claude-code:shared-id": makeSession({
+        id: "shared-id",
+        source: "claude-code",
+        orchestrator: undefined,
+      }),
+    };
+
+    const updated = updateSessions(existing, [makeSession({
+      id: "shared-id",
+      source: "pi-agent",
+      orchestrator: { kind: "eureka" },
+    })], "machine-1");
+
+    expect(Object.keys(updated).sort()).toEqual([
+      "machine-1:claude-code:shared-id",
+      "machine-1:pi-agent:shared-id",
+    ]);
   });
 });
 

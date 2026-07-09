@@ -37,6 +37,7 @@ const SOURCE_LABELS: Record<string, string> = {
   "claude-code": "Claude Code",
   codex: "Codex",
   "copilot-cli": "Copilot CLI",
+  "pi-agent": "PI Agent",
   eureka: "Eureka",
   mars: "Mars",
 };

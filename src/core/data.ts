@@ -116,6 +116,7 @@ function tokenProvenanceRank(provenance: Session["tokenProvenance"]): number {
   switch (provenance) {
     case "sdk-cc-jsonl":
     case "sdk-codex-rollout":
+    case "sdk-pi-jsonl":
       return 5;
     case "sdk-shutdown":
       return 4;
@@ -136,11 +137,37 @@ function totalTokens(session: Session): number {
 
 export function updateSessions(existing: Record<string, Session>, newSessions: Session[], machineId: string): Record<string, Session> {
   const result = { ...existing };
+  const orchestratedKeysById = indexOrchestratedSessionKeys(result, machineId);
+
   for (const session of newSessions) {
     const key = getSessionKey(machineId, session);
+    const orchestratedId = getOrchestratedSessionId(session);
+    if (orchestratedId) {
+      for (const existingKey of orchestratedKeysById.get(orchestratedId) ?? []) {
+        if (existingKey !== key) delete result[existingKey];
+      }
+      orchestratedKeysById.set(orchestratedId, [key]);
+    }
     result[key] = mergeSession(result[key], session);
   }
   return result;
+}
+
+function indexOrchestratedSessionKeys(sessions: Record<string, Session>, machineId: string): Map<string, string[]> {
+  const keysById = new Map<string, string[]>();
+  const prefix = `${machineId}:`;
+  for (const [key, session] of Object.entries(sessions)) {
+    if (!key.startsWith(prefix)) continue;
+    const orchestratedId = getOrchestratedSessionId(session);
+    if (!orchestratedId) continue;
+    keysById.set(orchestratedId, [...(keysById.get(orchestratedId) ?? []), key]);
+  }
+  return keysById;
+}
+
+function getOrchestratedSessionId(session: Session): string | null {
+  const kind = session.orchestrator?.kind;
+  return kind === "eureka" || kind === "mars" ? `${kind}:${session.id}` : null;
 }
 
 export function replaceCursor(machineData: MachineData, cursor: CursorState): MachineData {

@@ -392,7 +392,7 @@ function asOptionalOrchestrator(value: unknown): DataFilters["orchestrator"] {
   return undefined;
 }
 
-const VALID_SOURCE_TYPES = new Set<SourceType>(["claude-code", "codex", "copilot-cli", "eureka", "mars"]);
+const VALID_SOURCE_TYPES = new Set<SourceType>(["claude-code", "codex", "copilot-cli", "pi-agent", "eureka", "mars"]);
 
 function sanitizeMachine(input: unknown, current: MachineConfig | undefined): MachineConfig | undefined {
   if (input === undefined) return current;

@@ -14,6 +14,7 @@ const SOURCE_TYPES: Array<{ id: SourceType; label: string }> = [
   { id: "claude-code", label: "Claude Code" },
   { id: "codex", label: "Codex" },
   { id: "copilot-cli", label: "Copilot CLI" },
+  { id: "pi-agent", label: "PI Agent" },
   { id: "eureka", label: "Eureka" },
   { id: "mars", label: "Mars" },
 ];

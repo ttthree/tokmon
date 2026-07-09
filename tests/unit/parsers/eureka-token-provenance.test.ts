@@ -5,8 +5,9 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { ingestEurekaOrphans } from "../../../src/core/attribute.js";
 import { createEmptyCursorState } from "../../../src/core/cursor.js";
+import { eurekaEngineLabel } from "../../../src/parsers/eureka-fallback.js";
 import { buildEurekaIndex } from "../../../src/parsers/eureka-index.js";
-import { createEurekaClaudeSdkFixture, createEurekaCodexFixture, createEurekaCopilotFixture, createTestHome } from "../../helpers/fixtures.js";
+import { createEurekaClaudeSdkFixture, createEurekaCodexFixture, createEurekaCopilotFixture, createEurekaPiFixture, createTestHome } from "../../helpers/fixtures.js";
 
 let testHome = "";
 
@@ -16,6 +17,13 @@ afterEach(async () => {
     testHome = "";
   }
   delete process.env.TOKMON_HOME;
+});
+
+describe("Eureka token provenance helpers", () => {
+  it("does not mislabel copilot runtime providers as PI", () => {
+    expect(eurekaEngineLabel("copilot-cli", "copilot_sdk")).toBe("Eureka + Copilot");
+    expect(eurekaEngineLabel("pi-agent", "pi_coding_agent")).toBe("Eureka + Pi");
+  });
 });
 
 describe("ingestEurekaOrphans provenance matrix", () => {
@@ -43,6 +51,45 @@ describe("ingestEurekaOrphans provenance matrix", () => {
     expect(session.tokenProvenance).toBe("none");
     expect(session.tokens).toEqual({ input: 0, output: 0, cacheCreation: 0, cacheRead: 0 });
     expect(session.model).toBe("claude-sonnet-4-20250514");
+  });
+
+
+  it("uses PI coding agent JSONL tokens for PI runtime sessions", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+    await createEurekaPiFixture(testHome, { sessionId: "eureka-pi", headerModel: "gpt-5.5" });
+    await fs.writeFile(
+      path.join(testHome, ".craft-agent", "workspaces", "workspace-1", "sessions", "eureka-pi", ".pi", "2026-07-09T07-44-00-000Z_eureka-pi.jsonl"),
+      [
+        JSON.stringify({ type: "model_change", timestamp: "2026-07-09T07:44:00.000Z", modelId: "gpt-5.5" }),
+        JSON.stringify({
+          type: "message",
+          id: "assistant-1-duplicate",
+          timestamp: "2026-07-09T07:44:01.000Z",
+          message: { role: "assistant", model: "gpt-5.5", responseId: "response-1", usage: { input: 6659, output: 211, cacheRead: 2560, cacheWrite: 0 } },
+        }),
+        JSON.stringify({
+          type: "message",
+          id: "assistant-2-duplicate",
+          timestamp: "2026-07-09T07:44:02.000Z",
+          message: { role: "assistant", model: "gpt-5.5", responseId: "response-2", usage: { input: 643, output: 343, cacheRead: 71168, cacheWrite: 0 } },
+        }),
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const session = await ingestSingle("eureka-pi");
+
+    expect(session.source).toBe("pi-agent");
+    expect(session.engine).toBe("Eureka + Pi");
+    expect(session.tokenProvenance).toBe("sdk-pi-jsonl");
+    expect(session.tokens).toEqual({ input: 7302, output: 554, cacheCreation: 0, cacheRead: 73728 });
+    expect(session.model).toBe("gpt-5.5");
+    expect(session.modelUsage).toEqual({
+      "gpt-5.5": { input: 7302, output: 554, cacheCreation: 0, cacheRead: 73728 },
+    });
+    expect(session.usageEvents).toHaveLength(2);
   });
 
   it("uses embedded codex rollout tokens when Phase 1 cannot see the sdk file", async () => {

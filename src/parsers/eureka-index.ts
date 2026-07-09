@@ -182,6 +182,10 @@ async function hasSdkArtifacts(entry: EurekaIndexEntry): Promise<boolean> {
     const codexDir = path.join(entry.sessionPath, ".codex-home", "sessions");
     return hasNestedJsonlMatching(codexDir, entry.sdkSessionId);
   }
+  if (entry.underlyingSource === "pi-agent") {
+    const piDir = path.join(entry.sessionPath, ".pi");
+    return hasNestedJsonlMatching(piDir, entry.sdkSessionId);
+  }
   const eventsPath = path.join(entry.sessionPath, ".copilot-sdk", "session-state", entry.sdkSessionId, "events.jsonl");
   return Boolean(await safeStat(eventsPath));
 }

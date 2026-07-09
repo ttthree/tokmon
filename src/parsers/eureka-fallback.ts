@@ -35,18 +35,30 @@ interface CopilotSdkUsage {
   cacheWriteTokens?: number;
 }
 
+interface PiUsage {
+  input?: number;
+  output?: number;
+  cacheRead?: number;
+  cacheWrite?: number;
+}
+
 type CopilotModelMetrics = Record<string, { usage?: CopilotSdkUsage }>;
 type CcEnvelope = { type?: string; timestamp?: string; model?: string; usage?: CcUsage; message?: { id?: string; model?: string; usage?: CcUsage } };
+type PiEnvelope = { type?: string; id?: string; timestamp?: string; api?: string; provider?: string; model?: string; modelId?: string; responseId?: string; usage?: PiUsage; message?: { role?: string; timestamp?: number | string; api?: string; provider?: string; model?: string; responseId?: string; usage?: PiUsage } };
 
 export async function readEurekaFallbackTokens(entry: EurekaIndexEntry): Promise<SdkTokenResult | null> {
   if (!entry.sdkSessionId) return null;
+  if (entry.underlyingSource === "pi-agent") {
+    return readPiCodingSessionTokens(entry.sessionPath, entry.sdkSessionId, entry.headerModel);
+  }
   if (entry.underlyingSource === "claude-code") {
     return readCcSessionTokens(entry.sdkSessionId, entry.sdkCwd);
   }
   return readEmbeddedSdkSessionTokens(entry.sessionPath, entry.sdkSessionId, entry.headerModel);
 }
 
-export function eurekaEngineLabel(source: EurekaIndexEntry["underlyingSource"]): string {
+export function eurekaEngineLabel(source: EurekaIndexEntry["underlyingSource"], _runtimeProvider?: string): string {
+  if (source === "pi-agent") return "Eureka + Pi";
   if (source === "codex") return "Eureka + Codex";
   if (source === "copilot-cli") return "Eureka + Copilot";
   return "Eureka + CC";
@@ -118,6 +130,71 @@ async function readEmbeddedSdkSessionTokens(sessionPath: string, sdkSessionId: s
   } catch {}
   return null;
 }
+
+async function readPiCodingSessionTokens(sessionPath: string, sdkSessionId: string, fallbackModel?: string): Promise<SdkTokenResult | null> {
+  const piDir = path.join(sessionPath, ".pi");
+  const files = (await walkDir(piDir, ".jsonl").catch(() => []))
+    .filter((file) => path.basename(file).includes(sdkSessionId))
+    .sort((a, b) => a.localeCompare(b));
+  if (files.length === 0) return null;
+
+  const tokens = emptyBreakdown();
+  const models = new Set<string>();
+  const modelUsage: Record<string, TokenBreakdown> = {};
+  const usageEvents: UsageEvent[] = [];
+  let currentModel = fallbackModel;
+  let foundUsage = false;
+  const seenUsageKeys = new Set<string>();
+
+  for (const file of files) {
+    const fallbackTimestamp = new Date((await fs.stat(file).catch(() => ({ mtimeMs: 0 }))).mtimeMs).toISOString();
+    await streamJsonl(file, (obj, lineNo) => {
+      if (!obj || typeof obj !== "object") return;
+      const event = obj as PiEnvelope;
+      if (event.type === "model_change") {
+        const model = stringOrUndefined(event.modelId ?? event.model);
+        if (model) {
+          currentModel = model;
+          models.add(model);
+        }
+        return;
+      }
+
+      const usageSource = event.usage ?? event.message?.usage;
+      const usage = piUsageToBreakdown(usageSource);
+      if (!hasAnyBreakdown(usage)) return;
+      const model = stringOrUndefined(event.model ?? event.message?.model) ?? currentModel ?? fallbackModel ?? "unknown";
+      const responseId = stringOrUndefined(event.responseId ?? event.message?.responseId);
+      const dedupeKey = responseId
+        ? `${responseId}:${model}:${usage.input}:${usage.output}:${usage.cacheCreation}:${usage.cacheRead}`
+        : `${path.basename(file)}:${lineNo}`;
+      if (seenUsageKeys.has(dedupeKey)) return;
+      seenUsageKeys.add(dedupeKey);
+
+      foundUsage = true;
+      addBreakdown(tokens, usage);
+      if (model !== "unknown") {
+        models.add(model);
+        const bucket = modelUsage[model] ?? (modelUsage[model] = emptyBreakdown());
+        addBreakdown(bucket, usage);
+      }
+      usageEvents.push({
+        at: piTimestampToIso(event.timestamp ?? event.message?.timestamp) ?? fallbackTimestamp,
+        model,
+        tokens: usage,
+        requestId: responseId ?? event.id ?? `${path.basename(file)}:${lineNo}`,
+      });
+    });
+  }
+
+  if (!foundUsage) return null;
+  if (models.size === 0 && fallbackModel) {
+    models.add(fallbackModel);
+    modelUsage[fallbackModel] = { ...tokens };
+  }
+  return { tokens, models: [...models], modelUsage, usageEvents, provenance: "sdk-pi-jsonl" };
+}
+
 
 async function extractCodexTurnModelUsage(filePath: string, fallbackModel?: string): Promise<SdkTokenResult | null> {
   const tokens = emptyBreakdown();
@@ -321,6 +398,23 @@ function copilotUsageToBreakdown(usage: CopilotSdkUsage | undefined): TokenBreak
     output: numberOrZero(usage?.outputTokens),
     cacheCreation: numberOrZero(usage?.cacheWriteTokens),
     cacheRead,
+  };
+}
+
+function piTimestampToIso(value: unknown): string | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return new Date(value).toISOString();
+  if (typeof value === "string" && !Number.isNaN(Date.parse(value))) return new Date(Date.parse(value)).toISOString();
+  return undefined;
+}
+
+function piUsageToBreakdown(usage: PiUsage | undefined): TokenBreakdown {
+  // PI JSONL usage reports input and cacheRead as separate additive fields:
+  // input + output + cacheRead + cacheWrite = totalTokens. Do not subtract cacheRead here.
+  return {
+    input: numberOrZero(usage?.input),
+    output: numberOrZero(usage?.output),
+    cacheCreation: numberOrZero(usage?.cacheWrite),
+    cacheRead: numberOrZero(usage?.cacheRead),
   };
 }
 

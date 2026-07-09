@@ -27,6 +27,7 @@ const SOURCE_LABELS: Record<Source, string> = {
   "claude-code": "Claude Code",
   codex: "Codex",
   "copilot-cli": "Copilot CLI",
+  "pi-agent": "PI Agent",
 };
 
 const ORCHESTRATOR_LABELS: Record<OrchestratorKind | "none", string> = {
@@ -39,6 +40,7 @@ const SOURCE_STACK_COLORS: Record<Source, string> = {
   "claude-code": "#18181b",
   codex: "#3f3f46",
   "copilot-cli": "#71717a",
+  "pi-agent": "#a1a1aa",
 };
 
 const ORCHESTRATOR_STACK_COLORS: Record<OrchestratorKind | "none", string> = {
@@ -256,7 +258,7 @@ export function App() {
   const availableSources = useMemo((): SourceFilter[] => {
     if (!data) return [];
     const sources = new Set(data.sessions.map((s) => s.source));
-    return (["claude-code", "codex", "copilot-cli"] as Source[]).filter((s) =>
+    return (["claude-code", "codex", "copilot-cli", "pi-agent"] as Source[]).filter((s) =>
       sources.has(s),
     );
   }, [data]);

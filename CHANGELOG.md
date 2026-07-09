@@ -4,6 +4,20 @@ All notable changes to `@ttthree/tokmon` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.8] – 2026-07-09
+
+### Added
+- Eureka PI runtime sessions are now tracked as `pi-agent` / `Eureka + Pi`
+  sessions with token usage parsed from PI `.jsonl` session logs.
+- Dashboard source filters and settings now include PI Agent as a first-class
+  source.
+
+### Fixed
+- Prevent Eureka + Copilot sessions from being mislabeled as PI sessions.
+- Deduplicate stale orchestrated-session keys when a Eureka/Mars session changes
+  underlying source across releases.
+- Deduplicate repeated PI SDK response usage across multiple `.pi` JSONL files.
+
 ## [0.2.7] – 2026-05-25
 
 ### Fixed

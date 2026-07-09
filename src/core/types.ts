@@ -1,4 +1,4 @@
-export type Source = "claude-code" | "codex" | "copilot-cli";
+export type Source = "claude-code" | "codex" | "copilot-cli" | "pi-agent";
 
 export type OrchestratorKind = "mars" | "eureka";
 
@@ -41,6 +41,7 @@ export type TokenProvenance =
   | "sdk-events"
   | "sdk-cc-jsonl"
   | "sdk-codex-rollout"
+  | "sdk-pi-jsonl"
   | "telemetry"
   | "none";
 
@@ -48,7 +49,7 @@ export interface Session {
   id: string;
   machineId: string;
   source: Source;
-  /** Human-readable engine label, e.g. "Claude Code", "Codex", "Copilot CLI", "Eureka + CC", "Eureka + Codex". */
+  /** Human-readable engine label, e.g. "Claude Code", "Codex", "Copilot CLI", "Eureka + CC", "Eureka + Codex", "Eureka + Pi". */
   engine?: string;
   projectPath: string;
   project: string;

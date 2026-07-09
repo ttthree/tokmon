@@ -23,7 +23,8 @@ export async function attributeOrchestrator(
     }
 
     const marsMeta = resolveMarsMeta(session, marsRegistry);
-    return marsMeta ? applyMarsMeta(session, marsMeta, session.source) : session;
+    if (!marsMeta || session.source === "pi-agent") return session;
+    return applyMarsMeta(session, marsMeta, session.source);
   }));
   return { attributed, matchedEurekaCompositeKeys };
 }
@@ -46,7 +47,7 @@ export async function ingestEurekaOrphans(
       id: entry.eurekaSessionId,
       machineId,
       source: entry.underlyingSource,
-      engine: eurekaEngineLabel(entry.underlyingSource),
+      engine: eurekaEngineLabel(entry.underlyingSource, entry.runtimeProvider),
       projectPath,
       project,
       summary: entry.name ?? (entry.sessionType ? `${entry.sessionType} session` : undefined),
@@ -75,7 +76,7 @@ function applyEurekaMeta(session: Session, entry: EurekaIndexEntry): Session {
   return {
     ...session,
     id: entry.eurekaSessionId,
-    engine: eurekaEngineLabel(entry.underlyingSource),
+    engine: eurekaEngineLabel(entry.underlyingSource, entry.runtimeProvider),
     projectPath,
     project: /\/\.(craft-agent|eureka)\/workspaces\//.test(projectPath.replace(/\\/g, "/")) ? "Eureka" : path.basename(normalizedPath) || session.project,
     summary: entry.name ?? session.summary,
