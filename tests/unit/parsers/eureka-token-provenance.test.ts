@@ -92,6 +92,43 @@ describe("ingestEurekaOrphans provenance matrix", () => {
     expect(session.usageEvents).toHaveLength(2);
   });
 
+  it("uses PI JSONL when custom-model runtime disposal cleared sdkSessionId", async () => {
+    testHome = await createTestHome();
+    process.env.TOKMON_HOME = testHome;
+    await createEurekaPiFixture(testHome, {
+      sessionId: "eureka-pi-custom",
+      headerModel: "custom-model:endpoint:anthropic%2Fmessages:deepseek-v4-flash-anthropic",
+      omitSdkSessionId: true,
+      eventLines: [
+        JSON.stringify({ type: "session", version: 3, id: "eureka-pi-custom", timestamp: "2026-08-05T05:58:58.905Z" }),
+        JSON.stringify({ type: "model_change", timestamp: "2026-08-05T05:58:58.941Z", provider: "eureka-custom-endpoint", modelId: "deepseek-v4-flash-anthropic" }),
+        JSON.stringify({
+          type: "message",
+          id: "assistant-custom",
+          timestamp: "2026-08-05T05:59:02.346Z",
+          message: {
+            role: "assistant",
+            provider: "eureka-custom-endpoint",
+            model: "deepseek-v4-flash-anthropic",
+            responseId: "response-custom",
+            usage: { input: 9057, output: 169, cacheRead: 2944, cacheWrite: 0 },
+          },
+        }),
+        "",
+      ],
+    });
+
+    const session = await ingestSingle("eureka-pi-custom");
+
+    expect(session.source).toBe("pi-agent");
+    expect(session.tokenProvenance).toBe("sdk-pi-jsonl");
+    expect(session.tokens).toEqual({ input: 9057, output: 169, cacheCreation: 0, cacheRead: 2944 });
+    expect(session.model).toBe("deepseek-v4-flash-anthropic");
+    expect(session.modelUsage).toEqual({
+      "deepseek-v4-flash-anthropic": { input: 9057, output: 169, cacheCreation: 0, cacheRead: 2944 },
+    });
+  });
+
   it("uses embedded codex rollout tokens when Phase 1 cannot see the sdk file", async () => {
     testHome = await createTestHome();
     process.env.TOKMON_HOME = testHome;

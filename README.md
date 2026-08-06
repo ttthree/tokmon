@@ -58,6 +58,18 @@ tokmon --help       # full CLI reference
 | `-V`, `--version` | Print the version. |
 | `-h`, `--help` | Show help. |
 
+### Network-restricted environments
+
+tokmon checks for new releases through the npm registry. In environments where public npm is blocked, disable the check or point it at an internal registry:
+
+```bash
+TOKMON_DISABLE_UPDATE_CHECK=1 tokmon
+# or
+TOKMON_NPM_REGISTRY=https://your-internal-registry.example tokmon
+```
+
+`TOKMON_NPM_REGISTRY` controls only the update-check URL; tokmon does not read or transmit npm authentication tokens.
+
 ### Data locations
 
 - Config + machine data: `~/.tokmon/`

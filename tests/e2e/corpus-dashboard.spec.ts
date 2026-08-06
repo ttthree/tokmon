@@ -42,6 +42,8 @@ for (const corpusId of CORPUS_IDS) {
       await gotoTab(page, server.url, "Overview");
       await expect(page.getByTestId("token-chart")).toBeVisible();
       await expect(page.getByTestId("burn-clock")).toBeVisible();
+      await expect(page.getByTestId("model-breakdown-pie")).toBeVisible();
+      await expect(page.getByTestId("token-chart").getByRole("button", { name: "By model" })).toBeVisible();
     });
   });
 }

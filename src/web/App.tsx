@@ -11,6 +11,7 @@ import { ProjectActivityTable } from "./components/ProjectActivityTable.js";
 import { ProjectDetailCard } from "./components/ProjectDetailCard.js";
 import { SessionDetailModal } from "./components/SessionDetailModal.js";
 import { LogsTab, type LogEntry } from "./components/LogsTab.js";
+import { ModelBreakdownPie } from "./components/ModelBreakdownPie.js";
 import { SessionTable } from "./components/SessionTable.js";
 import { SettingsTab } from "./components/SettingsTab.js";
 import { StatCard } from "./components/StatCard.js";
@@ -51,7 +52,7 @@ const ORCHESTRATOR_STACK_COLORS: Record<OrchestratorKind | "none", string> = {
 
 type SourceFilter = Source | "all";
 type OrchestratorFilter = OrchestratorKind | "none" | "all";
-type ChartStackBy = "source" | "orchestrator";
+type ChartStackBy = "source" | "orchestrator" | "model";
 type Tab = "overview" | "projects" | "sessions" | "logs" | "settings";
 
 const LOGS_STORAGE_KEY = "tokmon:change-log:v1";
@@ -349,6 +350,7 @@ export function App() {
   }, [sourceSessions, selectedProject, range, chartStackBy]);
   const projectData = useMemo(() => buildProjectData(sourceProjects), [sourceProjects]);
   const modelData = useMemo(() => buildModelData(sourceSessions), [sourceSessions]);
+  const modelPieData = useMemo(() => buildModelPieData(sourceSessions), [sourceSessions]);
   const agentData = useMemo(() => buildAgentData(sourceSessions), [sourceSessions]);
   const tokenBreakdown = useMemo(() => buildTokenBreakdown(filteredTotals?.tokens), [filteredTotals]);
   const selectedProjectSummary = useMemo(
@@ -363,14 +365,26 @@ export function App() {
   const orchestratorSelectedLabel = orchestratorFilter === "all" ? null : ORCHESTRATOR_LABELS[orchestratorFilter] ?? null;
   const machineSelectedLabel =
     machineFilter === "all" ? null : machineNames.get(machineFilter) ?? machineFilter;
-  const stackSeriesLabels = chartStackBy === "source" ? SOURCE_LABELS : ORCHESTRATOR_LABELS;
-  const stackSeriesColors = chartStackBy === "source" ? SOURCE_STACK_COLORS : ORCHESTRATOR_STACK_COLORS;
+  const stackSeriesLabels = chartStackBy === "source"
+    ? SOURCE_LABELS
+    : chartStackBy === "orchestrator"
+      ? ORCHESTRATOR_LABELS
+      : undefined;
+  const stackSeriesColors = chartStackBy === "source"
+    ? SOURCE_STACK_COLORS
+    : chartStackBy === "orchestrator"
+      ? ORCHESTRATOR_STACK_COLORS
+      : undefined;
   const overviewStackKeys = chartStackBy === "source"
     ? (sourceFilter === "all" ? chartData.stackKeys : undefined)
-    : (orchestratorFilter === "all" ? chartData.stackKeys : undefined);
+    : chartStackBy === "orchestrator"
+      ? (orchestratorFilter === "all" ? chartData.stackKeys : undefined)
+      : chartData.stackKeys;
   const projectStackKeys = chartStackBy === "source"
     ? (sourceFilter === "all" ? projectChartData.stackKeys : undefined)
-    : (orchestratorFilter === "all" ? projectChartData.stackKeys : undefined);
+    : chartStackBy === "orchestrator"
+      ? (orchestratorFilter === "all" ? projectChartData.stackKeys : undefined)
+      : projectChartData.stackKeys;
 
   useEffect(() => {
     if (!selectedSession) {
@@ -473,13 +487,15 @@ export function App() {
               />
             </section>
 
-            <section className="grid gap-4 xl:grid-cols-[320px_1fr] items-stretch">
-              <div className="grid grid-cols-2 grid-rows-2 gap-4">
-                {tokenBreakdown.map((item) => (
-                  <StatCard key={item.name} label={item.name} value={formatCompact(item.value)} />
-                ))}
-              </div>
+            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {tokenBreakdown.map((item) => (
+                <StatCard key={item.name} label={item.name} value={formatCompact(item.value)} />
+              ))}
+            </section>
+
+            <section className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,1.8fr)_minmax(300px,0.8fr)]">
               <BurnClock sessions={visibleSessions} formatCurrency={formatCurrency} />
+              <ModelBreakdownPie data={modelPieData} formatCurrency={formatCurrency} />
             </section>
           </>
         ) : tab === "projects" ? (
@@ -671,6 +687,10 @@ function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter, 
   const grouped = new Map<string, { input: number; output: number; cacheCreation: number; cacheRead: number; cost: number; costBySource: Record<string, number> }>();
   const stackKeysSeen = new Set<string>();
   const seenIso: string[] = [];
+  const modelStackKeys = stackBy === "model" ? getTopModelKeys(sessions, 7) : [];
+  const topModels = new Set(modelStackKeys);
+  let hasOtherModels = false;
+
   for (const session of sessions) {
     for (const event of getSessionUsageEvents(session)) {
       const iso = event.at.slice(0, 10);
@@ -684,7 +704,17 @@ function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter, 
       if (event.tokens.input > 0 || event.tokens.output > 0 || event.tokens.cacheCreation > 0 || event.tokens.cacheRead > 0 || (event.cost?.total ?? 0) > 0) {
         seenIso.push(iso);
       }
-      const key = stackBy === "source" ? session.source : session.orchestrator?.kind ?? "none";
+
+      let key: string;
+      if (stackBy === "source") {
+        key = session.source;
+      } else if (stackBy === "orchestrator") {
+        key = session.orchestrator?.kind ?? "none";
+      } else {
+        const model = shortenModelName(event.model || session.model || "unknown");
+        key = topModels.has(model) ? model : "Other models";
+        if (key === "Other models") hasOtherModels = true;
+      }
       bucket.costBySource[key] = (bucket.costBySource[key] ?? 0) + (event.cost?.total ?? 0);
       stackKeysSeen.add(key);
       grouped.set(label, bucket);
@@ -694,8 +724,25 @@ function buildChartData(sessions: DataResponse["sessions"], range: RangeFilter, 
   const labels = buildContinuousLabels(range, seenIso, isMonthly);
   const empty = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0, cost: 0, costBySource: {} as Record<string, number> };
   const points = labels.map((label) => ({ label, ...(grouped.get(label) ?? empty) }));
-  const stackKeys = [...stackKeysSeen].sort();
+  const stackKeys = stackBy === "model"
+    ? [...modelStackKeys, ...(hasOtherModels ? ["Other models"] : [])]
+    : [...stackKeysSeen].sort();
   return { points, stackKeys };
+}
+
+function getTopModelKeys(sessions: DataResponse["sessions"], limit: number): string[] {
+  const totals = new Map<string, number>();
+  for (const session of sessions) {
+    for (const event of getSessionUsageEvents(session)) {
+      const model = shortenModelName(event.model || session.model || "unknown");
+      if (model === "unknown") continue;
+      totals.set(model, (totals.get(model) ?? 0) + (event.cost?.total ?? 0));
+    }
+  }
+  return [...totals.entries()]
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .slice(0, limit)
+    .map(([model]) => model);
 }
 
 function buildContinuousLabels(range: RangeFilter, seenIso: string[], isMonthly: boolean): string[] {
@@ -761,6 +808,33 @@ function buildModelData(sessions: DataResponse["sessions"]) {
     .map(([name, value]) => ({ name, value }))
     .sort((left, right) => right.value - left.value)
     .slice(0, 8);
+}
+
+function buildModelPieData(sessions: DataResponse["sessions"]) {
+  const grouped = new Map<string, { value: number; tokens: number }>();
+  for (const session of sessions) {
+    for (const event of getSessionUsageEvents(session)) {
+      const model = shortenModelName(event.model || session.model || "unknown");
+      if (model === "unknown") continue;
+      const bucket = grouped.get(model) ?? { value: 0, tokens: 0 };
+      bucket.value += event.cost?.total ?? 0;
+      bucket.tokens += event.tokens.input + event.tokens.output + event.tokens.cacheCreation + event.tokens.cacheRead;
+      grouped.set(model, bucket);
+    }
+  }
+
+  const sorted = [...grouped.entries()]
+    .map(([name, totals]) => ({ name, ...totals }))
+    .sort((left, right) => right.value - left.value || right.tokens - left.tokens);
+  const visible = sorted.slice(0, 5);
+  if (sorted.length > visible.length) {
+    visible.push({
+      name: "Other models",
+      value: sorted.slice(visible.length).reduce((sum, item) => sum + item.value, 0),
+      tokens: sorted.slice(visible.length).reduce((sum, item) => sum + item.tokens, 0),
+    });
+  }
+  return visible;
 }
 
 function buildAgentData(sessions: DataResponse["sessions"]) {
@@ -1115,7 +1189,7 @@ function MachineIcon() {
 function ChartStackToggle({ value, onChange }: { value: ChartStackBy; onChange: (value: ChartStackBy) => void }) {
   return (
     <div className="flex gap-1 text-xs">
-      {(["source", "orchestrator"] as ChartStackBy[]).map((option) => {
+      {(["source", "orchestrator", "model"] as ChartStackBy[]).map((option) => {
         const active = option === value;
         return (
           <button
@@ -1129,7 +1203,7 @@ function ChartStackToggle({ value, onChange }: { value: ChartStackBy; onChange: 
               border: "1px solid var(--border)",
             }}
           >
-            {option === "source" ? "By source" : "By orchestrator"}
+            {option === "source" ? "By source" : option === "orchestrator" ? "By orchestrator" : "By model"}
           </button>
         );
       })}

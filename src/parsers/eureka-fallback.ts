@@ -47,10 +47,18 @@ type CcEnvelope = { type?: string; timestamp?: string; model?: string; usage?: C
 type PiEnvelope = { type?: string; id?: string; timestamp?: string; api?: string; provider?: string; model?: string; modelId?: string; responseId?: string; usage?: PiUsage; message?: { role?: string; timestamp?: number | string; api?: string; provider?: string; model?: string; responseId?: string; usage?: PiUsage } };
 
 export async function readEurekaFallbackTokens(entry: EurekaIndexEntry): Promise<SdkTokenResult | null> {
-  if (!entry.sdkSessionId) return null;
   if (entry.underlyingSource === "pi-agent") {
-    return readPiCodingSessionTokens(entry.sessionPath, entry.sdkSessionId, entry.headerModel);
+    // PI session files are created with the Eureka session id. The persisted
+    // sdkSessionId can be cleared when Eureka disposes/recreates a runtime
+    // (custom-model invalidation is one common trigger), but the JSONL remains
+    // authoritative and still contains complete per-request usage.
+    return readPiCodingSessionTokens(
+      entry.sessionPath,
+      entry.sdkSessionId ?? entry.eurekaSessionId,
+      entry.headerModel,
+    );
   }
+  if (!entry.sdkSessionId) return null;
   if (entry.underlyingSource === "claude-code") {
     return readCcSessionTokens(entry.sdkSessionId, entry.sdkCwd);
   }

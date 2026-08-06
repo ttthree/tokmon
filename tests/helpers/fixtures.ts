@@ -449,6 +449,7 @@ export async function createEurekaPiFixture(testHome: string, options?: {
   headerModel?: string;
   workingDirectory?: string;
   eventLines?: string[];
+  omitSdkSessionId?: boolean;
 }): Promise<void> {
   const sessionId = options?.sessionId ?? "260709-fresh-whale";
   const headerModel = options?.headerModel ?? "gpt-5.5";
@@ -472,7 +473,7 @@ export async function createEurekaPiFixture(testHome: string, options?: {
         messageCount: 4,
         userMessageCount: 1,
         workingDirectory,
-        sdkSessionId: sessionId,
+        ...(!options?.omitSdkSessionId ? { sdkSessionId: sessionId } : {}),
         sdkCwd: workingDirectory,
         tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0, contextTokens: 0, costUsd: 0 },
       }),

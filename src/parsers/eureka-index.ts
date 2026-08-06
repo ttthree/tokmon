@@ -165,6 +165,10 @@ async function scoreEurekaEntry(entry: EurekaIndexEntry): Promise<number> {
 }
 
 async function hasSdkArtifacts(entry: EurekaIndexEntry): Promise<boolean> {
+  if (entry.underlyingSource === "pi-agent") {
+    const piDir = path.join(entry.sessionPath, ".pi");
+    return hasNestedJsonlMatching(piDir, entry.sdkSessionId ?? entry.eurekaSessionId);
+  }
   if (!entry.sdkSessionId) return false;
   if (entry.underlyingSource === "claude-code") {
     const encoded = entry.sdkCwd ? encodeClaudeProjectPath(entry.sdkCwd) : null;
@@ -181,10 +185,6 @@ async function hasSdkArtifacts(entry: EurekaIndexEntry): Promise<boolean> {
   if (entry.underlyingSource === "codex") {
     const codexDir = path.join(entry.sessionPath, ".codex-home", "sessions");
     return hasNestedJsonlMatching(codexDir, entry.sdkSessionId);
-  }
-  if (entry.underlyingSource === "pi-agent") {
-    const piDir = path.join(entry.sessionPath, ".pi");
-    return hasNestedJsonlMatching(piDir, entry.sdkSessionId);
   }
   const eventsPath = path.join(entry.sessionPath, ".copilot-sdk", "session-state", entry.sdkSessionId, "events.jsonl");
   return Boolean(await safeStat(eventsPath));

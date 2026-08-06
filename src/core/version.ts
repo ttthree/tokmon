@@ -34,23 +34,46 @@ export function getPackageVersion(): string {
 export const PACKAGE_NAME = "@ttthree/tokmon";
 
 interface CachedLatest {
-  version: string;
+  version?: string;
+  error?: Error;
   fetchedAt: number;
 }
 
 let latestCache: CachedLatest | null = null;
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const DEFAULT_REGISTRY = "https://registry.npmjs.org";
 
-/** Fetch the latest published version from the npm registry, with 5-min cache. */
+/** Resolve the registry used for update checks without reading auth tokens. */
+export function getUpdateRegistry(): string {
+  const configured =
+    process.env.TOKMON_NPM_REGISTRY ??
+    process.env.npm_config_registry ??
+    process.env.NPM_CONFIG_REGISTRY ??
+    DEFAULT_REGISTRY;
+  return configured.replace(/\/+$/, "");
+}
+
+export function isUpdateCheckDisabled(): boolean {
+  return process.env.TOKMON_DISABLE_UPDATE_CHECK === "1";
+}
+
+/** Fetch the latest published version, caching both successes and failures. */
 export async function fetchLatestVersion(): Promise<string> {
+  if (isUpdateCheckDisabled()) {
+    throw new Error("update check disabled by TOKMON_DISABLE_UPDATE_CHECK");
+  }
+
   const now = Date.now();
   if (latestCache && now - latestCache.fetchedAt < CACHE_TTL_MS) {
-    return latestCache.version;
+    if (latestCache.error) throw latestCache.error;
+    return latestCache.version!;
   }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
-    const url = `https://registry.npmjs.org/${PACKAGE_NAME}/latest`;
+    const registry = getUpdateRegistry();
+    const url = `${registry}/${PACKAGE_NAME}/latest`;
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
       signal: controller.signal,
@@ -60,6 +83,10 @@ export async function fetchLatestVersion(): Promise<string> {
     if (!json.version) throw new Error("no version in registry response");
     latestCache = { version: json.version, fetchedAt: now };
     return json.version;
+  } catch (error) {
+    const cachedError = error instanceof Error ? error : new Error(String(error));
+    latestCache = { error: cachedError, fetchedAt: now };
+    throw cachedError;
   } finally {
     clearTimeout(timer);
   }
